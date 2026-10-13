@@ -19,6 +19,9 @@ import {
   DollarSign,
   ShieldCheck,
   EyeOff,
+  LayoutGrid,
+  List,
+  Sparkles,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Salon, SalonStatus, PlanType } from '../../types/admin';
@@ -51,6 +54,7 @@ export const BusinessesView: React.FC = () => {
   const [cityFilter, setCityFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'revenue' | 'appointments' | 'date'>('revenue');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -72,7 +76,6 @@ export const BusinessesView: React.FC = () => {
     variant: 'warning',
   });
 
-  // Reveal phone in drawer
   const [revealPhone, setRevealPhone] = useState(false);
 
   // Form state for new salon
@@ -93,8 +96,7 @@ export const BusinessesView: React.FC = () => {
 
   // Unique cities
   const uniqueCities = useMemo(() => {
-    const list = Array.from(new Set(salons.map((s) => s.province)));
-    return list;
+    return Array.from(new Set(salons.map((s) => s.province)));
   }, [salons]);
 
   // Filtered & sorted salons
@@ -139,7 +141,7 @@ export const BusinessesView: React.FC = () => {
     exportToCsv(`salons-export-${Date.now()}`, exportRows);
     addToast({
       type: 'success',
-      title: 'فایل اکسل/CSV سالن‌ها ایجاد و دانلود شد',
+      title: 'فایل اکسل سالن‌ها ذخیره شد',
     });
   };
 
@@ -148,8 +150,8 @@ export const BusinessesView: React.FC = () => {
     if (!formData.name?.trim() || !formData.ownerName?.trim() || !formData.phone?.trim()) {
       addToast({
         type: 'error',
-        title: 'خطا در ثبت سالن',
-        message: 'لطفاً نام سالن، نام مدیر و شماره تلفن را وارد نمایید.',
+        title: 'اطلاعات ناقص است',
+        message: 'نام سالن، نام مدیر و شماره تلفن الزامی هستند.',
       });
       return;
     }
@@ -173,7 +175,7 @@ export const BusinessesView: React.FC = () => {
       verifiedBadge: false,
       registeredAt: 'امروز',
       servicesCount: formData.servicesCount || 8,
-      notes: 'سالن توسط ادمین اصلی اضافه گردید.',
+      notes: 'سالن جدید افزوده شد.',
     };
 
     saveSalon(newSalon);
@@ -209,45 +211,73 @@ export const BusinessesView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* View Header with Actions */}
+      {/* View Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <Store className="w-5 h-5 text-rose-400" />
-            مدیریت جامع سالن‌ها و کسب‌وکارها ({toPersianDigits(salons.length)})
+          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <Store className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            سالن‌ها و مراکز زیبایی ({toPersianDigits(salons.length)})
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            مشاهده، ارزیابی مدارک، تایید صلاحیت، تعلیق و مدیریت تعرفه سالن‌های متصل به سیستم
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            تایید صلاحیت مدارک، وضعیت فعالیت و مدیریت بسته‌های اشتراک
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle: Cards vs Table */}
+          <div className="flex items-center p-1 bg-stone-100 dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl text-xs">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'
+              }`}
+              title="نمایش کارت‌های خلوت"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>کارت‌ها</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'
+              }`}
+              title="نمایش جدول فشرده"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>جدول</span>
+            </button>
+          </div>
+
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700/80 rounded-xl transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl transition-colors cursor-pointer shadow-xs"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>خروجی اکسل / CSV</span>
+            <span className="hidden sm:inline">اکسل</span>
           </button>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-sm transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>افزودن سالن جدید</span>
+            <span>افزودن سالن</span>
           </button>
         </div>
       </div>
 
-      {/* 1-Click Segmented Status Pills for Instant Access */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-2xl text-xs">
+      {/* Segmented Status Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl text-xs shadow-xs">
         {[
           { id: 'all', label: 'همه سالن‌ها', count: salons.length },
           { id: 'active', label: 'فعال', count: salons.filter((s) => s.status === 'active').length },
-          { id: 'pending', label: 'در انتظار بررسی', count: salons.filter((s) => s.status === 'pending').length },
-          { id: 'suspended', label: 'معلق شده', count: salons.filter((s) => s.status === 'suspended').length },
-          { id: 'trial', label: 'دوره آزمایشی', count: salons.filter((s) => s.status === 'trial').length },
+          { id: 'pending', label: 'در انتظار تایید', count: salons.filter((s) => s.status === 'pending').length },
+          { id: 'suspended', label: 'معلق', count: salons.filter((s) => s.status === 'suspended').length },
+          { id: 'trial', label: 'آزمایشی', count: salons.filter((s) => s.status === 'trial').length },
         ].map((tab) => {
           const isSelected = statusFilter === tab.id;
           return (
@@ -256,14 +286,14 @@ export const BusinessesView: React.FC = () => {
               onClick={() => setStatusFilter(tab.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-medium ${
                 isSelected
-                  ? 'bg-rose-500 text-white font-bold shadow-md shadow-rose-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+                  ? 'bg-rose-600 text-white font-bold shadow-xs'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-stone-100 dark:hover:bg-zinc-800/60'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
+                  isSelected ? 'bg-white/20 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
                 }`}
               >
                 {toPersianDigits(tab.count)}
@@ -273,23 +303,23 @@ export const BusinessesView: React.FC = () => {
         })}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+      {/* Search & Quick Filter Bar */}
+      <div className="p-3.5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 space-y-3 shadow-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-          {/* Search Input with Clear Button */}
+          {/* Search Input */}
           <div className="lg:col-span-3 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="جستجوی سریع نام سالن، مدیر، تلفن یا شهر..."
-              className="w-full pl-8 pr-9 py-2 bg-slate-800 border border-slate-700/70 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+              placeholder="جستجوی نام سالن، مدیر، شهر یا شماره تماس..."
+              className="w-full pl-8 pr-9 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500 transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute left-2.5 top-2.5 text-slate-400 hover:text-white"
+                className="absolute left-2.5 top-2.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -301,7 +331,7 @@ export const BusinessesView: React.FC = () => {
             <select
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700/70 rounded-xl text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
             >
               <option value="all">تمام استان‌ها</option>
               {uniqueCities.map((c) => (
@@ -315,271 +345,334 @@ export const BusinessesView: React.FC = () => {
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700/70 rounded-xl text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
             >
               <option value="all">تمام بسته‌ها</option>
               <option value="bronze">پایه (برنزی)</option>
               <option value="silver">حرفه‌ای (نقره‌ای)</option>
-              <option value="gold_vip">طلایی ویژه (VIP)</option>
+              <option value="gold_vip">ویژه (VIP)</option>
             </select>
           </div>
         </div>
 
-        {/* Sort & Quick Status Counts */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+        {/* Sort & Result Count */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-100 dark:border-zinc-800/80 text-[11px] text-zinc-500 dark:text-zinc-400">
           <div className="flex items-center gap-2">
-            <span>مرتب‌سازی بر اساس:</span>
+            <span>مرتب‌سازی:</span>
             <button
               onClick={() => setSortBy('revenue')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'revenue' ? 'bg-slate-800 text-rose-400 font-semibold' : 'hover:text-slate-200'
+                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold' : 'hover:text-zinc-800 dark:hover:text-zinc-200'
               }`}
             >
-              بیشترین گردش مالی
+              بیشترین درآمد
             </button>
             <button
               onClick={() => setSortBy('appointments')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'appointments' ? 'bg-slate-800 text-rose-400 font-semibold' : 'hover:text-slate-200'
+                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold' : 'hover:text-zinc-800 dark:hover:text-zinc-200'
               }`}
             >
-              تعداد نوبت‌ها
+              بیشترین نوبت
             </button>
           </div>
 
           <div>
-            نمایش <span className="font-bold text-slate-200">{toPersianDigits(filteredSalons.length)}</span> سالن از کل{' '}
-            <span className="font-bold text-slate-200">{toPersianDigits(salons.length)}</span> سالن
+            نمایش <span className="font-bold text-zinc-800 dark:text-zinc-200">{toPersianDigits(filteredSalons.length)}</span> از{' '}
+            <span className="font-bold text-zinc-800 dark:text-zinc-200">{toPersianDigits(salons.length)}</span> سالن
           </div>
         </div>
       </div>
 
-      {/* Salons Table */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-semibold">
-              <tr>
-                <th className="py-3.5 px-4">نام سالن و دسته‌بندی</th>
-                <th className="py-3.5 px-4">مدیر و تماس</th>
-                <th className="py-3.5 px-4">شهر / منطقه</th>
-                <th className="py-3.5 px-4">بسته اشتراک</th>
-                <th className="py-3.5 px-4">گردش ماهانه</th>
-                <th className="py-3.5 px-4">پرسنل / نوبت‌ها</th>
-                <th className="py-3.5 px-4">وضعیت</th>
-                <th className="py-3.5 px-4 text-center">عملیات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/80 text-slate-300">
-              {filteredSalons.map((salon) => {
-                const badge = getStatusBadge(salon.status);
+      {/* VIEW 1: UNCLUTTERED MODERN CARD GRID (PRIMARY) */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredSalons.map((salon) => {
+            const badge = getStatusBadge(salon.status);
 
-                return (
-                  <tr key={salon.id} className="hover:bg-slate-800/40 transition-colors">
-                    {/* Salon Name */}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center font-bold text-rose-400 shrink-0">
-                          {salon.name.slice(0, 1)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-slate-100">{salon.name}</span>
-                            {salon.verifiedBadge && (
-                              <span className="text-[10px] text-sky-400 font-semibold" title="تایید رسمی ادمین">
-                                ✓
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[11px] text-slate-400 block mt-0.5">{salon.category}</span>
-                        </div>
+            return (
+              <div
+                key={salon.id}
+                className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs hover:border-rose-400/50 dark:hover:border-rose-500/30 transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  {/* Card Header: Icon, Name, Category & Status Badge */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700/80 flex items-center justify-center font-bold text-rose-600 dark:text-rose-400 shrink-0">
+                        {salon.name.slice(0, 1)}
                       </div>
-                    </td>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm truncate">
+                            {salon.name}
+                          </h3>
+                          {salon.verifiedBadge && (
+                            <span className="text-sky-500 text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                          {salon.category}
+                        </p>
+                      </div>
+                    </div>
 
-                    {/* Owner & Phone */}
-                    <td className="py-3 px-4">
-                      <span className="font-medium text-slate-200 block">{salon.ownerName}</span>
-                      <span className="font-mono text-[11px] text-slate-400 block mt-0.5" dir="ltr">
+                    <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
+                      {badge.label}
+                    </span>
+                  </div>
+
+                  {/* Owner, City & Contact */}
+                  <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-zinc-800/80 text-xs">
+                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                      <span>مدیر سالن:</span>
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">{salon.ownerName}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                      <span>موقعیت:</span>
+                      <span className="text-zinc-700 dark:text-zinc-300">{salon.city} ({salon.province})</span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                      <span>شماره تماس:</span>
+                      <span className="font-mono text-zinc-700 dark:text-zinc-300" dir="ltr">
                         {maskPhone(salon.phone)}
                       </span>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* City */}
-                    <td className="py-3 px-4 text-slate-300">
-                      <span>{salon.city}</span>
-                      <span className="block text-[10px] text-slate-400 mt-0.5 truncate max-w-[150px]">{salon.address}</span>
-                    </td>
-
-                    {/* Plan */}
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => openPlanModal(salon)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer hover:brightness-110 flex items-center gap-1.5"
-                        style={{
-                          backgroundColor:
-                            salon.plan === 'gold_vip'
-                              ? 'rgba(245, 158, 11, 0.15)'
-                              : salon.plan === 'silver'
-                              ? 'rgba(148, 163, 184, 0.15)'
-                              : 'rgba(217, 119, 6, 0.1)',
-                          borderColor:
-                            salon.plan === 'gold_vip'
-                              ? 'rgba(245, 158, 11, 0.3)'
-                              : salon.plan === 'silver'
-                              ? 'rgba(148, 163, 184, 0.3)'
-                              : 'rgba(217, 119, 6, 0.2)',
-                          color:
-                            salon.plan === 'gold_vip'
-                              ? '#fbbf24'
-                              : salon.plan === 'silver'
-                              ? '#cbd5e1'
-                              : '#f59e0b',
-                        }}
-                      >
-                        {salon.plan === 'gold_vip' ? 'طلایی VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
-                        <Edit2 className="w-2.5 h-2.5 text-slate-400" />
-                      </button>
-                    </td>
-
-                    {/* Monthly Revenue */}
-                    <td className="py-3 px-4 font-bold text-emerald-400 tabular-nums">
-                      {formatCurrency(salon.monthlyRevenue, 'toman')}
-                    </td>
-
-                    {/* Staff & Appointments */}
-                    <td className="py-3 px-4 tabular-nums text-slate-300">
-                      <span>{toPersianDigits(salon.activeStaffCount)} آرایشگر</span>
-                      <span className="block text-[11px] text-slate-400 mt-0.5">
-                        {toPersianDigits(salon.totalAppointments)} نوبت ثبت شده
+                  {/* Clean Metrics Row */}
+                  <div className="grid grid-cols-3 gap-2 my-3 text-center">
+                    <div className="p-2 rounded-xl bg-stone-50 dark:bg-[#12141C] border border-stone-100 dark:border-zinc-800/60">
+                      <span className="text-[10px] text-zinc-500 block mb-0.5">گردش ماه</span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        {formatCurrency(salon.monthlyRevenue, 'toman')}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Status Badge */}
-                    <td className="py-3 px-4">
-                      <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
-                        {badge.label}
+                    <div className="p-2 rounded-xl bg-stone-50 dark:bg-[#12141C] border border-stone-100 dark:border-zinc-800/60">
+                      <span className="text-[10px] text-zinc-500 block mb-0.5">نوبت‌ها</span>
+                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
+                        {toPersianDigits(salon.totalAppointments)}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Actions */}
-                    <td className="py-3 px-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {/* View / Inspect Drawer */}
-                        <button
-                          onClick={() => setInspectedSalon(salon)}
-                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                          title="مشاهده جزئیات کامل"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        {/* Approve Button (if pending) */}
-                        {salon.status === 'pending' && (
-                          <button
-                            onClick={() => approveSalon(salon.id)}
-                            className="p-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer"
-                            title="تایید صلاحیت و اعطای نشان"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Suspend / Activate toggle */}
-                        {salon.status === 'active' ? (
-                          <button
-                            onClick={() => {
-                              setConfirmModalData({
-                                isOpen: true,
-                                title: `تعلیق موقت سالن ${salon.name}`,
-                                message: `با تعلیق سالن، نوبت‌دهی آنلاین برای مشتریان مسدود می‌شود. آیا مطمئن هستید؟`,
-                                variant: 'warning',
-                                onConfirm: () => suspendSalon(salon.id),
-                              });
-                            }}
-                            className="p-1.5 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
-                            title="تعلیق فعالیت سالن"
-                          >
-                            <AlertTriangle className="w-4 h-4" />
-                          </button>
-                        ) : salon.status === 'suspended' ? (
-                          <button
-                            onClick={() => activateSalon(salon.id)}
-                            className="p-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors cursor-pointer"
-                            title="رفع تعلیق و بازگشایی"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        ) : null}
-
-                        {/* Delete Salon */}
-                        <button
-                          onClick={() => {
-                            setConfirmModalData({
-                              isOpen: true,
-                              title: `حذف دائم سالن ${salon.name}`,
-                              message: `این اقدام غیرقابل بازگشت است و تمام نوبت‌ها و اطلاعات سالن حذف خواهد شد.`,
-                              variant: 'danger',
-                              onConfirm: () => deleteSalon(salon.id),
-                            });
-                          }}
-                          className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                          title="حذف سالن از پایگاه داده"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {filteredSalons.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
-                    <Store className="w-8 h-8 mx-auto text-slate-600 mb-2" />
-                    <p className="text-xs">هیچ سالنی مطابق با فیلترهای انتخابی یافت نشد.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Salon Inspection Drawer */}
-      {inspectedSalon && (
-        <div className="fixed inset-0 z-50 flex justify-start bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="fixed inset-0" onClick={() => setInspectedSalon(null)}></div>
-
-          <div className="relative w-full max-w-lg bg-slate-900 border-l border-slate-700 h-full overflow-y-auto shadow-2xl p-6 z-10 text-right space-y-6">
-            {/* Drawer Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center font-bold text-lg text-white shadow-lg">
-                  {inspectedSalon.name.slice(0, 1)}
+                    <div className="p-2 rounded-xl bg-stone-50 dark:bg-[#12141C] border border-stone-100 dark:border-zinc-800/60">
+                      <span className="text-[10px] text-zinc-500 block mb-0.5">پرسنل</span>
+                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
+                        {toPersianDigits(salon.activeStaffCount)} نفر
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
+
+                {/* Footer: Plan Badge & Action Buttons */}
+                <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-zinc-800">
+                  <button
+                    onClick={() => openPlanModal(salon)}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer flex items-center gap-1.5"
+                    style={{
+                      backgroundColor:
+                        salon.plan === 'gold_vip'
+                          ? 'rgba(245, 158, 11, 0.1)'
+                          : salon.plan === 'silver'
+                          ? 'rgba(148, 163, 184, 0.1)'
+                          : 'rgba(217, 119, 6, 0.08)',
+                      borderColor:
+                        salon.plan === 'gold_vip'
+                          ? 'rgba(245, 158, 11, 0.25)'
+                          : salon.plan === 'silver'
+                          ? 'rgba(148, 163, 184, 0.25)'
+                          : 'rgba(217, 119, 6, 0.2)',
+                      color:
+                        salon.plan === 'gold_vip'
+                          ? '#d97706'
+                          : salon.plan === 'silver'
+                          ? '#64748b'
+                          : '#b45309',
+                    }}
+                  >
+                    <span>{salon.plan === 'gold_vip' ? 'بسته VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}</span>
+                    <Edit2 className="w-2.5 h-2.5 opacity-60" />
+                  </button>
+
                   <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold text-white">{inspectedSalon.name}</h3>
-                    {inspectedSalon.verifiedBadge && (
-                      <span className="text-xs text-sky-400 font-bold" title="دارای نشان تایید">
-                        ✓
-                      </span>
+                    {/* Inspect Drawer */}
+                    <button
+                      onClick={() => setInspectedSalon(salon)}
+                      className="p-1.5 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+                      title="مشاهده جزئیات کامل"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+
+                    {/* Approve (if pending) */}
+                    {salon.status === 'pending' && (
+                      <button
+                        onClick={() => approveSalon(salon.id)}
+                        className="px-2.5 py-1 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                        title="تایید سالن"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>تایید</span>
+                      </button>
+                    )}
+
+                    {/* Suspend / Activate */}
+                    {salon.status === 'active' && (
+                      <button
+                        onClick={() => {
+                          setConfirmModalData({
+                            isOpen: true,
+                            title: `تعلیق موقت سالن ${salon.name}`,
+                            message: `با تعلیق سالن، نوبت‌دهی آنلاین برای مشتریان متوقف خواهد شد.`,
+                            variant: 'warning',
+                            onConfirm: () => suspendSalon(salon.id),
+                          });
+                        }}
+                        className="p-1.5 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors cursor-pointer"
+                        title="تعلیق فعالیت"
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {salon.status === 'suspended' && (
+                      <button
+                        onClick={() => activateSalon(salon.id)}
+                        className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
+                        title="فعال‌سازی مجدد"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">{inspectedSalon.category}</p>
                 </div>
+              </div>
+            );
+          })}
+
+          {filteredSalons.length === 0 && (
+            <div className="col-span-full py-12 text-center text-zinc-400 space-y-2">
+              <Store className="w-10 h-10 mx-auto opacity-30" />
+              <p className="text-xs">هیچ سالنی با این مشخصات یافت نشد.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VIEW 2: COMPACT CLEAN TABLE (ALTERNATIVE) */}
+      {viewMode === 'table' && (
+        <div className="rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-xs">
+              <thead className="bg-stone-50 dark:bg-[#12141C] border-b border-stone-200 dark:border-zinc-800 text-zinc-500 font-semibold">
+                <tr>
+                  <th className="py-3 px-4">نام سالن و دسته‌بندی</th>
+                  <th className="py-3 px-4">مدیر و تماس</th>
+                  <th className="py-3 px-4">شهر</th>
+                  <th className="py-3 px-4">پلن</th>
+                  <th className="py-3 px-4">گردش ماه</th>
+                  <th className="py-3 px-4">پرسنل</th>
+                  <th className="py-3 px-4">وضعیت</th>
+                  <th className="py-3 px-4 text-center">عملیات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
+                {filteredSalons.map((salon) => {
+                  const badge = getStatusBadge(salon.status);
+
+                  return (
+                    <tr key={salon.id} className="hover:bg-stone-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-rose-600 dark:text-rose-400 shrink-0">
+                            {salon.name.slice(0, 1)}
+                          </div>
+                          <div>
+                            <span className="font-bold text-zinc-900 dark:text-zinc-100 block">{salon.name}</span>
+                            <span className="text-[11px] text-zinc-500">{salon.category}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="block font-medium">{salon.ownerName}</span>
+                        <span className="font-mono text-[11px] text-zinc-500" dir="ltr">{maskPhone(salon.phone)}</span>
+                      </td>
+                      <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{salon.city}</td>
+                      <td className="py-3 px-4">
+                        <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                          {salon.plan === 'gold_vip' ? 'VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        {formatCurrency(salon.monthlyRevenue, 'toman')}
+                      </td>
+                      <td className="py-3 px-4 tabular-nums text-zinc-600 dark:text-zinc-400">
+                        {toPersianDigits(salon.activeStaffCount)} نفر
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setInspectedSalon(salon)}
+                            className="p-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 rounded-lg"
+                            title="جزئیات"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {salon.status === 'pending' && (
+                            <button
+                              onClick={() => approveSalon(salon.id)}
+                              className="p-1.5 text-emerald-600 rounded-lg hover:bg-emerald-50"
+                              title="تایید"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Inspected Salon Side Drawer */}
+      {inspectedSalon && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setInspectedSalon(null)}></div>
+
+          <div className="relative w-full max-w-md h-full bg-white dark:bg-[#181B24] border-r border-stone-200 dark:border-zinc-800 shadow-2xl p-6 overflow-y-auto space-y-5 text-right z-10 text-zinc-900 dark:text-zinc-100">
+            {/* Drawer Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-zinc-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold">{inspectedSalon.name}</h3>
+                  <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border ${getStatusBadge(inspectedSalon.status).bg} ${getStatusBadge(inspectedSalon.status).text} ${getStatusBadge(inspectedSalon.status).border}`}>
+                    {getStatusBadge(inspectedSalon.status).label}
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-1">{inspectedSalon.category}</p>
               </div>
 
               <button
                 onClick={() => setInspectedSalon(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Quick Actions in Drawer */}
+            {/* Quick Actions */}
             <div className="flex items-center gap-2">
               {inspectedSalon.status === 'pending' && (
                 <button
@@ -587,10 +680,10 @@ export const BusinessesView: React.FC = () => {
                     approveSalon(inspectedSalon.id);
                     setInspectedSalon({ ...inspectedSalon, status: 'active', verifiedBadge: true });
                   }}
-                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow"
+                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <Check className="w-4 h-4" />
-                  <span>تایید و اعطای نشان رسمی</span>
+                  <span>تایید سالن</span>
                 </button>
               )}
 
@@ -600,10 +693,10 @@ export const BusinessesView: React.FC = () => {
                     suspendSalon(inspectedSalon.id);
                     setInspectedSalon({ ...inspectedSalon, status: 'suspended' });
                   }}
-                  className="flex-1 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <AlertTriangle className="w-4 h-4" />
-                  <span>تعلیق موقت فعالیت</span>
+                  <span>تعلیق موقت</span>
                 </button>
               )}
 
@@ -613,105 +706,92 @@ export const BusinessesView: React.FC = () => {
                     activateSalon(inspectedSalon.id);
                     setInspectedSalon({ ...inspectedSalon, status: 'active' });
                   }}
-                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  <span>رفع تعلیق و بازگشایی</span>
+                  <span>رفع تعلیق</span>
                 </button>
               )}
 
               <button
                 onClick={() => openPlanModal(inspectedSalon)}
-                className="px-4 py-2 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl transition-colors cursor-pointer"
+                className="px-3 py-2 text-xs font-medium bg-stone-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-xl transition-colors cursor-pointer"
               >
                 تغییر پلن
               </button>
             </div>
 
-            {/* Key Salon Facts */}
+            {/* Key Facts Grid */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                <span className="text-slate-400 flex items-center gap-1.5 mb-1">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" /> گردش مالی ماهانه
-                </span>
-                <span className="text-sm font-bold text-emerald-400 tabular-nums">
+              <div className="p-3 bg-stone-50 dark:bg-[#12141C] rounded-xl border border-stone-200/80 dark:border-zinc-800">
+                <span className="text-zinc-500 block mb-1">گردش مالی ماه</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {formatCurrency(inspectedSalon.monthlyRevenue, 'toman')}
                 </span>
               </div>
 
-              <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                <span className="text-slate-400 flex items-center gap-1.5 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-sky-400" /> کل نوبت‌های رزرو
-                </span>
-                <span className="text-sm font-bold text-slate-200 tabular-nums">
-                  {formatNumber(inspectedSalon.totalAppointments)} نوبت
+              <div className="p-3 bg-stone-50 dark:bg-[#12141C] rounded-xl border border-stone-200/80 dark:border-zinc-800">
+                <span className="text-zinc-500 block mb-1">کل نوبت‌ها</span>
+                <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
+                  {formatNumber(inspectedSalon.totalAppointments)}
                 </span>
               </div>
 
-              <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                <span className="text-slate-400 flex items-center gap-1.5 mb-1">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" /> تعداد کادر آرایشگر
-                </span>
-                <span className="text-sm font-bold text-slate-200 tabular-nums">
-                  {toPersianDigits(inspectedSalon.activeStaffCount)} نفر فعال
+              <div className="p-3 bg-stone-50 dark:bg-[#12141C] rounded-xl border border-stone-200/80 dark:border-zinc-800">
+                <span className="text-zinc-500 block mb-1">تعداد پرسنل</span>
+                <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
+                  {toPersianDigits(inspectedSalon.activeStaffCount)} نفر
                 </span>
               </div>
 
-              <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                <span className="text-slate-400 flex items-center gap-1.5 mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> بسته فعال
-                </span>
-                <span className="text-sm font-bold text-amber-300">
-                  {inspectedSalon.plan === 'gold_vip' ? 'طلایی VIP' : inspectedSalon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
+              <div className="p-3 bg-stone-50 dark:bg-[#12141C] rounded-xl border border-stone-200/80 dark:border-zinc-800">
+                <span className="text-zinc-500 block mb-1">پلن اشتراک</span>
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                  {inspectedSalon.plan === 'gold_vip' ? 'ویژه VIP' : inspectedSalon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
                 </span>
               </div>
             </div>
 
-            {/* Contact & Location Info */}
-            <div className="p-4 bg-slate-800/40 rounded-xl border border-slate-800 space-y-3 text-xs">
-              <h4 className="font-bold text-slate-200">مشخصات مدیر و آدرس</h4>
+            {/* Manager Contact & Location */}
+            <div className="p-4 bg-stone-50 dark:bg-[#12141C] rounded-xl border border-stone-200/80 dark:border-zinc-800 space-y-2.5 text-xs">
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100">مشخصات تماس و نشانی</h4>
               
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="text-slate-400">نام مدیر سالن:</span>
-                <span className="font-semibold text-slate-100">{inspectedSalon.ownerName}</span>
+              <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                <span>مدیر:</span>
+                <span className="font-semibold text-zinc-800 dark:text-zinc-200">{inspectedSalon.ownerName}</span>
               </div>
 
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Phone className="w-3.5 h-3.5" /> شماره تماس مستقیم:
-                </span>
+              <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                <span>شماره تماس:</span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-slate-200" dir="ltr">
+                  <span className="font-mono text-zinc-800 dark:text-zinc-200" dir="ltr">
                     {revealPhone ? inspectedSalon.phone : maskPhone(inspectedSalon.phone)}
                   </span>
                   <button
                     onClick={() => setRevealPhone(!revealPhone)}
-                    className="text-slate-400 hover:text-slate-200"
-                    title={revealPhone ? 'پنهان‌سازی' : 'نمایش کامل'}
+                    className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
                   >
                     {revealPhone ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="text-slate-400">ایمیل ثبت‌شده:</span>
-                <span className="font-mono text-slate-300" dir="ltr">{inspectedSalon.email}</span>
+              <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                <span>ایمیل:</span>
+                <span className="font-mono text-zinc-700 dark:text-zinc-300" dir="ltr">{inspectedSalon.email}</span>
               </div>
 
-              <div className="flex items-start justify-between text-slate-300 pt-2 border-t border-slate-800">
-                <span className="text-slate-400 flex items-center gap-1 shrink-0">
-                  <MapPin className="w-3.5 h-3.5" /> نشانی دقیق:
-                </span>
-                <span className="text-left leading-relaxed text-slate-200 mr-2">
+              <div className="pt-2 border-t border-stone-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400">
+                <span className="block text-zinc-500 mb-0.5">نشانی دقیق:</span>
+                <p className="leading-relaxed text-zinc-800 dark:text-zinc-200">
                   {inspectedSalon.province}، {inspectedSalon.address}
-                </span>
+                </p>
               </div>
             </div>
 
-            {/* Notes & Admin Commentary */}
-            <div className="space-y-2 text-xs">
-              <h4 className="font-bold text-slate-200">یادداشت نظارتی ادمین</h4>
+            {/* Notes */}
+            <div className="space-y-1.5 text-xs">
+              <h4 className="font-bold text-zinc-900 dark:text-zinc-100">یادداشت نظارتی</h4>
               <textarea
                 value={inspectedSalon.notes || ''}
                 onChange={(e) => {
@@ -720,10 +800,9 @@ export const BusinessesView: React.FC = () => {
                   saveSalon(updated);
                 }}
                 rows={3}
-                placeholder="یادداشت در مورد سابقه سالن، تایید مدارک یا شکایات مشتریان..."
-                className="w-full p-3 bg-slate-800 border border-slate-700/80 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-rose-500 leading-relaxed"
-              ></textarea>
-              <p className="text-[10px] text-slate-400">تغییرات یادداشت به شکل آنی ذخیره می‌شود.</p>
+                placeholder="یادداشت در مورد سالن، مدارک و سوابق..."
+                className="w-full p-2.5 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-rose-500"
+              />
             </div>
           </div>
         </div>
@@ -731,18 +810,18 @@ export const BusinessesView: React.FC = () => {
 
       {/* Add New Salon Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="fixed inset-0" onClick={() => setIsAddModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Plus className="w-4 h-4 text-rose-400" />
-                ثبت سالن جدید در شبکه
+          <div className="relative w-full max-w-lg bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                ثبت سالن جدید
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg"
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -750,63 +829,62 @@ export const BusinessesView: React.FC = () => {
 
             <form onSubmit={handleCreateSalon} className="space-y-4 text-xs">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">نام سالن زیبایی *</label>
+                <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">نام سالن *</label>
                 <input
                   type="text"
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="مثال: سالن تخصصی آفتاب طلایی"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500"
+                  placeholder="مثال: سالن تخصصی مهسا"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">دسته‌بندی سالن</label>
+                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">دسته‌بندی</label>
                   <select
                     value={formData.category || 'سالن عمومی بانوان'}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   >
-                    <option value="سالن تخصصی عروس و زیبایی">سالن تخصصی عروس</option>
-                    <option value="کلینیک پوست و مو و بیوتی">کلینیک پوست و فیشیال</option>
-                    <option value="مرکز تخصصی ناخن و اسپا">مرکز تخصصی ناخن</option>
-                    <option value="باربرشاپ و گریم داماد">باربرشاپ آقایان</option>
-                    <option value="مرکز مژه و ابرو">مرکز مژه و ابرو</option>
+                    <option value="سالن تخصصی عروس و زیبایی">سالن عروس و زیبایی</option>
+                    <option value="کلینیک پوست و فیشیال">کلینیک پوست و فیشیال</option>
+                    <option value="مرکز تخصصی ناخن و اسپا">مرکز ناخن و اسپا</option>
+                    <option value="باربرشاپ آقایان">باربرشاپ آقایان</option>
                     <option value="سالن عمومی بانوان">سالن عمومی بانوان</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">بسته اشتراک</label>
+                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">پلن اشتراک</label>
                   <select
                     value={formData.plan || 'bronze'}
                     onChange={(e) => setFormData({ ...formData, plan: e.target.value as PlanType })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   >
                     <option value="bronze">پایه (برنزی)</option>
                     <option value="silver">حرفه‌ای (نقره‌ای)</option>
-                    <option value="gold_vip">طلایی ویژه (VIP)</option>
+                    <option value="gold_vip">ویژه (VIP)</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">نام و نام خانوادگی مدیر *</label>
+                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">نام مدیر *</label>
                   <input
                     type="text"
                     required
                     value={formData.ownerName || ''}
                     onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
-                    placeholder="مثال: مریم کریمی"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500"
+                    placeholder="مثال: سارا محمدی"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">شماره موبایل مدیر (جهت احراز) *</label>
+                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">شماره تماس مدیر *</label>
                   <input
                     type="tel"
                     required
@@ -814,18 +892,18 @@ export const BusinessesView: React.FC = () => {
                     value={formData.phone || ''}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="09121234567"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500 font-mono text-left"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500 font-mono text-left"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">استان</label>
+                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">استان</label>
                   <select
                     value={formData.province || 'تهران'}
                     onChange={(e) => setFormData({ ...formData, province: e.target.value, city: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   >
                     <option value="تهران">تهران</option>
                     <option value="اصفهان">اصفهان</option>
@@ -833,45 +911,43 @@ export const BusinessesView: React.FC = () => {
                     <option value="خراسان رضوی">خراسان رضوی</option>
                     <option value="آذربایجان شرقی">آذربایجان شرقی</option>
                     <option value="البرز">البرز</option>
-                    <option value="گیلان">گیلان</option>
-                    <option value="مازندران">مازندران</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">شهر / منطقه</label>
+                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">شهر / محله</label>
                   <input
                     type="text"
                     value={formData.city || ''}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="مثال: تهران (نیاوران)"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500"
+                    placeholder="مثال: تهران (سعادت‌آباد)"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">نشانی پستی سالن</label>
+                <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">نشانی سالن</label>
                 <input
                   type="text"
                   value={formData.address || ''}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="خیابان، پلاک، طبقه و واحد"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer"
+                  className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
                 >
                   ثبت سالن
                 </button>
@@ -883,83 +959,59 @@ export const BusinessesView: React.FC = () => {
 
       {/* Plan Changer Modal */}
       {isPlanModalOpen && targetSalonForPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="fixed inset-0" onClick={() => setIsPlanModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
               <div>
-                <h3 className="text-sm font-bold text-white">تغییر پلن اشتراک</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{targetSalonForPlan.name}</p>
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">تغییر پلن اشتراک</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">{targetSalonForPlan.name}</p>
               </div>
               <button
                 onClick={() => setIsPlanModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg"
+                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <label
-                onClick={() => setSelectedPlanOption('bronze')}
-                className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-colors ${
-                  selectedPlanOption === 'bronze'
-                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                }`}
-              >
-                <div>
-                  <p className="font-bold">بسته پایه (برنزی)</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">تا ۳ آرایشگر · ۳۰۰ نوبت در ماه · ۵۰۰ پیامک</p>
+            <div className="space-y-2 text-xs">
+              {[
+                { id: 'bronze' as PlanType, title: 'پایه (برنزی)', price: 'رایگان / آزمایشی', desc: 'تا ۵ پرسنل و پیامک محدود' },
+                { id: 'silver' as PlanType, title: 'حرفه‌ای (نقره‌ای)', price: '۷۵۰,۰۰۰ تومان/ماه', desc: 'تا ۱۵ پرسنل و پیامک خدماتی' },
+                { id: 'gold_vip' as PlanType, title: 'ویژه (VIP)', price: '۱,۴۵۰,۰۰۰ تومان/ماه', desc: 'نامحدود و پشتیبانی اختصاصی' },
+              ].map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => setSelectedPlanOption(p.id)}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    selectedPlanOption === p.id
+                      ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20 shadow-xs'
+                      : 'border-stone-200 dark:border-zinc-800 hover:border-stone-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-bold text-zinc-900 dark:text-zinc-100">
+                    <span>{p.title}</span>
+                    <span className="text-rose-600 dark:text-rose-400 text-[11px]">{p.price}</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">{p.desc}</p>
                 </div>
-                <span className="font-semibold text-slate-200">۴۹۰,۰۰۰ تومان</span>
-              </label>
-
-              <label
-                onClick={() => setSelectedPlanOption('silver')}
-                className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-colors ${
-                  selectedPlanOption === 'silver'
-                    ? 'bg-slate-400/10 border-slate-400/40 text-slate-200'
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                }`}
-              >
-                <div>
-                  <p className="font-bold">بسته حرفه‌ای (نقره‌ای)</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">تا ۱۰ آرایشگر · ۱,۲۰۰ نوبت در ماه · ۲,۰۰۰ پیامک</p>
-                </div>
-                <span className="font-semibold text-slate-200">۸۹۰,۰۰۰ تومان</span>
-              </label>
-
-              <label
-                onClick={() => setSelectedPlanOption('gold_vip')}
-                className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-colors ${
-                  selectedPlanOption === 'gold_vip'
-                    ? 'bg-amber-500/15 border-amber-500/50 text-amber-200'
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                }`}
-              >
-                <div>
-                  <p className="font-bold text-amber-300">بسته طلایی ویژه (VIP Enterprise)</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">تا ۵۰ آرایشگر · نوبت نامحدود · ۶,۰۰۰ پیامک · دامنه اختصاصی</p>
-                </div>
-                <span className="font-bold text-amber-300">۱,۵۹۰,۰۰۰ تومان</span>
-              </label>
+              ))}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-200 dark:border-zinc-800">
               <button
-                type="button"
                 onClick={() => setIsPlanModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 rounded-xl"
+                className="px-4 py-2 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl"
               >
                 انصراف
               </button>
               <button
                 onClick={handleSavePlanChange}
-                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow"
+                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl"
               >
-                ذخیره تغییر پلن
+                ذخیره تغییرات
               </button>
             </div>
           </div>
@@ -973,7 +1025,7 @@ export const BusinessesView: React.FC = () => {
         message={confirmModalData.message}
         variant={confirmModalData.variant}
         onConfirm={confirmModalData.onConfirm}
-        onCancel={() => setConfirmModalData((prev) => ({ ...prev, isOpen: false }))}
+        onClose={() => setConfirmModalData({ ...confirmModalData, isOpen: false })}
       />
     </div>
   );

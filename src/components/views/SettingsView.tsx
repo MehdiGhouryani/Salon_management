@@ -33,8 +33,7 @@ export const SettingsView: React.FC = () => {
     e.preventDefault();
     addToast({
       type: 'success',
-      title: 'کلیدهای وب‌سرویس و درگاه با موفقیت بروزرسانی شدند',
-      message: 'اعتبارسنجی اتصال با درگاه و پیامک با موفقیت انجام شد.',
+      title: 'تنظیمات درگاه و پیامک ذخیره شد',
     });
   };
 
@@ -42,7 +41,7 @@ export const SettingsView: React.FC = () => {
     e.preventDefault();
     addToast({
       type: 'info',
-      title: bannerActive ? 'اطلاعیه سراسری در پنل سالن‌ها فعال گردید' : 'اطلاعیه سراسری غیرفعال شد',
+      title: bannerActive ? 'اطلاعیه سراسری فعال گردید' : 'اطلاعیه سراسری غیرفعال شد',
     });
   };
 
@@ -50,210 +49,123 @@ export const SettingsView: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-          <Settings className="w-5 h-5 text-slate-300" />
-          تنظیمات هسته، درگاه‌ها و پیکربندی عمومی سامانه
+        <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <Settings className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+          تنظیمات هسته و اتصالات
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          تنظیم اطلاعات اتصال درگاه‌های بانکی، ارائه‌دهندگان پیامک، پیام‌های سرتاسری و بکاپ‌گیری
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          پیکربندی کلیدهای وب‌سرویس پیامک، درگاه بانکی شاپرک و اطلاعیه‌های سراسری
         </p>
       </div>
 
-      {/* Maintenance Mode Warning if active */}
-      {securitySettings.maintenanceMode && (
-        <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle className="w-5 h-5 text-rose-400" />
-            <div>
-              <p className="font-bold">حالت تعمیر و نگهداری (Maintenance Mode) هم‌اکنون فعال است!</p>
-              <p className="text-[11px] text-rose-300/80 mt-0.5">کاربران عادی و مشتریان سالن‌ها با پیام «سایت در حال بروزرسانی است» مواجه می‌شوند.</p>
-            </div>
-          </div>
-          <button
-            onClick={() => updateSecuritySettings({ maintenanceMode: false })}
-            className="px-3 py-1.5 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-500 cursor-pointer"
-          >
-            غیرفعال‌سازی فوری
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
-        {/* API Credentials Card */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div>
-              <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
-                <Key className="w-4 h-4 text-amber-400" />
-                درگاه‌های بانکی دریافت اشتراک سالن‌ها (B2B SaaS) و پیامک
-              </h3>
-              <p className="text-slate-400 text-xs mt-0.5">درگاه شاپرک منحصراً جهت دریافت حق اشتراک پلتفرم از مدیران سالن‌هاست (پرداخت نوبت‌ها حضوری است)</p>
-            </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Form 1: API Keys & Gateways */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-zinc-800">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Key className="w-4 h-4 text-amber-500" />
+              کلیدهای اتصال پیامک و درگاه
+            </h3>
             <button
+              type="button"
               onClick={() => setShowKeys(!showKeys)}
-              className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-xs cursor-pointer"
+              className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
             >
               {showKeys ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span>{showKeys ? 'مخفی‌سازی' : 'نمایش'}</span>
+              <span>{showKeys ? 'پنهان‌سازی کلیدها' : 'نمایش کلیدها'}</span>
             </button>
           </div>
 
-          <form onSubmit={handleSaveApiKeys} className="space-y-3.5">
+          <form onSubmit={handleSaveApiKeys} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
-                کلید وب‌سرویس پیامک کاوه‌نگار (API Key)
-              </label>
+              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">API Key کاوه‌نگار (سرویس پیامک خدماتی)</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={kavenegarKey}
                 onChange={(e) => setKavenegarKey(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono text-xs focus:outline-none focus:border-rose-500"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono text-left"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
-                کد پذیرنده زرین‌پال (Merchant ID)
-              </label>
+              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">مرچنت‌کد زرین‌پال (درگاه پرداخت اشتراک)</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={zarinpalMerchant}
                 onChange={(e) => setZarinpalMerchant(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono text-xs focus:outline-none focus:border-rose-500"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono text-left"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1">
-                شماره ترمینال به‌پرداخت ملت (Terminal ID)
-              </label>
+              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">ترمینال سامانه به‌پرداخت ملت</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={samanTerminal}
                 onChange={(e) => setSamanTerminal(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-mono text-xs focus:outline-none focus:border-rose-500"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono text-left"
               />
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-2">
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-xl transition-colors cursor-pointer shadow"
+                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                <Save className="w-3.5 h-3.5" />
-                <span>ذخیره کلیدهای API</span>
+                ذخیره کلیدهای وب‌سرویس
               </button>
             </div>
           </form>
         </div>
 
-        {/* System Announcements & Broadcast Banner */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-          <div className="pb-3 border-b border-slate-800">
-            <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
-              <Bell className="w-4 h-4 text-sky-400" />
-              اطلاعیه و بنر سراسری برای تمام سالن‌ها
+        {/* Form 2: System Broadcast Banner */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs space-y-4">
+          <div className="pb-3 border-b border-stone-100 dark:border-zinc-800">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+              <Bell className="w-4 h-4 text-rose-500" />
+              پیام اطلاعیه سراسری
             </h3>
-            <p className="text-slate-400 text-xs mt-0.5">نمایش پیام هشدار یا راهنما در بالای داشبورد تمام مدیران سالن</p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              نمایش بنر هشدار در بالای پنل تمام سالن‌ها و اپلیکیشن‌ها
+            </p>
           </div>
 
-          <form onSubmit={handleSaveBanner} className="space-y-3.5">
-            <label className="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 cursor-pointer">
-              <span className="font-semibold text-slate-200">نمایش بنر سراسری در پنل کاربران</span>
+          <form onSubmit={handleSaveBanner} className="space-y-3.5 text-xs">
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
+                id="banner-toggle"
                 checked={bannerActive}
                 onChange={(e) => setBannerActive(e.target.checked)}
-                className="rounded text-rose-500 focus:ring-rose-500 w-4 h-4 cursor-pointer"
+                className="rounded text-rose-600"
               />
-            </label>
-
-            <div>
-              <label className="block text-slate-300 font-semibold mb-1">متن اطلاعیه عمومی</label>
-              <textarea
-                rows={3}
-                value={bannerText}
-                onChange={(e) => setBannerText(e.target.value)}
-                className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500 leading-relaxed text-xs"
-              ></textarea>
+              <label htmlFor="banner-toggle" className="text-zinc-800 dark:text-zinc-200 font-semibold cursor-pointer">
+                فعال‌سازی بنر اطلاعیه سراسری
+              </label>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div>
+              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">متن پیام برای سالن‌ها</label>
+              <textarea
+                rows={4}
+                value={bannerText}
+                onChange={(e) => setBannerText(e.target.value)}
+                className="w-full p-3 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            <div className="pt-2">
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl transition-colors cursor-pointer border border-slate-700"
+                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                <Save className="w-3.5 h-3.5" />
-                <span>ذخیره وضعیت بنر</span>
+                اعمال وضعیت اطلاعیه
               </button>
             </div>
           </form>
-        </div>
-
-        {/* Maintenance & Core Guard Switch */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              حالت اضطراری و تعمیرات سیستم
-            </h3>
-            <p className="text-slate-400 text-xs mt-0.5">در مواقع ارتقای زیرساخت یا مهاجرت دیتابیس</p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="font-bold text-slate-200 block">فعال‌سازی حالت تعمیرات (Maintenance Mode)</span>
-                <span className="text-[11px] text-slate-400">فقط سوپرادمین‌ها می‌توانند به سیستم وارد شوند.</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={securitySettings.maintenanceMode}
-                onChange={(e) => updateSecuritySettings({ maintenanceMode: e.target.checked })}
-                className="rounded text-rose-500 focus:ring-rose-500 w-4 h-4 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Database Backup Schedule */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-          <div>
-            <h3 className="font-bold text-slate-100 text-sm flex items-center gap-2">
-              <HardDrive className="w-4 h-4 text-emerald-400" />
-              پشتیبان‌گیری خودکار پایگاه‌داده (Automated Backups)
-            </h3>
-            <p className="text-slate-400 text-xs mt-0.5">پشتیبان‌گیری رمزنگاری شده روزانه روی فضای ابری مجزا</p>
-          </div>
-
-          <div className="space-y-2 text-xs">
-            <div className="p-3 bg-slate-800/50 rounded-xl flex items-center justify-between">
-              <span className="text-slate-300">آخرین پشتیبان خودکار موفق:</span>
-              <span className="text-emerald-400 font-medium">امروز ۰۳:۰۰ بامداد (۱.۴ GB)</span>
-            </div>
-
-            <div className="p-3 bg-slate-800/50 rounded-xl flex items-center justify-between">
-              <span className="text-slate-300">دوره نگهداری فایل‌های پشتیبان:</span>
-              <span className="text-slate-200 font-semibold">۳۰ روز اخیر با چرخش خودکار</span>
-            </div>
-
-            <button
-              onClick={() => {
-                addToast({
-                  type: 'success',
-                  title: 'دستور پشتیبان‌گیری آنی صادر شد',
-                  message: 'فایل بکاپ تا چند لحظه دیگر در مسیر امن ذخیره خواهد شد.',
-                });
-              }}
-              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition-colors cursor-pointer mt-2"
-            >
-              ایجاد پشتیبان دستی فوری (Create Snapshot Now)
-            </button>
-          </div>
         </div>
       </div>
     </div>

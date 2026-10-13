@@ -15,11 +15,12 @@ import {
 export const initialSalons: Salon[] = [
   {
     id: 'sal-101',
-    name: 'سالن زیبایی وی‌آی‌پی گیپور',
-    category: 'سالن تخصصی عروس و زیبایی',
+    slug: 'gisara',
+    name: 'سالن زیبایی و عروس گیس‌آرا',
+    category: 'سالن تخصصی عروس، رنگ و زیبایی VIP',
     ownerName: 'مهتاب کیانی',
     phone: '09123456789',
-    email: 'info@guipure-beauty.ir',
+    email: 'info@gisara-beauty.ir',
     province: 'تهران',
     city: 'تهران (زعفرانیه)',
     address: 'خیابان آصف، مجتمع تجاری رویال، طبقه ۳، واحد ۳۰۲',
@@ -32,10 +33,11 @@ export const initialSalons: Salon[] = [
     verifiedBadge: true,
     registeredAt: '۱۴۰۲/۰۶/۱۰',
     servicesCount: 38,
-    notes: 'سالن درجه یک با امتیاز ۴.۹ و گردش مالی بالا',
+    notes: 'سالن درجه یک با امتیاز ۴.۹ و گردش مالی بالا - لینک اختصاصی nobatara.ir/gisara',
   },
   {
     id: 'sal-102',
+    slug: 'kazhal',
     name: 'مرکز تخصصی مراقبت پوست و مو کژال',
     category: 'کلینیک پوست و مو و بیوتی',
     ownerName: 'دکتر الناز صبوری',
@@ -57,6 +59,7 @@ export const initialSalons: Salon[] = [
   },
   {
     id: 'sal-103',
+    slug: 'barberclub',
     name: 'آرایشگاه آقایان پیرایش باربرکلاب',
     category: 'باربرشاپ و گریم داماد',
     ownerName: 'امیرحسین رادمنش',
@@ -78,6 +81,7 @@ export const initialSalons: Salon[] = [
   },
   {
     id: 'sal-104',
+    slug: 'lavin',
     name: 'سالن اکستنشن و مژه لاوین',
     category: 'مرکز تخصصی مژه و ابرو',
     ownerName: 'نگین شجاعی',
@@ -99,6 +103,7 @@ export const initialSalons: Salon[] = [
   },
   {
     id: 'sal-105',
+    slug: 'rosegold',
     name: 'سالن ناخن و پدیکور رزگلد',
     category: 'مرکز تخصصی ناخن و اسپا',
     ownerName: 'پریا دادرس',
@@ -120,6 +125,7 @@ export const initialSalons: Salon[] = [
   },
   {
     id: 'sal-106',
+    slug: 'anahita',
     name: 'مجموعه زیبایی آناهیتا (شعبه مهرشهر)',
     category: 'سالن عمومی بانوان',
     ownerName: 'فرزانه مرادی',
@@ -141,6 +147,7 @@ export const initialSalons: Salon[] = [
   },
   {
     id: 'sal-107',
+    slug: 'aramis',
     name: 'مرکز زیبایی و لیزر آرامیس',
     category: 'کلینیک پوست، لیزر و زیبایی',
     ownerName: 'دکتر بهاره موحدی',
@@ -162,6 +169,7 @@ export const initialSalons: Salon[] = [
   },
   {
     id: 'sal-108',
+    slug: 'niloufar',
     name: 'استودیو تخصصی رنگ و لایت نیلوفر آبی',
     category: 'مرکز رنگ، کراتین و احیا مو',
     ownerName: 'سارا میرزایی',
@@ -179,7 +187,7 @@ export const initialSalons: Salon[] = [
     verifiedBadge: false,
     registeredAt: '۱۴۰۳/۰۸/۰۴',
     servicesCount: 14,
-    notes: 'درخواست ارتقای پلن به طلایی داده است',
+    notes: 'درخواست ارتقای پلن به VIP داده است',
   },
 ];
 
@@ -319,7 +327,7 @@ export const initialPlans: Plan[] = [
   },
   {
     id: 'gold_vip',
-    name: 'بسته طلایی ویژه (VIP Enterprise)',
+    name: 'بسته ویژه (VIP Enterprise)',
     priceMonthly: 1590000,
     priceYearly: 15900000,
     maxStaff: 50,
@@ -538,7 +546,7 @@ export const initialTickets: SupportTicket[] = [
         id: 'tm-3',
         senderName: 'علیرضا حسینی (پشتیبانی ادمین)',
         senderRole: 'admin',
-        content: 'سلام سرکار خانم کیانی، وب‌هوک مربوطه در تنظیمات پیشرفته پلن طلایی سالن شما فعال گردید و مستندات اتصال به ایمیل شما ارسال شد.',
+        content: 'سلام سرکار خانم کیانی، وب‌هوک مربوطه در تنظیمات پیشرفته سالن شما فعال گردید و مستندات اتصال به ایمیل شما ارسال شد.',
         timestamp: '۱۶:۲۰',
       },
     ],
@@ -662,7 +670,7 @@ export const initialAuditLogs: AuditLog[] = [
     userAgent: 'Safari 18 / iPadOS',
     severity: 'info',
     category: 'financial',
-    details: 'تمدید اشتراک سالانه طلایی با مبلغ ۱۵,۹۰۰,۰۰۰ تومان',
+    details: 'تمدید اشتراک سالانه VIP با مبلغ ۱۵,۹۰۰,۰۰۰ تومان',
   },
   {
     id: 'aud-706',

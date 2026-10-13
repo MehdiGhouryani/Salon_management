@@ -19,7 +19,7 @@ import { toPersianDigits, getStatusBadge } from '../../utils/formatters';
 
 const CANNED_RESPONSES = [
   'سلام و احترام، مدارک پروانه کسب و اطلاعات حساب سالن شما بررسی و نشان تایید رسمی برای شما فعال گردید.',
-  'درود، خط خدماتی اختصاصی کاوه‌نگار برای سالن شما متصل شد و اکنون به تمام شماره‌ها (حتی مسدود تبلیغاتی) پیامک ارسال می‌شود.',
+  'درود، خط خدماتی اختصاصی برای سالن شما متصل شد و اکنون به تمام شماره‌ها (حتی مسدود تبلیغاتی) پیامک ارسال می‌شود.',
   'سلام همکار گرامی، دسترسی به وب‌هوک‌های مالی و مستندات اتصال حسابداری فعال شد.',
   'درخواست شما جهت بررسی به تیم فنی ارجاع داده شد و نتیجه ظرف ۲ ساعت آینده اعلام خواهد شد.',
 ];
@@ -50,13 +50,13 @@ export const SupportView: React.FC = () => {
   const getPriorityBadge = (p: TicketPriority) => {
     switch (p) {
       case 'critical':
-        return { label: 'بحرانی / فوری', color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' };
+        return { label: 'بحرانی', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-500/20' };
       case 'high':
-        return { label: 'اولویت بالا', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' };
+        return { label: 'بالا', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-500/20' };
       case 'medium':
-        return { label: 'معمولی', color: 'text-sky-400 bg-sky-500/10 border-sky-500/30' };
+        return { label: 'معمولی', color: 'text-sky-600 bg-sky-50 dark:bg-sky-950/40 border-sky-500/20' };
       case 'low':
-        return { label: 'کم‌اهمیت', color: 'text-slate-400 bg-slate-500/10 border-slate-500/30' };
+        return { label: 'کم', color: 'text-zinc-500 bg-stone-100 dark:bg-zinc-800 border-stone-200' };
     }
   };
 
@@ -65,12 +65,12 @@ export const SupportView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-sky-400" />
-            مرکز پشتیبانی، تیکت‌ها و مکاتبات سالن‌داران
+          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+            مرکز پشتیبانی و تیکت‌های سالن‌ها
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            رسیدگی سریع به درخواست‌های فنی، مالی و احراز هویت سالن‌ها با پاسخ‌های آماده و تغییر وضعیت
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            رسیدگی به درخواست‌های فنی، مالی و راهنمایی مدیران سالن‌ها
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export const SupportView: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 focus:outline-none cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
           >
             <option value="all">تمام وضعیت‌ها</option>
             <option value="open">تیکت‌های باز</option>
@@ -90,7 +90,7 @@ export const SupportView: React.FC = () => {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 focus:outline-none cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
           >
             <option value="all">تمام اولویت‌ها</option>
             <option value="critical">بحرانی</option>
@@ -100,178 +100,141 @@ export const SupportView: React.FC = () => {
         </div>
       </div>
 
-      {/* Split Inbox and Conversation View */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[580px]">
-        {/* Left Column (Inbox List, 5 Cols) */}
-        <div className="lg:col-span-5 rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden flex flex-col">
-          <div className="p-3.5 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-200">صندوق تیکت‌ها ({toPersianDigits(filteredTickets.length)})</span>
-            <span className="text-slate-400">مرتب‌سازی بر اساس تازه‌ترین</span>
-          </div>
+      {/* Main Split: Ticket List & Conversation View */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Ticket List */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs space-y-3">
+          <h3 className="font-bold text-xs text-zinc-700 dark:text-zinc-300 px-1">
+            لیست تیکت‌ها ({toPersianDigits(filteredTickets.length)})
+          </h3>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-800/80">
+          <div className="space-y-2 max-h-[600px] overflow-y-auto">
             {filteredTickets.map((t) => {
+              const prio = getPriorityBadge(t.priority);
               const isSelected = selectedTicket?.id === t.id;
-              const pBadge = getPriorityBadge(t.priority);
-              const sBadge = getStatusBadge(t.status);
 
               return (
                 <div
                   key={t.id}
                   onClick={() => setSelectedTicketId(t.id)}
-                  className={`p-3.5 text-right transition-colors cursor-pointer text-xs space-y-1.5 ${
-                    isSelected ? 'bg-slate-800/80 border-r-4 border-rose-500' : 'hover:bg-slate-800/30'
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer text-xs ${
+                    isSelected
+                      ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/20 shadow-xs'
+                      : 'border-stone-100 dark:border-zinc-800 hover:border-stone-200 dark:hover:border-zinc-700'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] text-slate-400">{t.ticketNumber}</span>
-                    <span className={`px-2 py-0.5 text-[10px] rounded border font-semibold ${pBadge.color}`}>
-                      {pBadge.label}
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{t.subject}</h4>
+                    <span className={`px-1.5 py-0.2 text-[10px] rounded-md font-semibold border shrink-0 ${prio.color}`}>
+                      {prio.label}
                     </span>
                   </div>
 
-                  <h4 className="font-bold text-slate-100 line-clamp-1">{t.subject}</h4>
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1 text-slate-300">
-                      <Store className="w-3 h-3 text-rose-400" />
-                      {t.salonName}
-                    </span>
-                    <span className={`px-1.5 py-0.2 text-[10px] rounded font-medium ${sBadge.text}`}>
-                      {sBadge.label}
-                    </span>
+                  <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                    <span>{t.salonName}</span>
+                    <span>{t.updatedAt}</span>
                   </div>
-
-                  <p className="text-[11px] text-slate-400 line-clamp-1 pt-0.5">
-                    {t.messages[t.messages.length - 1]?.content}
-                  </p>
                 </div>
               );
             })}
 
             {filteredTickets.length === 0 && (
-              <div className="p-10 text-center text-slate-400 flex flex-col items-center gap-2">
-                <Inbox className="w-8 h-8 text-slate-600" />
-                <p className="text-xs">هیچ تیکتی در این بخش وجود ندارد.</p>
+              <div className="py-8 text-center text-zinc-400">
+                تیکتی یافت نشد.
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Column (Conversation Thread & Composer, 7 Cols) */}
+        {/* Selected Ticket Conversation */}
         {selectedTicket ? (
-          <div className="lg:col-span-7 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between overflow-hidden">
-            {/* Thread Header */}
-            <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-start justify-between gap-3 text-xs">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-slate-400 text-[11px]">{selectedTicket.ticketNumber}</span>
-                  <span className={`px-2 py-0.5 text-[10px] rounded border font-semibold ${getPriorityBadge(selectedTicket.priority).color}`}>
-                    {getPriorityBadge(selectedTicket.priority).label}
-                  </span>
-                  <span className={`px-2 py-0.5 text-[10px] rounded border font-medium ${getStatusBadge(selectedTicket.status).bg} ${getStatusBadge(selectedTicket.status).text}`}>
-                    {getStatusBadge(selectedTicket.status).label}
-                  </span>
+          <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
+            <div>
+              {/* Ticket Header */}
+              <div className="flex items-start justify-between pb-3 border-b border-stone-100 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedTicket.subject}</h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    سالن: {selectedTicket.salonName} · ثبت توسط: {selectedTicket.creatorName}
+                  </p>
                 </div>
-                <h3 className="text-sm font-bold text-white mt-1">{selectedTicket.subject}</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  سالن: {selectedTicket.salonName} · ایجاد شده توسط: {selectedTicket.creatorName} ({selectedTicket.creatorRole})
-                </p>
-              </div>
 
-              {/* Status Actions */}
-              <div className="flex items-center gap-2 shrink-0">
-                {selectedTicket.status !== 'resolved' && (
-                  <button
-                    onClick={() => resolveTicket(selectedTicket.id)}
-                    className="px-2.5 py-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>حل تیکت</span>
-                  </button>
-                )}
-
-                {selectedTicket.status !== 'closed' && (
-                  <button
-                    onClick={() => closeTicket(selectedTicket.id)}
-                    className="px-2.5 py-1 text-[11px] text-slate-400 hover:text-white bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                  >
-                    بستن تیکت
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Conversation Messages */}
-            <div className="flex-1 p-5 overflow-y-auto space-y-4 text-xs">
-              {selectedTicket.messages.map((msg) => {
-                const isAdmin = msg.senderRole === 'admin';
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isAdmin ? 'items-start' : 'items-end'}`}
-                  >
-                    <div className="flex items-center gap-2 mb-1 px-1 text-[11px] text-slate-400">
-                      <span className="font-semibold text-slate-300">{msg.senderName}</span>
-                      <span>·</span>
-                      <span>{msg.timestamp}</span>
-                    </div>
-
-                    <div
-                      className={`p-3.5 rounded-2xl max-w-[85%] leading-relaxed ${
-                        isAdmin
-                          ? 'bg-rose-500/15 border border-rose-500/30 text-rose-100 rounded-tr-none'
-                          : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-none'
-                      }`}
+                <div className="flex items-center gap-2">
+                  {selectedTicket.status !== 'resolved' && (
+                    <button
+                      onClick={() => resolveTicket(selectedTicket.id)}
+                      className="px-3 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                     >
-                      {msg.content}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      حل تیکت
+                    </button>
+                  )}
+                  {selectedTicket.status !== 'closed' && (
+                    <button
+                      onClick={() => closeTicket(selectedTicket.id)}
+                      className="px-3 py-1 text-xs text-zinc-500 hover:text-zinc-800 rounded-lg cursor-pointer"
+                    >
+                      بستن
+                    </button>
+                  )}
+                </div>
+              </div>
 
-            {/* Canned Responses Suggestions */}
-            <div className="p-3 bg-slate-950/40 border-t border-slate-800/80">
-              <span className="text-[10px] text-slate-400 block mb-1.5 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-rose-400" />
-                پاسخ‌های آماده و هوشمند (کلیک جهت درج در کادر):
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {CANNED_RESPONSES.map((resp, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setReplyText(resp)}
-                    className="px-2.5 py-1 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-colors truncate max-w-xs cursor-pointer border border-slate-700/60"
+              {/* Messages Thread */}
+              <div className="space-y-3 py-4 max-h-[380px] overflow-y-auto">
+                {selectedTicket.messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
+                      m.senderRole === 'admin'
+                        ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-500/20 text-zinc-800 dark:text-zinc-200 mr-auto'
+                        : 'bg-stone-50 dark:bg-[#12141C] border border-stone-200/80 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 ml-auto'
+                    }`}
                   >
-                    {resp}
-                  </button>
+                    <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1">
+                      <span className="font-bold">{m.senderName} ({m.senderRole === 'admin' ? 'پشتیبان نوبت‌آرا' : 'سالن'})</span>
+                      <span>{m.timestamp}</span>
+                    </div>
+                    <p>{m.content}</p>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Reply Composer Form */}
-            <form onSubmit={handleSendReply} className="p-3.5 border-t border-slate-800 bg-slate-950/80 flex items-center gap-2">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="پاسخ ادمین به تیکت را تایپ کنید..."
-                className="flex-1 px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500"
-              />
-              <button
-                type="submit"
-                disabled={!replyText.trim()}
-                className="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 shadow shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>ارسال پاسخ</span>
-              </button>
-            </form>
+            {/* Quick Canned Responses & Reply Form */}
+            <div className="pt-3 border-t border-stone-100 dark:border-zinc-800 space-y-2.5">
+              <div className="flex flex-wrap gap-1.5">
+                {CANNED_RESPONSES.map((res, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setReplyText(res)}
+                    className="px-2 py-0.5 text-[10px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-stone-200 cursor-pointer"
+                  >
+                    {res.slice(0, 30)}...
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={handleSendReply} className="flex gap-2">
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="پاسخ به تیکت سالن..."
+                  className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>ارسال</span>
+                </button>
+              </form>
+            </div>
           </div>
         ) : (
-          <div className="lg:col-span-7 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-center p-12 text-slate-500 text-xs">
-            لطفاً یک تیکت از ستون کناری انتخاب کنید.
+          <div className="lg:col-span-2 p-12 text-center text-zinc-400 bg-white dark:bg-[#181B24] rounded-2xl border border-stone-200 dark:border-zinc-800">
+            لطفاً یک تیکت را از لیست انتخاب کنید.
           </div>
         )}
       </div>

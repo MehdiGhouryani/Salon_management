@@ -14,6 +14,8 @@ import {
   SalonStatus,
   PlanType,
   UserRole,
+  CustomerBooking,
+  ClientAuthSession,
 } from '../types/admin';
 import {
   initialSalons,
@@ -49,60 +51,67 @@ export interface ToastMessage {
   undoAction?: () => void;
 }
 
-interface AdminContextType {
+export type AppPersona = 'salon_website' | 'salon_app' | 'super_admin';
+
+export interface AdminContextType {
+  // Existing Tab Navigation for Super Admin
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
+  // Salons CRUD
   salons: Salon[];
   setSalons: React.Dispatch<React.SetStateAction<Salon[]>>;
-  users: User[];
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  plans: Plan[];
-  transactions: Transaction[];
-  messages: DispatchMessage[];
-  templates: MessageTemplate[];
-  tickets: SupportTicket[];
-  auditLogs: AuditLog[];
-  sessions: ActiveSession[];
-  metrics: SystemMetrics;
-  securitySettings: SecuritySettings;
-  updateSecuritySettings: (settings: Partial<SecuritySettings>) => void;
-  // Salon Operations
   approveSalon: (id: string) => void;
-  suspendSalon: (id: string, reason?: string) => void;
+  suspendSalon: (id: string) => void;
   activateSalon: (id: string) => void;
   updateSalonPlan: (id: string, plan: PlanType) => void;
   saveSalon: (salon: Salon) => void;
   deleteSalon: (id: string) => void;
-  // User Operations
+  // Users CRUD & RBAC
+  users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   banUser: (id: string) => void;
   unbanUser: (id: string) => void;
   updateUserRole: (id: string, role: UserRole) => void;
   toggleUser2FA: (id: string) => void;
   saveUser: (user: User) => void;
-  // Dispatch Operations
+  // Subscriptions & Plans
+  plans: Plan[];
+  transactions: Transaction[];
+  // Messages & Dispatch
+  messages: DispatchMessage[];
+  templates: MessageTemplate[];
   retryFailedMessage: (id: string) => void;
   retryAllFailedMessages: () => void;
   sendBroadcastMessage: (salonName: string, text: string) => void;
   updateTemplate: (id: string, pattern: string, enabled: boolean) => void;
-  // Ticket Operations
-  replyToTicket: (ticketId: string, replyContent: string) => void;
-  resolveTicket: (ticketId: string) => void;
-  closeTicket: (ticketId: string) => void;
-  // Security & Sessions
-  terminateSession: (sessionId: string) => void;
+  // Support Tickets
+  tickets: SupportTicket[];
+  replyToTicket: (id: string, message: string) => void;
+  resolveTicket: (id: string) => void;
+  closeTicket: (id: string) => void;
+  // Active Sessions
+  sessions: ActiveSession[];
+  terminateSession: (id: string) => void;
   terminateAllOtherSessions: () => void;
-  addIpToBlacklist: (ip: string) => void;
-  removeIpFromBlacklist: (ip: string) => void;
-  // Operations & Health
+  // System Metrics & Ops
+  metrics: SystemMetrics;
   flushRedisCache: () => void;
   runSystemDiagnostic: () => void;
-  // Inspection & Modals
+  // Security & Audit
+  auditLogs: AuditLog[];
+  securitySettings: SecuritySettings;
+  updateSecuritySettings: (settings: Partial<SecuritySettings>) => void;
+  addIpToBlacklist: (ip: string) => void;
+  removeIpFromBlacklist: (ip: string) => void;
+  // Inspection & Drawer
   inspectedSalon: Salon | null;
   setInspectedSalon: (salon: Salon | null) => void;
+  // Modals & Palettes
   commandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
   shortcutsModalOpen: boolean;
   setShortcutsModalOpen: (open: boolean) => void;
+  // Toast Notifications
   toasts: ToastMessage[];
   addToast: (toast: Omit<ToastMessage, 'id'>) => void;
   removeToast: (id: string) => void;
@@ -112,11 +121,88 @@ interface AdminContextType {
   // Companion Simulator
   simulatorSalonId: string;
   setSimulatorSalonId: (id: string) => void;
+  // Three Architecture Personas
+  persona: AppPersona;
+  setPersona: (p: AppPersona) => void;
+  currentSalonSlug: string;
+  setCurrentSalonSlug: (slug: string) => void;
+  clientSession: ClientAuthSession;
+  setClientSession: (session: ClientAuthSession) => void;
+  logoutClientSession: () => void;
+  // Legacy alias for compatibility
+  viewMode: 'admin' | 'customer';
+  setViewMode: (mode: 'admin' | 'customer') => void;
+  selectedCustomerSalonId: string;
+  setSelectedCustomerSalonId: (id: string) => void;
+  customerBookings: CustomerBooking[];
+  addCustomerBooking: (booking: CustomerBooking) => void;
+  cancelCustomerBooking: (id: string) => void;
+  completeCustomerBookingInSalon: (bookingId: string) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [persona, setPersonaState] = useState<AppPersona>('salon_website');
+  const [currentSalonSlug, setCurrentSalonSlug] = useState<string>('gisara');
+  const [clientSession, setClientSession] = useState<ClientAuthSession>({
+    isLoggedIn: false,
+    phone: '',
+    name: '',
+  });
+
+  const setPersona = (p: AppPersona) => {
+    setPersonaState(p);
+  };
+
+  const setViewMode = (mode: 'admin' | 'customer') => {
+    if (mode === 'customer') {
+      setPersonaState('salon_website');
+    } else {
+      setPersonaState('super_admin');
+    }
+  };
+
+  const viewMode: 'admin' | 'customer' = persona === 'super_admin' ? 'admin' : 'customer';
+
+  const [selectedCustomerSalonId, setSelectedCustomerSalonId] = useState<string>('sal-101');
+  const [customerBookings, setCustomerBookings] = useState<CustomerBooking[]>([
+    {
+      id: 'cb-1',
+      trackingCode: 'ARA-8921',
+      salonId: 'sal-101',
+      salonName: 'سالن زیبایی و عروس گیس‌آرا',
+      clientName: 'سارا تهرانی',
+      clientPhone: '09121112233',
+      serviceName: 'رنگ و هایلایت تخصصی مو',
+      serviceCategory: 'خدمات تخصصی مو',
+      staffName: 'ندا سلطانی',
+      date: 'فردا ۲۴ آبان',
+      time: '۱۰:۳۰',
+      price: 2400000,
+      paymentMethod: 'in_person',
+      createdAt: 'امروز',
+      status: 'confirmed',
+    },
+    {
+      id: 'cb-2',
+      trackingCode: 'RES-8922',
+      salonId: 'sal-102',
+      salonName: 'مرکز تخصصی مراقبت پوست و مو کژال',
+      clientName: 'مهناز شریفی',
+      clientPhone: '09354445566',
+      serviceName: 'فیشیال و پاکسازی عمیق پوست',
+      serviceCategory: 'مراقبت پوست و فیشیال',
+      staffName: 'دکتر الناز صبوری',
+      date: 'پنج‌شنبه ۲۶ آبان',
+      time: '۱۵:۰۰',
+      price: 950000,
+      paymentMethod: 'in_person',
+      createdAt: 'دیروز',
+      status: 'confirmed',
+    },
+  ]);
+
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [salons, setSalons] = useState<Salon[]>(initialSalons);
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -599,6 +685,80 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  // Customer booking operations
+  const addCustomerBooking = (booking: CustomerBooking) => {
+    setCustomerBookings((prev) => [booking, ...prev]);
+    // Increase salon appointments count
+    setSalons((prev) =>
+      prev.map((s) => (s.id === booking.salonId ? { ...s, totalAppointments: s.totalAppointments + 1 } : s))
+    );
+    logAction(
+      `ثبت رزرو حضوری نوبت توسط مشتری (${booking.clientName})`,
+      booking.salonName,
+      `کد رهگیری: ${booking.trackingCode} | خدمت: ${booking.serviceName} | تسویه حضوری: ${booking.price.toLocaleString('fa-IR')} تومان`,
+      'info',
+      'business'
+    );
+    addToast({
+      type: 'success',
+      title: `نوبت شما با کد ${booking.trackingCode} با موفقیت ثبت شد`,
+      message: `پرداخت به صورت ۱۰۰٪ حضوری در سالن انجام خواهد شد. پیامک تایید صادر شد.`,
+    });
+  };
+
+  const cancelCustomerBooking = (id: string) => {
+    const booking = customerBookings.find((b) => b.id === id);
+    setCustomerBookings((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b))
+    );
+    if (booking) {
+      logAction(
+        `لغو رزرو نوبت توسط کاربر (${booking.clientName})`,
+        booking.salonName,
+        `کد رهگیری: ${booking.trackingCode}`,
+        'warning',
+        'business'
+      );
+    }
+    addToast({
+      type: 'info',
+      title: 'نوبت انتخابی با موفقیت لغو شد',
+    });
+  };
+
+  const completeCustomerBookingInSalon = (bookingId: string) => {
+    const booking = customerBookings.find((b) => b.id === bookingId);
+    setCustomerBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: 'completed' } : b))
+    );
+    if (booking) {
+      logAction(
+        `تکمیل خدمت و ثبت تسویه حضوری در سالن (${booking.clientName})`,
+        booking.salonName,
+        `مبلغ تسویه حضوری: ${booking.price.toLocaleString('fa-IR')} تومان | کد: ${booking.trackingCode}`,
+        'info',
+        'business'
+      );
+    }
+    addToast({
+      type: 'success',
+      title: 'خدمت تکمیل شد و تسویه حضوری ثبت گردید',
+      message: 'نوبت با موفقیت تسویه و در فاکتورهای تکمیل‌شده سالن ذخیره شد.',
+    });
+  };
+
+  const logoutClientSession = () => {
+    setClientSession({
+      isLoggedIn: false,
+      phone: '',
+      name: '',
+    });
+    addToast({
+      type: 'info',
+      title: 'از حساب کاربری خارج شدید',
+    });
+  };
+
   return (
     <AdminContext.Provider
       value={{
@@ -655,6 +815,21 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSearchQuery,
         simulatorSalonId,
         setSimulatorSalonId,
+        persona,
+        setPersona,
+        currentSalonSlug,
+        setCurrentSalonSlug,
+        clientSession,
+        setClientSession,
+        logoutClientSession,
+        viewMode,
+        setViewMode,
+        selectedCustomerSalonId,
+        setSelectedCustomerSalonId,
+        customerBookings,
+        addCustomerBooking,
+        cancelCustomerBooking,
+        completeCustomerBookingInSalon,
       }}
     >
       {children}

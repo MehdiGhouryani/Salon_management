@@ -8,6 +8,7 @@ export type AuditSeverity = 'info' | 'warning' | 'critical';
 
 export interface Salon {
   id: string;
+  slug?: string;
   name: string;
   category: string;
   ownerName: string;
@@ -26,6 +27,13 @@ export interface Salon {
   registeredAt: string;
   servicesCount: number;
   notes?: string;
+}
+
+export interface ClientAuthSession {
+  isLoggedIn: boolean;
+  phone: string;
+  name: string;
+  verifiedAt?: string;
 }
 
 export interface User {
@@ -162,4 +170,23 @@ export interface SecuritySettings {
   maintenanceMode: boolean;
   dataMaskingEnabled: boolean;
   ipBlacklist: string[];
+}
+
+export interface CustomerBooking {
+  id: string;
+  trackingCode: string;
+  salonId: string;
+  salonName: string;
+  clientName: string;
+  clientPhone: string;
+  serviceName: string;
+  serviceCategory: string;
+  staffName: string;
+  date: string;
+  time: string;
+  price: number;
+  paymentMethod: 'in_person'; // 100% In-person settlement at salon
+  createdAt: string;
+  status: 'confirmed' | 'completed' | 'cancelled';
+  notes?: string;
 }
