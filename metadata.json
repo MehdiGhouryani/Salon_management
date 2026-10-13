@@ -1,0 +1,6 @@
+{
+  "name": "سامانه مدیریت و نظارت مرکزی سالن‌های زیبایی | Salon Admin",
+  "description": "پنل مدیریت جامع ادمین اصلی با امکانات ارتقای UI/UX، مانیتورینگ امنیتی، مدیریت کسب‌وکارها، کاربران، اشتراک‌ها، صف پیامک و پشتیبانی",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
