@@ -136,6 +136,7 @@ export interface AdminContextType {
   setSelectedCustomerSalonId: (id: string) => void;
   customerBookings: CustomerBooking[];
   addCustomerBooking: (booking: CustomerBooking) => void;
+  updateCustomerBooking: (id: string, updates: Partial<CustomerBooking>) => void;
   cancelCustomerBooking: (id: string) => void;
   completeCustomerBookingInSalon: (bookingId: string) => void;
 }
@@ -747,6 +748,27 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  const updateCustomerBooking = (id: string, updates: Partial<CustomerBooking>) => {
+    const booking = customerBookings.find((b) => b.id === id);
+    setCustomerBookings((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...updates } : b))
+    );
+    if (booking) {
+      logAction(
+        `ویرایش مشخصات نوبت (${booking.clientName})`,
+        booking.salonName,
+        `تغییرات اعمال شد.`,
+        'info',
+        'business'
+      );
+    }
+    addToast({
+      type: 'success',
+      title: 'مشخصات نوبت به‌روزرسانی شد',
+      message: 'تغییرات نوبت با موفقیت ذخیره گردید.',
+    });
+  };
+
   const logoutClientSession = () => {
     setClientSession({
       isLoggedIn: false,
@@ -828,6 +850,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setSelectedCustomerSalonId,
         customerBookings,
         addCustomerBooking,
+        updateCustomerBooking,
         cancelCustomerBooking,
         completeCustomerBookingInSalon,
       }}

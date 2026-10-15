@@ -271,7 +271,7 @@ export const BusinessesView: React.FC = () => {
       </div>
 
       {/* Segmented Status Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl text-xs shadow-xs">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-xl text-xs shadow-xs">
         {[
           { id: 'all', label: 'همه سالن‌ها', count: salons.length },
           { id: 'active', label: 'فعال', count: salons.filter((s) => s.status === 'active').length },
@@ -284,16 +284,16 @@ export const BusinessesView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-medium ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium ${
                 isSelected
                   ? 'bg-rose-600 text-white font-bold shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-stone-100 dark:hover:bg-zinc-800/60'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {toPersianDigits(tab.count)}
@@ -304,22 +304,22 @@ export const BusinessesView: React.FC = () => {
       </div>
 
       {/* Search & Quick Filter Bar */}
-      <div className="p-3.5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 space-y-3 shadow-xs">
+      <div className="p-3.5 rounded-xl bg-white dark:bg-[#151821] border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           {/* Search Input */}
           <div className="lg:col-span-3 relative">
-            <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="جستجوی نام سالن، مدیر، شهر یا شماره تماس..."
-              className="w-full pl-8 pr-9 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500 transition-colors"
+              className="w-full pl-8 pr-9 py-2 bg-slate-50 dark:bg-[#12141C] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute left-2.5 top-2.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                className="absolute left-2.5 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -331,7 +331,7 @@ export const BusinessesView: React.FC = () => {
             <select
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#12141C] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
             >
               <option value="all">تمام استان‌ها</option>
               {uniqueCities.map((c) => (
@@ -345,7 +345,7 @@ export const BusinessesView: React.FC = () => {
             <select
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#12141C] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:border-rose-500 cursor-pointer"
             >
               <option value="all">تمام بسته‌ها</option>
               <option value="bronze">پایه (برنزی)</option>
@@ -356,13 +356,13 @@ export const BusinessesView: React.FC = () => {
         </div>
 
         {/* Sort & Result Count */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-100 dark:border-zinc-800/80 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
             <span>مرتب‌سازی:</span>
             <button
               onClick={() => setSortBy('revenue')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold' : 'hover:text-zinc-800 dark:hover:text-zinc-200'
+                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold' : 'hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               بیشترین درآمد
@@ -370,7 +370,7 @@ export const BusinessesView: React.FC = () => {
             <button
               onClick={() => setSortBy('appointments')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold' : 'hover:text-zinc-800 dark:hover:text-zinc-200'
+                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold' : 'hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               بیشترین نوبت
@@ -378,8 +378,8 @@ export const BusinessesView: React.FC = () => {
           </div>
 
           <div>
-            نمایش <span className="font-bold text-zinc-800 dark:text-zinc-200">{toPersianDigits(filteredSalons.length)}</span> از{' '}
-            <span className="font-bold text-zinc-800 dark:text-zinc-200">{toPersianDigits(salons.length)}</span> سالن
+            نمایش <span className="font-bold text-slate-800 dark:text-slate-200">{toPersianDigits(filteredSalons.length)}</span> از{' '}
+            <span className="font-bold text-slate-800 dark:text-slate-200">{toPersianDigits(salons.length)}</span> سالن
           </div>
         </div>
       </div>
@@ -393,25 +393,25 @@ export const BusinessesView: React.FC = () => {
             return (
               <div
                 key={salon.id}
-                className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs hover:border-rose-400/50 dark:hover:border-rose-500/30 transition-all flex flex-col justify-between group"
+                className="p-5 rounded-xl bg-white dark:bg-[#151821] border border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between group"
               >
                 <div>
                   {/* Card Header: Icon, Name, Category & Status Badge */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700/80 flex items-center justify-center font-bold text-rose-600 dark:text-rose-400 shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-rose-600 dark:text-rose-400 shrink-0">
                         {salon.name.slice(0, 1)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm truncate">
+                          <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">
                             {salon.name}
                           </h3>
                           {salon.verifiedBadge && (
                             <span className="text-sky-500 text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
                           )}
                         </div>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                           {salon.category}
                         </p>
                       </div>
@@ -423,20 +423,20 @@ export const BusinessesView: React.FC = () => {
                   </div>
 
                   {/* Owner, City & Contact */}
-                  <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-zinc-800/80 text-xs">
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                  <div className="space-y-1.5 py-2.5 border-y border-slate-100 dark:border-slate-800 text-xs">
+                    <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                       <span>مدیر سالن:</span>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">{salon.ownerName}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{salon.ownerName}</span>
                     </div>
 
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                       <span>موقعیت:</span>
-                      <span className="text-zinc-700 dark:text-zinc-300">{salon.city} ({salon.province})</span>
+                      <span className="text-slate-700 dark:text-slate-300">{salon.city} ({salon.province})</span>
                     </div>
 
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                       <span>شماره تماس:</span>
-                      <span className="font-mono text-zinc-700 dark:text-zinc-300" dir="ltr">
+                      <span className="font-mono text-slate-700 dark:text-slate-300" dir="ltr">
                         {maskPhone(salon.phone)}
                       </span>
                     </div>
@@ -444,8 +444,8 @@ export const BusinessesView: React.FC = () => {
 
                   {/* Clean Metrics Row */}
                   <div className="grid grid-cols-3 gap-2 my-3 text-center">
-                    <div className="p-2 rounded-xl bg-stone-50 dark:bg-[#12141C] border border-stone-100 dark:border-zinc-800/60">
-                      <span className="text-[10px] text-zinc-500 block mb-0.5">گردش ماه</span>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-[#12141C] border border-slate-100 dark:border-slate-800/60">
+                      <span className="text-[10px] text-slate-500 block mb-0.5">گردش ماه</span>
                       <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {formatCurrency(salon.monthlyRevenue, 'toman')}
                       </span>

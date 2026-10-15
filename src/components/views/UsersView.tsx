@@ -145,13 +145,13 @@ export const UsersView: React.FC = () => {
 
         <div className="flex items-center gap-2">
           {/* View Mode Toggle: Cards vs Table */}
-          <div className="flex items-center p-1 bg-stone-100 dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl text-xs">
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
               title="نمایش کارت‌های خلوت"
             >
@@ -160,10 +160,10 @@ export const UsersView: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold shadow-xs'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
               title="نمایش جدول فشرده"
             >
@@ -174,7 +174,7 @@ export const UsersView: React.FC = () => {
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-lg shadow-xs transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>افزودن کاربر</span>
@@ -183,7 +183,7 @@ export const UsersView: React.FC = () => {
       </div>
 
       {/* Role Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl text-xs shadow-xs">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-xl text-xs shadow-xs">
         {[
           { id: 'all', label: 'همه کاربران', count: users.length },
           { id: 'super_admin', label: 'ادمین کل', count: users.filter((u) => u.role === 'super_admin').length },
@@ -196,16 +196,16 @@ export const UsersView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setRoleFilter(tab.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-medium ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium ${
                 isSelected
-                  ? 'bg-indigo-600 text-white font-bold shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-stone-100 dark:hover:bg-zinc-800/60'
+                  ? 'bg-rose-600 text-white font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-stone-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {toPersianDigits(tab.count)}

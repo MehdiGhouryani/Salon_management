@@ -222,22 +222,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
-      <div className="relative w-full max-w-xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-zinc-900 dark:text-zinc-100 transition-colors">
+      <div className="relative w-full max-w-xl bg-white dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-slate-900 dark:text-slate-100 transition-colors">
         {/* Modal Top Header */}
-        <div className="p-4 sm:p-5 border-b border-stone-100 dark:border-zinc-800/80 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Calendar className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               <span>رزرو نوبت {salon.name}</span>
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               مرحله {toPersianDigits(step)} از ۳: {step === 1 ? 'خدمت و آرایشگر' : step === 2 ? 'تاریخ و ساعت' : 'تایید شماره و ثبت'}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="بستن"
           >
             <X className="w-5 h-5" />
@@ -245,15 +245,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         </div>
 
         {/* 3-Step Clean Progress Bar */}
-        <div className="px-5 pt-3 pb-2 bg-stone-50/70 dark:bg-[#10121A]/60 border-b border-stone-100 dark:border-zinc-800/60">
+        <div className="px-5 pt-3 pb-2 bg-slate-50 dark:bg-[#10121A]/60 border-b border-slate-100 dark:border-slate-800">
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className={`py-1.5 px-2 rounded-xl font-bold transition-all ${step === 1 ? 'bg-rose-600 text-white shadow-xs' : step > 1 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-zinc-400 dark:text-zinc-600'}`}>
+            <div className={`py-1.5 px-2 rounded-lg font-bold transition-all ${step === 1 ? 'bg-rose-600 text-white shadow-xs' : step > 1 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-400 dark:text-slate-600'}`}>
               ۱. خدمت و آرایشگر
             </div>
-            <div className={`py-1.5 px-2 rounded-xl font-bold transition-all ${step === 2 ? 'bg-rose-600 text-white shadow-xs' : step > 2 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-zinc-400 dark:text-zinc-600'}`}>
+            <div className={`py-1.5 px-2 rounded-lg font-bold transition-all ${step === 2 ? 'bg-rose-600 text-white shadow-xs' : step > 2 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-400 dark:text-slate-600'}`}>
               ۲. زمان نوبت
             </div>
-            <div className={`py-1.5 px-2 rounded-xl font-bold transition-all ${step === 3 ? 'bg-rose-600 text-white shadow-xs' : 'text-zinc-400 dark:text-zinc-600'}`}>
+            <div className={`py-1.5 px-2 rounded-lg font-bold transition-all ${step === 3 ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-400 dark:text-slate-600'}`}>
               ۳. تایید و ثبت
             </div>
           </div>

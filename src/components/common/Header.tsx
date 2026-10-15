@@ -51,16 +51,16 @@ export const Header: React.FC = () => {
   const currentInfo = tabTitles[activeTab] || tabTitles.overview;
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-5 py-3 bg-white/95 dark:bg-[#14161F]/95 backdrop-blur-md border-b border-stone-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 transition-colors">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-5 py-3 bg-white dark:bg-[#0F172A] backdrop-blur-md border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 transition-colors shadow-xs">
       {/* Zone 1: Contextual Breadcrumb & Title */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex flex-col text-right truncate">
           <div className="flex items-center gap-2 text-xs">
-            <span className="font-bold text-zinc-500 dark:text-zinc-400">پنل کل</span>
-            <span aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="font-bold text-slate-500 dark:text-slate-400">پنل کل</span>
+            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">/</span>
             <span className="text-rose-600 dark:text-rose-400 font-bold truncate">{currentInfo.title}</span>
           </div>
-          <span className="hidden md:inline text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+          <span className="hidden md:inline text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
             {currentInfo.subtitle}
           </span>
         </div>
@@ -70,21 +70,21 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-2.5 max-w-md w-full justify-center">
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="w-full max-w-sm flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-zinc-500 dark:text-zinc-400 bg-stone-100 dark:bg-[#0E1015] hover:bg-stone-200/70 dark:hover:bg-[#181B24] hover:text-zinc-800 dark:hover:text-zinc-200 border border-stone-200 dark:border-zinc-800 rounded-xl transition-all cursor-pointer shadow-xs group"
+          className="w-full max-w-sm flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#151F32] hover:bg-slate-200/80 dark:hover:bg-[#1E293B] hover:text-slate-800 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-xl transition-all cursor-pointer shadow-xs group"
           title="جستجو در بخش‌ها (Ctrl+K)"
         >
           <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-zinc-400 group-hover:text-rose-600 transition-colors" />
+            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-600 transition-colors" />
             <span className="truncate">جستجوی سالن، کاربر، تیکت...</span>
           </div>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-700 rounded-md text-zinc-500 dark:text-zinc-400 font-mono shadow-inner">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-700 rounded-md text-slate-500 dark:text-slate-400 font-mono shadow-inner">
             <Command className="w-2.5 h-2.5" /> K
           </kbd>
         </button>
       </div>
 
       {/* Zone 3: Actions, Theme Switcher & Profile */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2.5 shrink-0">
         {/* Prominent Theme Toggle in Admin Header */}
         <ThemeToggle variant="segmented" className="hidden sm:inline-flex" />
         <ThemeToggle variant="icon" className="sm:hidden" />
@@ -92,7 +92,7 @@ export const Header: React.FC = () => {
         {/* Keyboard Shortcuts Trigger Button */}
         <button
           onClick={() => setShortcutsModalOpen(true)}
-          className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 bg-stone-100 dark:bg-[#0E1015] hover:bg-stone-200/80 dark:hover:bg-zinc-800 border border-stone-200 dark:border-zinc-800 rounded-xl transition-colors cursor-pointer hidden sm:flex items-center justify-center"
+          className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-[#151F32] hover:bg-slate-200/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors cursor-pointer hidden sm:flex items-center justify-center"
           title="کلیدهای میانبر (?)"
         >
           <Keyboard className="w-4 h-4" />
@@ -111,7 +111,7 @@ export const Header: React.FC = () => {
         {/* Switch to Salon Android App */}
         <button
           onClick={() => setPersona('salon_app')}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800/80 hover:bg-stone-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 transition-all cursor-pointer shadow-xs"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
           title="مشاهده اپلیکیشن مدیر سالن"
         >
           <Smartphone className="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@ export const Header: React.FC = () => {
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative p-2 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white bg-stone-100 dark:bg-[#0E1015] hover:bg-stone-200/80 dark:hover:bg-zinc-800 border border-stone-200 dark:border-zinc-800 rounded-xl transition-colors cursor-pointer"
+            className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#0E1015] hover:bg-slate-200/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors cursor-pointer"
             aria-label="اعلان‌ها"
           >
             <Bell className="w-4 h-4" />

@@ -34,25 +34,25 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden text-zinc-900 dark:text-zinc-100 flex flex-col max-h-[92vh] transition-colors">
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 flex flex-col max-h-[92vh] transition-colors">
         {/* Header with success badge */}
-        <div className="p-5 border-b border-stone-100 dark:border-zinc-800/80 flex items-start justify-between">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 نوبت با موفقیت ثبت شد
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                کد رهگیری: <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{booking.trackingCode}</span>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                زمان نوبت: <span className="font-bold text-rose-600 dark:text-rose-400">{booking.date} · ساعت {booking.time}</span>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             aria-label="بستن"
           >
             <X className="w-5 h-5" />
@@ -62,7 +62,7 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
         {/* Scrollable Receipt Body */}
         <div className="p-5 overflow-y-auto space-y-4 text-xs">
           {/* In-Person Settlement Banner */}
-          <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl flex items-start gap-3 text-emerald-800 dark:text-emerald-300">
+          <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl flex items-start gap-3 text-emerald-800 dark:text-emerald-300">
             <CreditCard className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             <div className="leading-relaxed">
               <span className="font-bold">تسویه هزینه: حضوری در سالن</span>
@@ -143,7 +143,7 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
             </div>
             <div className="p-2.5 bg-white dark:bg-[#181B24] rounded-xl text-zinc-700 dark:text-zinc-300 text-[11px] leading-relaxed font-sans border border-stone-200 dark:border-zinc-800">
               «{booking.clientName} عزیز، نوبت شما در {booking.salonName} برای {booking.serviceName} ثبت شد.
-              زمان: {booking.date} ساعت {toPersianDigits(booking.time)} · متخصص: {booking.staffName} · تسویه حضوری: {formatCurrency(booking.price)} · کد رهگیری: {booking.trackingCode}»
+              زمان: {booking.date} ساعت {toPersianDigits(booking.time)} · متخصص: {booking.staffName} · تسویه حضوری: {formatCurrency(booking.price)}»
             </div>
           </div>
         </div>

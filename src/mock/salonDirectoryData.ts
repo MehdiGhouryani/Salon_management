@@ -430,6 +430,34 @@ export function getSalonDetail(salonId: string, baseSalon?: any): DetailedSalonD
   };
 }
 
+export const luxuryBannerPresets = [
+  {
+    id: 'banner-gisara-lux',
+    name: 'استودیوی مدرن و مینیمال',
+    url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'banner-gold-marble',
+    name: 'سالن مرمرین VIP طلایی',
+    url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'banner-light-makeup',
+    name: 'استودیو میکاپ و چهره رویال',
+    url: 'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'banner-rose-spa',
+    name: 'اسپا و پدیکور آرامش مخملی',
+    url: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'banner-chic-hair',
+    name: 'لاین استایلینگ و رنگ موی VIP',
+    url: 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=1200&q=80',
+  },
+];
+
 export function getSalonBySlug(slug: string, salonsList?: any[]): DetailedSalonData {
   // Check predefined detailed map
   const foundInMap = Object.values(salonDirectoryDetails).find(
@@ -450,4 +478,15 @@ export function getSalonBySlug(slug: string, salonsList?: any[]): DetailedSalonD
   // Default to Gisara
   return salonDirectoryDetails['sal-101'];
 }
+
+export function updateSalonDetails(slug: string, updates: Partial<DetailedSalonData>): DetailedSalonData {
+  const current = getSalonBySlug(slug);
+  const updated = {
+    ...current,
+    ...updates,
+  };
+  salonDirectoryDetails[current.id] = updated;
+  return updated;
+}
+
 
