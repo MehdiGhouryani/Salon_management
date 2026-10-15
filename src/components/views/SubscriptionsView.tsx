@@ -70,11 +70,11 @@ export const SubscriptionsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             مالی، تعرفه‌ها و اشتراک‌های سالن‌ها
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
             تعرفه‌گذاری نرم‌افزار، تمدید اشتراک سالن‌ها و سوابق تراکنش‌ها
           </p>
         </div>
@@ -82,9 +82,9 @@ export const SubscriptionsView: React.FC = () => {
 
       {/* Financial Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">درآمد ماهانه پایدار (MRR)</span>
+            <span className="font-semibold text-zinc-700 dark:text-[#9AAAC2]">درآمد ماهانه پایدار (MRR)</span>
             <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
@@ -95,12 +95,12 @@ export const SubscriptionsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">اشتراک‌های فعال</span>
+            <span className="font-semibold text-zinc-700 dark:text-[#9AAAC2]">اشتراک‌های فعال</span>
             <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-[#E7ECF5] tabular-nums">
             {toPersianDigits(totalSubscribers)}
           </span>
           <p className="text-[11px] text-zinc-400 mt-2">
@@ -108,12 +108,12 @@ export const SubscriptionsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">درگاه‌های بانکی متصل</span>
+            <span className="font-semibold text-zinc-700 dark:text-[#9AAAC2]">درگاه‌های بانکی متصل</span>
             <Shield className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-[#E7ECF5] tabular-nums">
             زرین‌پال و بهپرداخت
           </span>
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-2 flex items-center gap-1">
@@ -125,7 +125,7 @@ export const SubscriptionsView: React.FC = () => {
       {/* 3 Decluttered Plan Tier Cards */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-rose-500" />
             بسته‌های تعرفه و امکانات
           </h3>
@@ -138,15 +138,15 @@ export const SubscriptionsView: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className={`p-5 rounded-2xl bg-white dark:bg-[#181B24] border shadow-xs flex flex-col justify-between transition-all ${
+                className={`p-5 rounded-2xl bg-white dark:bg-[#18243A] border shadow-xs flex flex-col justify-between transition-all ${
                   isVip
                     ? 'border-rose-500/50 dark:border-rose-500/40 ring-1 ring-rose-500/10'
-                    : 'border-stone-200/90 dark:border-zinc-800'
+                    : 'border-stone-200/90 dark:border-[#344258]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{p.name}</h4>
+                    <h4 className="font-bold text-zinc-900 dark:text-[#E7ECF5] text-sm">{p.name}</h4>
                     {isVip && (
                       <span className="px-2 py-0.5 text-[10px] rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
                         محبوب‌ترین
@@ -155,17 +155,17 @@ export const SubscriptionsView: React.FC = () => {
                   </div>
 
                   <div className="my-3">
-                    <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                    <span className="text-xl font-bold text-zinc-900 dark:text-[#E7ECF5] tabular-nums">
                       {p.priceMonthly === 0 ? 'رایگان' : formatCurrency(p.priceMonthly, 'toman')}
                     </span>
                     {p.priceMonthly > 0 && <span className="text-xs text-zinc-400 mr-1">/ ماه</span>}
                   </div>
 
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 pb-3 border-b border-stone-100 dark:border-zinc-800">
+                  <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mb-4 pb-3 border-b border-stone-100 dark:border-[#344258]">
                     {toPersianDigits(p.activeSubscribers)} سالن فعال
                   </p>
 
-                  <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-300">
+                  <ul className="space-y-2 text-xs text-zinc-600 dark:text-[#9AAAC2]">
                     <li className="flex items-center gap-2">
                       <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                       <span>تا {toPersianDigits(p.maxStaff)} متخصص همزمان</span>
@@ -187,10 +187,10 @@ export const SubscriptionsView: React.FC = () => {
                   </ul>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-stone-100 dark:border-zinc-800">
+                <div className="pt-4 mt-4 border-t border-stone-100 dark:border-[#344258]">
                   <button
                     onClick={() => openPlanEditor(p)}
-                    className="w-full py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-1.5 text-xs font-semibold text-zinc-700 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>ویرایش تعرفه</span>
@@ -205,22 +205,22 @@ export const SubscriptionsView: React.FC = () => {
       {/* Quick Salon Plan Assignment & Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Assignment Box */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] mb-1">
               تخصیص یا ارتقای پلن سالن
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mb-4">
               اعمال دستی بسته اشتراک برای سالن‌های دارای قرارداد سازمانی
             </p>
 
             <form onSubmit={handleAssignPlan} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1 font-medium">انتخاب سالن</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1 font-medium">انتخاب سالن</label>
                 <select
                   value={assignSalonId}
                   onChange={(e) => setAssignSalonId(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500"
                 >
                   {salons.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -231,11 +231,11 @@ export const SubscriptionsView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1 font-medium">بسته اشتراک</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1 font-medium">بسته اشتراک</label>
                 <select
                   value={assignPlanType}
                   onChange={(e) => setAssignPlanType(e.target.value as PlanType)}
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500"
                 >
                   <option value="bronze">پایه (برنزی)</option>
                   <option value="silver">حرفه‌ای (نقره‌ای)</option>
@@ -254,10 +254,10 @@ export const SubscriptionsView: React.FC = () => {
         </div>
 
         {/* Transactions Card */}
-        <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-zinc-800">
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-[#344258]">
             <div>
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">
                 تراکنش‌های اخیر اشتراک نرم‌افزار
               </h3>
               <p className="text-xs text-zinc-500 mt-0.5">درگاه شاپرک (فقط شارژ پنل و اشتراک SaaS)</p>
@@ -272,7 +272,7 @@ export const SubscriptionsView: React.FC = () => {
             {filteredTransactions.slice(0, 5).map((tx) => (
               <div key={tx.id} className="py-2.5 flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-zinc-900 dark:text-zinc-100 block">{tx.salonName}</span>
+                  <span className="font-bold text-zinc-900 dark:text-[#E7ECF5] block">{tx.salonName}</span>
                   <span className="text-[11px] text-zinc-500">
                     {tx.type === 'subscription' ? 'تمدید اشتراک سالن' : 'شارژ پیامک'}
                   </span>
@@ -295,9 +295,9 @@ export const SubscriptionsView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="fixed inset-0" onClick={() => setEditingPlan(null)}></div>
 
-          <div className="relative w-full max-w-sm bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">ویرایش تعرفه «{editingPlan.name}»</h3>
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">ویرایش تعرفه «{editingPlan.name}»</h3>
               <button onClick={() => setEditingPlan(null)} className="p-1 text-zinc-400 hover:text-zinc-700">
                 <X className="w-4 h-4" />
               </button>
@@ -305,40 +305,40 @@ export const SubscriptionsView: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1">مبلغ ماهانه (تومان)</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">مبلغ ماهانه (تومان)</label>
                 <input
                   type="number"
                   value={editPriceMonthly}
                   onChange={(e) => setEditPriceMonthly(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1">حداکثر پرسنل همزمان</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">حداکثر پرسنل همزمان</label>
                 <input
                   type="number"
                   value={editMaxStaff}
                   onChange={(e) => setEditMaxStaff(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1">پیامک پیش‌فرض ماهانه</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">پیامک پیش‌فرض ماهانه</label>
                 <input
                   type="number"
                   value={editSmsCount}
                   onChange={(e) => setEditSmsCount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-[#344258]">
               <button
                 onClick={() => setEditingPlan(null)}
-                className="px-3.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-stone-100 dark:bg-zinc-800 rounded-xl"
+                className="px-3.5 py-1.5 text-xs text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
               >
                 انصراف
               </button>

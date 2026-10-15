@@ -298,36 +298,36 @@ export const SalonAppView: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen bg-[#F4F4F5] dark:bg-[#0A0F1D] text-slate-900 dark:text-slate-100 py-6 px-4 font-sans antialiased transition-colors"
+      className="min-h-screen bg-[#F4F4F5] dark:bg-[#0B1120] text-slate-900 dark:text-[#E7ECF5] py-2 px-1 sm:py-6 sm:px-4 font-sans antialiased transition-colors"
       dir="rtl"
     >
       {/* Top Controller Bar */}
-      <div className="max-w-4xl mx-auto mb-6 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400">
+      <div className="max-w-4xl mx-auto mb-4 sm:mb-6 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shadow-xs">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#E7ECF5] flex items-center gap-2">
               <span>اپلیکیشن مدیر سالن</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono">
+              <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#18243A] text-slate-600 dark:text-[#9AAAC2] font-mono">
                 نسخه مدیریت هوشمند
               </span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-[#9AAAC2] mt-0.5">
               مدیریت نوبت‌ها، تسویه حضوری، بارکد QR اختصاصی و تنظیمات وب‌سایت
             </p>
           </div>
         </div>
 
         {/* Change Salon selector, QR Trigger, and Theme Toggle */}
-        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">سالن:</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+          <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
+            <span className="text-xs text-slate-500 dark:text-[#9AAAC2] whitespace-nowrap">سالن:</span>
             <select
               value={currentSalon.slug}
               onChange={(e) => setCurrentSalonSlug(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500 cursor-pointer font-medium"
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500 cursor-pointer font-medium"
             >
               {salons.map((s) => (
                 <option key={s.id} value={s.slug}>
@@ -339,7 +339,7 @@ export const SalonAppView: React.FC = () => {
 
           <button
             onClick={() => setQrModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-[#18243A] hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#344258] transition-colors cursor-pointer"
             title="مشاهده و چاپ کد QR سالن"
           >
             <QrCode className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
@@ -353,15 +353,15 @@ export const SalonAppView: React.FC = () => {
 
       {/* MOBILE DEVICE CASING CONTAINER */}
       <div className="max-w-md mx-auto relative">
-        <div className="relative bg-white dark:bg-[#0F172A] border-[8px] border-slate-300 dark:border-slate-800 rounded-[44px] shadow-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5">
-          {/* Top Notch & Speaker */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-3.5 bg-slate-200 dark:bg-slate-800 rounded-full z-30 flex items-center justify-center gap-2">
+        <div className="relative bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] sm:border-[8px] sm:border-slate-300 sm:dark:border-[#344258] rounded-2xl sm:rounded-[44px] shadow-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5">
+          {/* Top Notch & Speaker (Visible on desktop simulator only) */}
+          <div className="hidden sm:flex absolute top-2 left-1/2 -translate-x-1/2 w-28 h-3.5 bg-slate-200 dark:bg-[#18243A] rounded-full z-30 items-center justify-center gap-2">
             <div className="w-8 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
             <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-950" />
           </div>
 
           {/* Android Status Bar */}
-          <div className="pt-3 pb-1.5 px-6 bg-slate-100 dark:bg-[#0A0F1D] text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 z-20">
+          <div className="pt-2 sm:pt-3 pb-1.5 px-4 sm:px-6 bg-slate-100 dark:bg-[#0B1120] text-[11px] font-mono text-slate-500 dark:text-[#9AAAC2] flex items-center justify-between border-b border-slate-200 dark:border-[#344258]/80 z-20">
             <span className="font-bold text-slate-800 dark:text-slate-200">۱۰:۲۸</span>
             <div className="flex items-center gap-2">
               <span className="text-[10px]">5G</span>
@@ -374,7 +374,7 @@ export const SalonAppView: React.FC = () => {
           </div>
 
           {/* App Top Compact Bar */}
-          <div className="px-4 py-3 bg-slate-50 dark:bg-[#0E1526] border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="px-4 py-3 bg-slate-50 dark:bg-[#0B1120] border-b border-slate-200 dark:border-[#344258] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 {currentSalon.name.slice(0, 2)}
@@ -386,7 +386,7 @@ export const SalonAppView: React.FC = () => {
                   </h3>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 </div>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block truncate">
                   {currentSalon.city} · مدیر: {currentSalon.ownerName}
                 </span>
               </div>
@@ -403,14 +403,14 @@ export const SalonAppView: React.FC = () => {
           </div>
 
           {/* App Scrollable Content Area */}
-          <div className="h-[490px] overflow-y-auto p-4 space-y-4 bg-slate-50/60 dark:bg-[#0A0F1D]/60 text-slate-900 dark:text-slate-100">
+          <div className="h-[490px] overflow-y-auto p-4 space-y-4 bg-slate-50/60 dark:bg-[#0B1120]/60 text-slate-900 dark:text-[#E7ECF5]">
             {/* ==================================================== */}
             {/* TAB 1: APPOINTMENTS & DAILY SETTLEMENT */}
             {/* ==================================================== */}
             {activeAppTab === 'appointments' && (
               <div className="space-y-3.5">
                 {/* 1. Daily Settlement & Cashflow Summary Card (خلاصه دخل روزانه) */}
-                <div className="p-3.5 bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-xs space-y-2.5">
+                <div className="p-3.5 bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] rounded-2xl shadow-xs space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -459,9 +459,9 @@ export const SalonAppView: React.FC = () => {
 
                 {/* 3. Appointment Cards List */}
                 {salonBookings.length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-[#0F172A] border border-slate-200/90 dark:border-slate-800 rounded-2xl space-y-2.5">
+                  <div className="p-8 text-center bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] rounded-2xl space-y-2.5">
                     <Calendar className="w-8 h-8 text-slate-400 mx-auto" />
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-[#9AAAC2]">
                       نوبتی در صف انتظار این سالن نیست.
                     </p>
                     <button
@@ -486,19 +486,19 @@ export const SalonAppView: React.FC = () => {
                           onClick={() => handleOpenBookingSheet(b)}
                           className={`p-3.5 rounded-2xl border transition-all cursor-pointer group relative ${
                             isCompleted
-                              ? 'bg-slate-50 dark:bg-[#0F172A]/70 border-emerald-200/60 dark:border-emerald-800/40 opacity-90'
+                              ? 'bg-slate-50 dark:bg-[#111B2E]/70 border-emerald-200/60 dark:border-emerald-800/40 opacity-90'
                               : isCancelled
                               ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/30 opacity-60'
-                              : 'bg-white dark:bg-[#0F172A] border-slate-200/90 dark:border-slate-800 shadow-xs hover:border-rose-300 dark:hover:border-rose-900/50 hover:shadow-md'
+                              : 'bg-white dark:bg-[#111B2E] border-slate-200/90 dark:border-[#344258] shadow-xs hover:border-rose-300 dark:hover:border-rose-900/50 hover:shadow-md'
                           }`}
                         >
                           {/* Top row */}
-                          <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100 dark:border-[#344258]">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-rose-600 transition-colors">
+                              <span className="text-xs font-bold text-slate-900 dark:text-[#E7ECF5] group-hover:text-rose-600 transition-colors">
                                 {b.clientName}
                               </span>
-                              <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              <span className="text-[10px] font-mono text-slate-500 dark:text-[#9AAAC2]">
                                 {b.clientPhone}
                               </span>
                             </div>
@@ -509,7 +509,7 @@ export const SalonAppView: React.FC = () => {
                           </div>
 
                           {/* Details */}
-                          <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 mb-2.5">
+                          <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 dark:text-[#9AAAC2] mb-2.5">
                             <div>
                               خدمت:{' '}
                               <strong className="text-slate-900 dark:text-slate-200">
@@ -518,7 +518,7 @@ export const SalonAppView: React.FC = () => {
                             </div>
                             <div>
                               متخصص:{' '}
-                              <span className="text-slate-700 dark:text-slate-300 font-medium">{b.staffName}</span>
+                              <span className="text-slate-700 dark:text-[#9AAAC2] font-medium">{b.staffName}</span>
                             </div>
                             <div>
                               مبلغ خدمت:{' '}
@@ -533,7 +533,7 @@ export const SalonAppView: React.FC = () => {
                           </div>
 
                           {/* Action Bar */}
-                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                          <div className="pt-2 border-t border-slate-100 dark:border-[#344258] flex items-center justify-between gap-2">
                             <span className="text-[10px] text-slate-400 flex items-center gap-1 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors font-medium">
                               <Edit3 className="w-3 h-3" />
                               <span>جزئیات و ویرایش نوبت</span>
@@ -589,13 +589,13 @@ export const SalonAppView: React.FC = () => {
                   {salonDetailed.services.map((srv) => (
                     <div
                       key={srv.id}
-                      className="p-3 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs shadow-xs"
+                      className="p-3 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl flex items-center justify-between text-xs shadow-xs"
                     >
                       <div className="min-w-0 pr-1">
-                        <div className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5] truncate">
                           {srv.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2] mt-0.5">
                           {srv.duration} · {srv.categoryLabel}
                         </div>
                       </div>
@@ -607,7 +607,7 @@ export const SalonAppView: React.FC = () => {
                 </div>
 
                 {/* Staff List Preview */}
-                <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                <div className="pt-3 border-t border-slate-200 dark:border-[#344258] space-y-2">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                     پرسنل و متخصصین سالن:
                   </span>
@@ -615,7 +615,7 @@ export const SalonAppView: React.FC = () => {
                     {salonDetailed.staff.map((st) => (
                       <div
                         key={st.id}
-                        className="p-2.5 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-2"
+                        className="p-2.5 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl flex items-center gap-2"
                       >
                         <img
                           src={st.avatar}
@@ -623,7 +623,7 @@ export const SalonAppView: React.FC = () => {
                           className="w-8 h-8 rounded-full object-cover shrink-0"
                         />
                         <div className="min-w-0">
-                          <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                          <div className="text-xs font-bold text-slate-900 dark:text-[#E7ECF5] truncate">
                             {st.name}
                           </div>
                           <div className="text-[10px] text-slate-400 truncate mt-0.5">
@@ -649,7 +649,7 @@ export const SalonAppView: React.FC = () => {
                       <Store className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                       ویترین و مشخصات صفحه اختصاصی سالن
                     </span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                       تنظیم بنر، تیتر معرفی و نحوه نمایش در سایت
                     </span>
                   </div>
@@ -668,10 +668,10 @@ export const SalonAppView: React.FC = () => {
 
                 {/* Current Banner Preview Card */}
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-[#9AAAC2] block">
                     تصویر هدر فعلی وب‌سایت:
                   </label>
-                  <div className="relative h-28 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 group shadow-sm">
+                  <div className="relative h-28 rounded-2xl overflow-hidden border border-slate-200 dark:border-[#344258] group shadow-sm">
                     <img
                       src={salonDetailed.bannerImage}
                       alt={salonDetailed.name}
@@ -688,7 +688,7 @@ export const SalonAppView: React.FC = () => {
 
                 {/* Curated Luxury Banner Presets */}
                 <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-[#9AAAC2] block">
                     انتخاب سریع از بین بنرهای لوکس سالن:
                   </span>
                   <div className="grid grid-cols-2 gap-2">
@@ -701,7 +701,7 @@ export const SalonAppView: React.FC = () => {
                           className={`relative rounded-xl overflow-hidden border cursor-pointer transition-all h-20 group ${
                             isSelected
                               ? 'ring-2 ring-rose-500 border-rose-500 shadow-md'
-                              : 'border-slate-200 dark:border-slate-800 hover:border-slate-400'
+                              : 'border-slate-200 dark:border-[#344258] hover:border-slate-400'
                           }`}
                         >
                           <img
@@ -726,8 +726,8 @@ export const SalonAppView: React.FC = () => {
                 </div>
 
                 {/* Custom URL Input */}
-                <div className="p-3 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+                <div className="p-3 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl space-y-2">
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-[#9AAAC2] block">
                     یا ثبت آدرس اینترنتی عکس اختصاصی:
                   </span>
                   <div className="flex gap-2">
@@ -736,7 +736,7 @@ export const SalonAppView: React.FC = () => {
                       value={customBannerUrl}
                       onChange={(e) => setCustomBannerUrl(e.target.value)}
                       placeholder="https://.../my-salon-banner.jpg"
-                      className="flex-1 px-3 py-1.5 text-xs ltr font-mono bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                      className="flex-1 px-3 py-1.5 text-xs ltr font-mono bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                     />
                     <button
                       type="button"
@@ -751,45 +751,45 @@ export const SalonAppView: React.FC = () => {
                 {/* Showcase Details Form */}
                 <form
                   onSubmit={handleSaveShowcaseDetails}
-                  className="p-3.5 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl space-y-3"
+                  className="p-3.5 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl space-y-3"
                 >
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block pb-1 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-xs font-bold text-slate-900 dark:text-[#E7ECF5] block pb-1 border-b border-slate-100 dark:border-[#344258]">
                     اطلاعات متنی صفحه وب‌سایت
                   </span>
 
                   <div>
-                    <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] text-slate-600 dark:text-[#9AAAC2] mb-1">
                       تیتر معرفی کوتاه (Tagline):
                     </label>
                     <textarea
                       rows={2}
                       value={editableTagline}
                       onChange={(e) => setEditableTagline(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                      className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] text-slate-600 dark:text-[#9AAAC2] mb-1">
                       ساعات کاری سالن:
                     </label>
                     <input
                       type="text"
                       value={editableWorkingHours}
                       onChange={(e) => setEditableWorkingHours(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-[11px] text-slate-600 dark:text-[#9AAAC2] mb-1">
                       آدرس دقیق سالن:
                     </label>
                     <input
                       type="text"
                       value={editableAddress}
                       onChange={(e) => setEditableAddress(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                     />
                   </div>
 
@@ -809,13 +809,13 @@ export const SalonAppView: React.FC = () => {
             {activeAppTab === 'profile' && (
               <div className="space-y-4">
                 {/* 1. Profile Header Card */}
-                <div className="p-4 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-3">
+                <div className="p-4 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-2xl shadow-xs space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center font-bold text-lg shadow-sm">
                         {currentSalon.name.slice(0, 2)}
                       </div>
-                      <div className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white dark:border-[#0F172A]">
+                      <div className="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white dark:border-[#344258]">
                         <Check className="w-3 h-3" />
                       </div>
                     </div>
@@ -826,7 +826,7 @@ export const SalonAppView: React.FC = () => {
                           {currentSalon.name}
                         </h3>
                       </div>
-                      <span className="text-xs text-slate-600 dark:text-slate-300 block mt-0.5">
+                      <span className="text-xs text-slate-600 dark:text-[#9AAAC2] block mt-0.5">
                         مدیریت: {currentSalon.ownerName}
                       </span>
                       <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
@@ -835,7 +835,7 @@ export const SalonAppView: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="pt-2 border-t border-slate-100 dark:border-[#344258] flex items-center justify-between text-[11px] text-slate-500 dark:text-[#9AAAC2]">
                     <span className="flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                       حساب تجاری رسمی احراز هویت شده
@@ -847,7 +847,7 @@ export const SalonAppView: React.FC = () => {
                 </div>
 
                 {/* 2. Subscription Status Card (Integrated into Profile) */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 dark:from-[#151F32] dark:to-[#0F172A] text-white shadow-md border border-slate-800 dark:border-slate-700/80 space-y-3">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 dark:from-[#151F32] dark:to-[#0F172A] text-white shadow-md border border-slate-800 dark:border-[#344258]/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center">
@@ -887,7 +887,7 @@ export const SalonAppView: React.FC = () => {
                 </div>
 
                 {/* 3. Snapp/Digikala Navigation Rows */}
-                <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden text-xs">
+                <div className="bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-2xl shadow-xs divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden text-xs">
                   {/* Row 1: QR Code & Direct Link */}
                   <div
                     onClick={() => setQrModalOpen(true)}
@@ -898,10 +898,10 @@ export const SalonAppView: React.FC = () => {
                         <QrCode className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5]">
                           بارکد QR اختصاصی و لینک سالن
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                           چاپ برای آینه‌ها، استند و اشتراک با مشتریان
                         </div>
                       </div>
@@ -916,10 +916,10 @@ export const SalonAppView: React.FC = () => {
                         <Calendar className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5]">
                           پذیرش نوبت آنلاین در سایت
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                           امکان رزرو توسط مشتریان فعال باشد
                         </div>
                       </div>
@@ -949,10 +949,10 @@ export const SalonAppView: React.FC = () => {
                         <Bell className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5]">
                           پیامک خودکار تایید و یادآوری
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                           ارسال کد پیگیری بلافاصله پس از ثبت نوبت
                         </div>
                       </div>
@@ -985,10 +985,10 @@ export const SalonAppView: React.FC = () => {
                         <Clock className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5]">
                           ساعات کاری و مشخصات ویترین
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                           ویرایش عکس بنر، آدرس و زمان‌بندی سالن
                         </div>
                       </div>
@@ -1006,10 +1006,10 @@ export const SalonAppView: React.FC = () => {
                         {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5]">
                           حالت نمایش (تاریک / روشن)
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                           {theme === 'dark' ? 'تم سرمه‌ای شب فعال است' : 'تم روز فعال است'}
                         </div>
                       </div>
@@ -1031,14 +1031,14 @@ export const SalonAppView: React.FC = () => {
                     className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#151F32]/50 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#18243A] text-slate-600 dark:text-[#9AAAC2] flex items-center justify-center">
                         <HelpCircle className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                        <div className="font-bold text-slate-900 dark:text-[#E7ECF5]">
                           پشتیبانی و راهنمای سالن‌ها
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[10px] text-slate-500 dark:text-[#9AAAC2]">
                           تماس با کارشناس سامانه نوبت‌آرا
                         </div>
                       </div>
@@ -1052,7 +1052,7 @@ export const SalonAppView: React.FC = () => {
                 {/* Switch to Super Admin / Log Out */}
                 <button
                   onClick={() => setPersona('super_admin')}
-                  className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] text-slate-600 dark:text-slate-400 hover:text-rose-600 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
+                  className="w-full py-2.5 rounded-xl border border-slate-200 dark:border-[#344258] bg-white dark:bg-[#111B2E] text-slate-600 dark:text-[#9AAAC2] hover:text-rose-600 text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
                 >
                   <Layers className="w-3.5 h-3.5" />
                   <span>ورود به پنل مرکزی نظارت کل پلتفرم (سوپر ادمین)</span>
@@ -1062,7 +1062,7 @@ export const SalonAppView: React.FC = () => {
           </div>
 
           {/* Android Bottom Navigation Bar (4 CLEAN TABS: Calendar, Services, Showcase, Profile) */}
-          <div className="p-2 bg-white dark:bg-[#0E1526] border-t border-slate-200 dark:border-slate-800 grid grid-cols-4 gap-1 text-center text-[10px] select-none shadow-sm">
+          <div className="p-2 bg-white dark:bg-[#0B1120] border-t border-slate-200 dark:border-[#344258] grid grid-cols-4 gap-1 text-center text-[10px] select-none shadow-sm">
             <button
               onClick={() => setActiveAppTab('appointments')}
               className={`p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center gap-1 min-h-[44px] justify-center ${
@@ -1118,13 +1118,13 @@ export const SalonAppView: React.FC = () => {
           {newBookingSheetOpen && (
             <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-200">
               <div
-                className="bg-white dark:bg-[#0F172A] border-t border-slate-200 dark:border-slate-800 rounded-t-3xl p-4 sm:p-5 shadow-2xl max-h-[90%] overflow-y-auto animate-in slide-in-from-bottom duration-300 space-y-3.5"
+                className="bg-white dark:bg-[#111B2E] border-t border-slate-200 dark:border-[#344258] rounded-t-3xl p-4 sm:p-5 shadow-2xl max-h-[90%] overflow-y-auto animate-in slide-in-from-bottom duration-300 space-y-3.5"
                 dir="rtl"
               >
                 {/* Swipe / drag handle indicator */}
                 <div className="w-12 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto cursor-grab" />
 
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#344258]">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
                       <Plus className="w-4 h-4" />
@@ -1133,14 +1133,14 @@ export const SalonAppView: React.FC = () => {
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                         ثبت نوبت حضوری جدید
                       </h4>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
+                      <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block">
                         مشابه ثبت سریع در اپلیکیشن‌های اسنپ و دیجی‌کالا
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={() => setNewBookingSheetOpen(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#18243A] cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1150,7 +1150,7 @@ export const SalonAppView: React.FC = () => {
                   {/* Client Info */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      <label className="block text-[10px] font-bold text-slate-600 dark:text-[#9AAAC2] mb-1">
                         نام مشتری:
                       </label>
                       <input
@@ -1159,11 +1159,11 @@ export const SalonAppView: React.FC = () => {
                         value={manualClientName}
                         onChange={(e) => setManualClientName(e.target.value)}
                         placeholder="پریناز معتمدی"
-                        className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                        className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                      <label className="block text-[10px] font-bold text-slate-600 dark:text-[#9AAAC2] mb-1">
                         تلفن همراه:
                       </label>
                       <input
@@ -1172,14 +1172,14 @@ export const SalonAppView: React.FC = () => {
                         value={manualClientPhone}
                         onChange={(e) => setManualClientPhone(e.target.value)}
                         placeholder="09121112233"
-                        className="w-full px-3 py-2 text-xs font-mono bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500 text-right"
+                        className="w-full px-3 py-2 text-xs font-mono bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500 text-right"
                       />
                     </div>
                   </div>
 
                   {/* Quick Service Selection Chips */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                    <label className="block text-[10px] font-bold text-slate-600 dark:text-[#9AAAC2]">
                       انتخاب سریع از خدمات سالن:
                     </label>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1194,7 +1194,7 @@ export const SalonAppView: React.FC = () => {
                           className={`px-2.5 py-1.5 rounded-xl border text-[10px] font-bold whitespace-nowrap transition-all cursor-pointer ${
                             manualServiceName === srv.name
                               ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                              : 'bg-slate-50 dark:bg-[#151F32] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-rose-300'
+                              : 'bg-slate-50 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-700 dark:text-[#9AAAC2] hover:border-rose-300'
                           }`}
                         >
                           {srv.name} ({formatCurrency(srv.price)})
@@ -1205,7 +1205,7 @@ export const SalonAppView: React.FC = () => {
 
                   {/* Staff Chips */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                    <label className="block text-[10px] font-bold text-slate-600 dark:text-[#9AAAC2]">
                       انتخاب متخصص سالن:
                     </label>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1217,7 +1217,7 @@ export const SalonAppView: React.FC = () => {
                           className={`px-2.5 py-1 rounded-xl border text-[10px] font-medium whitespace-nowrap transition-all cursor-pointer ${
                             manualStaffName === st.name || (!manualStaffName && salonDetailed.staff[0]?.name === st.name)
                               ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 font-bold'
-                              : 'bg-slate-50 dark:bg-[#151F32] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                              : 'bg-slate-50 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-600 dark:text-[#9AAAC2]'
                           }`}
                         >
                           {st.name} ({st.role})
@@ -1228,7 +1228,7 @@ export const SalonAppView: React.FC = () => {
 
                   {/* Time slots */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                    <label className="block text-[10px] font-bold text-slate-600 dark:text-[#9AAAC2]">
                       ساعت نوبت:
                     </label>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1240,7 +1240,7 @@ export const SalonAppView: React.FC = () => {
                           className={`px-2.5 py-1 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer ${
                             manualTime === t
                               ? 'bg-rose-600 text-white border-rose-600'
-                              : 'bg-slate-50 dark:bg-[#151F32] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                              : 'bg-slate-50 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-700 dark:text-[#9AAAC2]'
                           }`}
                         >
                           {t}
@@ -1251,25 +1251,25 @@ export const SalonAppView: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <div>
-                      <label className="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      <label className="block text-[10px] font-medium text-slate-600 dark:text-[#9AAAC2] mb-1">
                         زمان سفارشی:
                       </label>
                       <input
                         type="text"
                         value={manualTime}
                         onChange={(e) => setManualTime(e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs font-mono bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100"
+                        className="w-full px-3 py-1.5 text-xs font-mono bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      <label className="block text-[10px] font-medium text-slate-600 dark:text-[#9AAAC2] mb-1">
                         مبلغ تسویه (تومان):
                       </label>
                       <input
                         type="number"
                         value={manualPrice}
                         onChange={(e) => setManualPrice(Number(e.target.value))}
-                        className="w-full px-3 py-1.5 text-xs font-mono bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100"
+                        className="w-full px-3 py-1.5 text-xs font-mono bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5]"
                       />
                     </div>
                   </div>
@@ -1292,14 +1292,14 @@ export const SalonAppView: React.FC = () => {
           {selectedBookingForSheet && (
             <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-200">
               <div
-                className="bg-white dark:bg-[#0F172A] border-t border-slate-200 dark:border-slate-800 rounded-t-3xl p-4 sm:p-5 shadow-2xl max-h-[90%] overflow-y-auto animate-in slide-in-from-bottom duration-300 space-y-3.5"
+                className="bg-white dark:bg-[#111B2E] border-t border-slate-200 dark:border-[#344258] rounded-t-3xl p-4 sm:p-5 shadow-2xl max-h-[90%] overflow-y-auto animate-in slide-in-from-bottom duration-300 space-y-3.5"
                 dir="rtl"
               >
                 {/* Swipe / drag indicator */}
                 <div className="w-12 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto cursor-grab" />
 
                 {/* Header */}
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-[#344258]">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
                       <User className="w-4 h-4" />
@@ -1309,7 +1309,7 @@ export const SalonAppView: React.FC = () => {
                         {selectedBookingForSheet.clientName}
                       </h4>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-[#9AAAC2]">
                           {selectedBookingForSheet.clientPhone}
                         </span>
                         {selectedBookingForSheet.status === 'completed' ? (
@@ -1330,7 +1330,7 @@ export const SalonAppView: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setSelectedBookingForSheet(null)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#18243A] cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1340,7 +1340,7 @@ export const SalonAppView: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <a
                     href={`tel:${selectedBookingForSheet.clientPhone}`}
-                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-[#151F32] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors"
+                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-[#18243A] hover:bg-slate-100 dark:hover:bg-[#18243A] border border-slate-200 dark:border-[#344258] text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors"
                   >
                     <Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                     <span>تماس با مشتری</span>
@@ -1349,7 +1349,7 @@ export const SalonAppView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleSendClientSms(selectedBookingForSheet.clientPhone, selectedBookingForSheet.clientName)}
-                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-[#151F32] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-[#18243A] hover:bg-slate-100 dark:hover:bg-[#18243A] border border-slate-200 dark:border-[#344258] text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                   >
                     <MessageSquare className="w-3 h-3 text-rose-600 dark:text-rose-400" />
                     <span>ارسال پیامک</span>
@@ -1361,7 +1361,7 @@ export const SalonAppView: React.FC = () => {
                       navigator.clipboard?.writeText(selectedBookingForSheet.clientPhone);
                       addToast({ type: 'success', title: 'شماره تلفن کپی شد' });
                     }}
-                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-[#151F32] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-[#18243A] hover:bg-slate-100 dark:hover:bg-[#18243A] border border-slate-200 dark:border-[#344258] text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                   >
                     <Copy className="w-3 h-3 text-slate-400" />
                     <span>کپی شماره</span>
@@ -1369,26 +1369,26 @@ export const SalonAppView: React.FC = () => {
                 </div>
 
                 {/* Appointment Card Prominent Info (No tracking code!) */}
-                <div className="p-3.5 bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2 text-xs">
+                <div className="p-3.5 bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-2xl space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-slate-400 text-[11px]">تاریخ و زمان نوبت:</span>
-                    <span className="font-bold text-rose-600 dark:text-rose-400 font-mono flex items-center gap-1 bg-white dark:bg-[#0F172A] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                    <span className="text-slate-500 dark:text-[#9AAAC2] text-[11px]">تاریخ و زمان نوبت:</span>
+                    <span className="font-bold text-rose-600 dark:text-rose-400 font-mono flex items-center gap-1 bg-white dark:bg-[#111B2E] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-[#344258]">
                       <Clock className="w-3 h-3" />
                       <span>{selectedBookingForSheet.date} · ساعت {selectedBookingForSheet.time}</span>
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-[#344258]/60">
                     <span className="text-slate-500 text-[11px]">خدمت درخواستی:</span>
-                    <strong className="text-slate-900 dark:text-slate-100">{selectedBookingForSheet.serviceName}</strong>
+                    <strong className="text-slate-900 dark:text-[#E7ECF5]">{selectedBookingForSheet.serviceName}</strong>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-[#344258]/60">
                     <span className="text-slate-500 text-[11px]">متخصص مسئول:</span>
                     <span className="text-slate-800 dark:text-slate-200 font-medium">{selectedBookingForSheet.staffName}</span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-[#344258]/60">
                     <span className="text-slate-500 text-[11px]">مبلغ خدمت:</span>
                     <strong className="text-rose-600 dark:text-rose-400 font-mono tabular-nums text-xs">
                       {formatCurrency(selectedBookingForSheet.price)}
@@ -1413,7 +1413,7 @@ export const SalonAppView: React.FC = () => {
                   </div>
 
                   {isEditingTimeMode && (
-                    <div className="space-y-2 p-2.5 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <div className="space-y-2 p-2.5 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl">
                       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                         {['۱۰:۰۰', '۱۱:۳۰', '۱۲:۰۰', '۱۴:۳۰', '۱۶:۰۰', '۱۷:۳۰', '۱۹:۰۰', '۲۰:۳۰'].map((slot) => (
                           <button
@@ -1423,7 +1423,7 @@ export const SalonAppView: React.FC = () => {
                             className={`px-2.5 py-1 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer ${
                               editBookingTime === slot
                                 ? 'bg-rose-600 text-white border-rose-600'
-                                : 'bg-slate-50 dark:bg-[#151F32] border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                                : 'bg-slate-50 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-700 dark:text-[#9AAAC2]'
                             }`}
                           >
                             {slot}
@@ -1437,7 +1437,7 @@ export const SalonAppView: React.FC = () => {
                           type="text"
                           value={editBookingTime}
                           onChange={(e) => setEditBookingTime(e.target.value)}
-                          className="flex-1 px-2.5 py-1 text-xs font-mono bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100"
+                          className="flex-1 px-2.5 py-1 text-xs font-mono bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5]"
                         />
                       </div>
                     </div>
@@ -1451,7 +1451,7 @@ export const SalonAppView: React.FC = () => {
                     <select
                       value={editBookingStaff}
                       onChange={(e) => setEditBookingStaff(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                     >
                       {salonDetailed.staff.map((st) => (
                         <option key={st.id} value={st.name}>
@@ -1471,13 +1471,13 @@ export const SalonAppView: React.FC = () => {
                       value={editBookingNotes}
                       onChange={(e) => setEditBookingNotes(e.target.value)}
                       placeholder="مثال: ترجیح مشتری استفاده از رنگ بدون آمونیاک"
-                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#151F32] border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
+                      className="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                     />
                   </div>
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <div className="pt-2 border-t border-slate-100 dark:border-[#344258] space-y-2">
                   {selectedBookingForSheet.status !== 'completed' && selectedBookingForSheet.status !== 'cancelled' && (
                     <button
                       type="button"
@@ -1532,8 +1532,8 @@ export const SalonAppView: React.FC = () => {
       {/* MODAL 2: IN-APP SUBSCRIPTION PAYMENT / UPGRADE MODAL */}
       {subModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-sm bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden p-5 space-y-4 text-slate-900 dark:text-slate-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-3xl shadow-2xl overflow-hidden p-5 space-y-4 text-slate-900 dark:text-[#E7ECF5]">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#344258]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                   <CreditCard className="w-4 h-4" />
@@ -1553,7 +1553,7 @@ export const SalonAppView: React.FC = () => {
 
             {/* Plan Options */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-[#9AAAC2] block">
                 انتخاب پلن اشتراک:
               </label>
               {[
@@ -1581,8 +1581,8 @@ export const SalonAppView: React.FC = () => {
                   onClick={() => setSelectedPlanToBuy(p.id as any)}
                   className={`p-2.5 rounded-xl border text-xs cursor-pointer flex items-center justify-between transition-all ${
                     selectedPlanToBuy === p.id
-                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-slate-900 dark:text-slate-100 font-bold'
-                      : 'bg-slate-50 dark:bg-[#151F32] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-slate-900 dark:text-[#E7ECF5] font-bold'
+                      : 'bg-slate-50 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-600 dark:text-[#9AAAC2]'
                   }`}
                 >
                   <div>
@@ -1597,8 +1597,8 @@ export const SalonAppView: React.FC = () => {
             </div>
 
             {/* Gateway Selection */}
-            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
+            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-[#344258]">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-[#9AAAC2] block">
                 انتخاب درگاه پرداخت آنلاین:
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -1614,7 +1614,7 @@ export const SalonAppView: React.FC = () => {
                     className={`py-2 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
                       selectedGateway === gw.id
                         ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 shadow-xs'
-                        : 'bg-slate-50 dark:bg-[#151F32] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        : 'bg-slate-50 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-600 dark:text-[#9AAAC2]'
                     }`}
                   >
                     {gw.name}

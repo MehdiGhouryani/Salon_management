@@ -39,11 +39,11 @@ export const OperationsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <Activity className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             سلامت سیستم و پایش زیرساخت
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
             پایش بار سرور، مصرف حافظه، کش Redis و صف‌های پیامک
           </p>
         </div>
@@ -69,12 +69,12 @@ export const OperationsView: React.FC = () => {
 
       {/* Hardware & Infrastructure KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
             <span>پردازنده سرور (CPU)</span>
             <Cpu className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-[#E7ECF5] tabular-nums">
             {toPersianDigits(metrics.cpuLoadPercentage)}٪
           </span>
           <div className="w-full bg-stone-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-2">
@@ -85,12 +85,12 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
             <span>حافظه RAM</span>
             <HardDrive className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-[#E7ECF5] tabular-nums">
             {toPersianDigits(Math.round((metrics.memoryUsageMb / metrics.totalMemoryMb) * 100))}٪
           </span>
           <div className="w-full bg-stone-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-2">
@@ -101,7 +101,7 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
             <span>تاخیر پاسخگویی (Latency)</span>
             <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -112,12 +112,12 @@ export const OperationsView: React.FC = () => {
           <p className="text-[11px] text-zinc-400 mt-2">عالی و در محدوده سبز</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <div className="flex items-center justify-between text-zinc-500 mb-2">
             <span>کش Redis</span>
             <Database className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-[#E7ECF5] tabular-nums">
             {toPersianDigits(metrics.redisCacheHitRate)}٪ هیت‌ریت
           </span>
           <p className="text-[11px] text-zinc-400 mt-2">{toPersianDigits(metrics.activeWebsockets)} سالن متصل زنده</p>
@@ -125,9 +125,9 @@ export const OperationsView: React.FC = () => {
       </div>
 
       {/* Terminal / Live Server Log Card */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-zinc-800 text-xs">
-          <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-zinc-100">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-[#344258] text-xs">
+          <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-[#E7ECF5]">
             <Terminal className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             <span>لاگ‌های لحظه‌ای سرور</span>
           </div>
@@ -149,7 +149,7 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-3 bg-stone-50 dark:bg-[#10121A] rounded-xl border border-stone-100 dark:border-zinc-800/80 my-3 font-mono text-xs space-y-2 max-h-72 overflow-y-auto" dir="ltr">
+        <div className="p-3 bg-stone-50 dark:bg-[#18243A] rounded-xl border border-stone-100 dark:border-[#344258]/80 my-3 font-mono text-xs space-y-2 max-h-72 overflow-y-auto" dir="ltr">
           {filteredLogs.map((log, i) => (
             <div key={i} className="flex items-start gap-2 text-left">
               <span className="text-zinc-400 shrink-0">[{log.time}]</span>
@@ -164,7 +164,7 @@ export const OperationsView: React.FC = () => {
               >
                 [{log.level.toUpperCase()}]
               </span>
-              <span className="text-zinc-700 dark:text-zinc-300 break-all">{log.msg}</span>
+              <span className="text-zinc-700 dark:text-[#9AAAC2] break-all">{log.msg}</span>
             </div>
           ))}
         </div>

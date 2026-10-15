@@ -139,6 +139,9 @@ export interface AdminContextType {
   updateCustomerBooking: (id: string, updates: Partial<CustomerBooking>) => void;
   cancelCustomerBooking: (id: string) => void;
   completeCustomerBookingInSalon: (bookingId: string) => void;
+  // Mobile drawer state
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (open: boolean) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -165,6 +168,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const viewMode: 'admin' | 'customer' = persona === 'super_admin' ? 'admin' : 'customer';
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [selectedCustomerSalonId, setSelectedCustomerSalonId] = useState<string>('sal-101');
   const [customerBookings, setCustomerBookings] = useState<CustomerBooking[]>([
@@ -853,6 +857,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateCustomerBooking,
         cancelCustomerBooking,
         completeCustomerBookingInSalon,
+        mobileSidebarOpen,
+        setMobileSidebarOpen,
       }}
     >
       {children}

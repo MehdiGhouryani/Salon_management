@@ -49,20 +49,20 @@ export const SettingsView: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+        <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
           <Settings className="w-5 h-5 text-rose-600 dark:text-rose-400" />
           تنظیمات هسته و اتصالات
         </h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+        <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
           پیکربندی کلیدهای وب‌سرویس پیامک، درگاه بانکی شاپرک و اطلاعیه‌های سراسری
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form 1: API Keys & Gateways */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-zinc-800">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-[#344258]">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
               <Key className="w-4 h-4 text-amber-500" />
               کلیدهای اتصال پیامک و درگاه
             </h3>
@@ -78,35 +78,35 @@ export const SettingsView: React.FC = () => {
 
           <form onSubmit={handleSaveApiKeys} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">API Key کاوه‌نگار (سرویس پیامک خدماتی)</label>
+              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">API Key کاوه‌نگار (سرویس پیامک خدماتی)</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={kavenegarKey}
                 onChange={(e) => setKavenegarKey(e.target.value)}
-                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono text-left"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono text-left"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">مرچنت‌کد زرین‌پال (درگاه پرداخت اشتراک)</label>
+              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">مرچنت‌کد زرین‌پال (درگاه پرداخت اشتراک)</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={zarinpalMerchant}
                 onChange={(e) => setZarinpalMerchant(e.target.value)}
-                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono text-left"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono text-left"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">ترمینال سامانه به‌پرداخت ملت</label>
+              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">ترمینال سامانه به‌پرداخت ملت</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={samanTerminal}
                 onChange={(e) => setSamanTerminal(e.target.value)}
-                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono text-left"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono text-left"
               />
             </div>
 
@@ -122,9 +122,9 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Form 2: System Broadcast Banner */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs space-y-4">
-          <div className="pb-3 border-b border-stone-100 dark:border-zinc-800">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs space-y-4">
+          <div className="pb-3 border-b border-stone-100 dark:border-[#344258]">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
               <Bell className="w-4 h-4 text-rose-500" />
               پیام اطلاعیه سراسری
             </h3>
@@ -148,12 +148,12 @@ export const SettingsView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-zinc-600 dark:text-zinc-400 mb-1">متن پیام برای سالن‌ها</label>
+              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">متن پیام برای سالن‌ها</label>
               <textarea
                 rows={4}
                 value={bannerText}
                 onChange={(e) => setBannerText(e.target.value)}
-                className="w-full p-3 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
+                className="w-full p-3 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
               />
             </div>
 

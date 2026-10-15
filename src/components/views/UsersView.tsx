@@ -134,24 +134,24 @@ export const UsersView: React.FC = () => {
       {/* View Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             کاربران و پرسنل پلتفرم ({toPersianDigits(users.length)})
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
             سطوح دسترسی، امنیت احراز هویت دومرحله‌ای و پرسنل متصل به سالن‌ها
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* View Mode Toggle: Cards vs Table */}
-          <div className="flex items-center p-1 bg-slate-100 dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-lg text-xs">
             <button
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                  ? 'bg-white dark:bg-[#18243A] text-slate-900 dark:text-[#E7ECF5] font-bold shadow-xs'
+                  : 'text-slate-500 dark:text-[#9AAAC2] hover:text-slate-700'
               }`}
               title="نمایش کارت‌های خلوت"
             >
@@ -162,8 +162,8 @@ export const UsersView: React.FC = () => {
               onClick={() => setViewMode('table')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-bold shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                  ? 'bg-white dark:bg-[#18243A] text-slate-900 dark:text-[#E7ECF5] font-bold shadow-xs'
+                  : 'text-slate-500 dark:text-[#9AAAC2] hover:text-slate-700'
               }`}
               title="نمایش جدول فشرده"
             >
@@ -183,7 +183,7 @@ export const UsersView: React.FC = () => {
       </div>
 
       {/* Role Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#151821] border border-slate-200 dark:border-slate-800 rounded-xl text-xs shadow-xs">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl text-xs shadow-xs">
         {[
           { id: 'all', label: 'همه کاربران', count: users.length },
           { id: 'super_admin', label: 'ادمین کل', count: users.filter((u) => u.role === 'super_admin').length },
@@ -199,13 +199,13 @@ export const UsersView: React.FC = () => {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium ${
                 isSelected
                   ? 'bg-rose-600 text-white font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                  : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-[#18243A]/60'
               }`}
             >
               <span>{tab.label}</span>
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-[#18243A] text-slate-500 dark:text-[#9AAAC2]'
                 }`}
               >
                 {toPersianDigits(tab.count)}
@@ -216,7 +216,7 @@ export const UsersView: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="p-3.5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 shadow-xs">
+      <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] shadow-xs">
         <div className="relative">
           <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
           <input
@@ -224,7 +224,7 @@ export const UsersView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="جستجوی نام، ایمیل، شماره تماس یا نام سالن..."
-            className="w-full pl-8 pr-9 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full pl-8 pr-9 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-xs text-zinc-900 dark:text-[#E7ECF5] placeholder-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
           />
           {search && (
             <button
@@ -247,20 +247,20 @@ export const UsersView: React.FC = () => {
             return (
               <div
                 key={user.id}
-                className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs hover:border-indigo-400/50 dark:hover:border-indigo-500/30 transition-all flex flex-col justify-between"
+                className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs hover:border-indigo-400/50 dark:hover:border-indigo-500/30 transition-all flex flex-col justify-between"
               >
                 <div>
                   {/* Top: Avatar, Name & Role Badge */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700/80 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-[#344258]/80 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
                         {user.name.slice(0, 1)}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm truncate">
+                        <h3 className="font-bold text-zinc-900 dark:text-[#E7ECF5] text-sm truncate">
                           {user.name}
                         </h3>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                        <p className="text-[11px] text-zinc-500 dark:text-[#9AAAC2] truncate mt-0.5">
                           {user.salonName || 'پرسنل ستادی'}
                         </p>
                       </div>
@@ -272,22 +272,22 @@ export const UsersView: React.FC = () => {
                   </div>
 
                   {/* Contact Info */}
-                  <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-zinc-800/80 text-xs">
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                  <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-[#344258]/80 text-xs">
+                    <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
                       <span>ایمیل:</span>
-                      <span className="font-mono text-zinc-700 dark:text-zinc-300 truncate max-w-[170px]" dir="ltr">
+                      <span className="font-mono text-zinc-700 dark:text-[#9AAAC2] truncate max-w-[170px]" dir="ltr">
                         {user.email}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
                       <span>موبایل:</span>
-                      <span className="font-mono text-zinc-700 dark:text-zinc-300" dir="ltr">
+                      <span className="font-mono text-zinc-700 dark:text-[#9AAAC2]" dir="ltr">
                         {maskPhone(user.phone)}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
                       <span>تایید دو مرحله‌ای:</span>
                       <button
                         onClick={() => toggleUser2FA(user.id)}
@@ -305,10 +305,10 @@ export const UsersView: React.FC = () => {
                 </div>
 
                 {/* Footer: Role Change & Status Action */}
-                <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-zinc-800 mt-2">
+                <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-[#344258] mt-2">
                   <button
                     onClick={() => openRoleModal(user)}
-                    className="px-2.5 py-1 text-xs text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <Edit2 className="w-3 h-3 text-zinc-400" />
                     <span>تغییر نقش</span>
@@ -355,10 +355,10 @@ export const UsersView: React.FC = () => {
 
       {/* VIEW 2: COMPACT CLEAN TABLE */}
       {viewMode === 'table' && (
-        <div className="rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 overflow-hidden shadow-xs">
+        <div className="rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-right text-xs">
-              <thead className="bg-stone-50 dark:bg-[#12141C] border-b border-stone-200 dark:border-zinc-800 text-zinc-500 font-semibold">
+              <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
                 <tr>
                   <th className="py-3 px-4">نام کاربر</th>
                   <th className="py-3 px-4">ایمیل و تماس</th>
@@ -368,17 +368,17 @@ export const UsersView: React.FC = () => {
                   <th className="py-3 px-4 text-center">عملیات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
+              <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
                 {filteredUsers.map((user) => {
                   const roleBadge = getRoleBadge(user.role);
                   return (
-                    <tr key={user.id} className="hover:bg-stone-50/60 dark:hover:bg-zinc-800/40 transition-colors">
-                      <td className="py-3 px-4 font-bold text-zinc-900 dark:text-zinc-100">{user.name}</td>
+                    <tr key={user.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
+                      <td className="py-3 px-4 font-bold text-zinc-900 dark:text-[#E7ECF5]">{user.name}</td>
                       <td className="py-3 px-4">
-                        <span className="font-mono text-zinc-600 dark:text-zinc-400 block" dir="ltr">{user.email}</span>
+                        <span className="font-mono text-zinc-600 dark:text-[#9AAAC2] block" dir="ltr">{user.email}</span>
                         <span className="font-mono text-[11px] text-zinc-500" dir="ltr">{maskPhone(user.phone)}</span>
                       </td>
-                      <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{user.salonName || 'دفتر مرکزی'}</td>
+                      <td className="py-3 px-4 text-zinc-600 dark:text-[#9AAAC2]">{user.salonName || 'دفتر مرکزی'}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${roleBadge.color}`}>
                           {roleBadge.label}
@@ -392,7 +392,7 @@ export const UsersView: React.FC = () => {
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => openRoleModal(user)}
-                          className="px-2.5 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg"
+                          className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg"
                         >
                           ویرایش
                         </button>
@@ -411,9 +411,9 @@ export const UsersView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="fixed inset-0" onClick={() => setEditingUser(null)}></div>
 
-          <div className="relative w-full max-w-sm bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">تغییر سطح دسترسی</h3>
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">تغییر سطح دسترسی</h3>
               <button onClick={() => setEditingUser(null)} className="p-1 text-zinc-400 hover:text-zinc-700">
                 <X className="w-4 h-4" />
               </button>
@@ -433,7 +433,7 @@ export const UsersView: React.FC = () => {
                   className={`p-3 rounded-xl border cursor-pointer transition-all ${
                     selectedRole === r.id
                       ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 font-bold text-indigo-700 dark:text-indigo-300'
-                      : 'border-stone-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-stone-300'
+                      : 'border-stone-200 dark:border-[#344258] text-zinc-700 dark:text-[#9AAAC2] hover:border-stone-300'
                   }`}
                 >
                   {r.title}
@@ -441,10 +441,10 @@ export const UsersView: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-[#344258]">
               <button
                 onClick={() => setEditingUser(null)}
-                className="px-3.5 py-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-stone-100 dark:bg-zinc-800 rounded-xl"
+                className="px-3.5 py-1.5 text-xs text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
               >
                 انصراف
               </button>
@@ -464,9 +464,9 @@ export const UsersView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="fixed inset-0" onClick={() => setIsAddModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-md bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">افزودن کاربر جدید</h3>
+          <div className="relative w-full max-w-md bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">افزودن کاربر جدید</h3>
               <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-700">
                 <X className="w-4 h-4" />
               </button>
@@ -474,19 +474,19 @@ export const UsersView: React.FC = () => {
 
             <form onSubmit={handleCreateUser} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">نام و نام خانوادگی *</label>
+                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نام و نام خانوادگی *</label>
                 <input
                   type="text"
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: نرگس رضایی"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">ایمیل *</label>
+                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">ایمیل *</label>
                 <input
                   type="email"
                   required
@@ -494,12 +494,12 @@ export const UsersView: React.FC = () => {
                   value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="name@example.com"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 text-left font-mono"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-indigo-500 text-left font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">شماره تماس *</label>
+                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">شماره تماس *</label>
                 <input
                   type="tel"
                   required
@@ -507,17 +507,17 @@ export const UsersView: React.FC = () => {
                   value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="09121234567"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 text-left font-mono"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-indigo-500 text-left font-mono"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">نقش کاربری</label>
+                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نقش کاربری</label>
                   <select
                     value={formData.role || 'staff'}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-indigo-500"
                   >
                     <option value="staff">پرسنل سالن</option>
                     <option value="salon_admin">مدیر سالن</option>
@@ -527,11 +527,11 @@ export const UsersView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-zinc-700 dark:text-zinc-300 font-semibold mb-1">سالن مربوطه</label>
+                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">سالن مربوطه</label>
                   <select
                     value={formData.salonId || salons[0]?.id}
                     onChange={(e) => setFormData({ ...formData, salonId: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-indigo-500"
                   >
                     {salons.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
@@ -540,11 +540,11 @@ export const UsersView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-200 dark:border-zinc-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-200 dark:border-[#344258]">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs text-zinc-600 dark:text-zinc-400 bg-stone-100 dark:bg-zinc-800 rounded-xl"
+                  className="px-4 py-2 text-xs text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
                 >
                   انصراف
                 </button>

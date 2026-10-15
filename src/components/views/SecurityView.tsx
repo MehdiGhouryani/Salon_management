@@ -77,7 +77,7 @@ export const SecurityView: React.FC = () => {
       case 'warning':
         return { label: 'هشدار', class: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-500/20' };
       case 'info':
-        return { label: 'عادی', class: 'bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-stone-200' };
+        return { label: 'عادی', class: 'bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2] border-stone-200' };
     }
   };
 
@@ -86,11 +86,11 @@ export const SecurityView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             مرکز امنیت، لاگ‌ها و نشست‌های فعال
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
             پایش دسترسی‌ها، رویدادهای مشکوک، فایروال و ابطال نشست‌های همزمان
           </p>
         </div>
@@ -102,7 +102,7 @@ export const SecurityView: React.FC = () => {
       </div>
 
       {/* Subtab Navigation */}
-      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-zinc-800 pb-2 text-xs">
+      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-[#344258] pb-2 text-xs">
         <button
           onClick={() => setActiveSubTab('audit')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
@@ -143,7 +143,7 @@ export const SecurityView: React.FC = () => {
       {/* Tab 1: Audit Logs */}
       {activeSubTab === 'audit' && (
         <div className="space-y-4">
-          <div className="p-3 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="p-3 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
             <div className="w-full sm:w-80 relative">
               <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
               <input
@@ -151,7 +151,7 @@ export const SecurityView: React.FC = () => {
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
                 placeholder="جستجوی اقدام‌کننده، IP یا رویداد..."
-                className="w-full pl-3 pr-9 py-1.5 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500"
+                className="w-full pl-3 pr-9 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] placeholder-zinc-400 focus:outline-none focus:border-rose-500"
               />
             </div>
 
@@ -159,7 +159,7 @@ export const SecurityView: React.FC = () => {
               <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
-                className="px-3 py-1.5 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                className="px-3 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 cursor-pointer"
               >
                 <option value="all">تمام سطوح</option>
                 <option value="critical">بحرانی</option>
@@ -169,10 +169,10 @@ export const SecurityView: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 overflow-hidden shadow-xs">
+          <div className="rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-stone-50 dark:bg-[#12141C] border-b border-stone-200 dark:border-zinc-800 text-zinc-500 font-semibold">
+                <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
                   <tr>
                     <th className="py-3 px-4">زمان ثبت</th>
                     <th className="py-3 px-4">کاربر / اقدام‌کننده</th>
@@ -182,13 +182,13 @@ export const SecurityView: React.FC = () => {
                     <th className="py-3 px-4">سطح اهمیت</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
+                <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
                   {filteredLogs.map((log) => {
                     const badge = getSeverityBadge(log.severity);
                     return (
-                      <tr key={log.id} className="hover:bg-stone-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                      <tr key={log.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
                         <td className="py-3 px-4 font-mono text-[11px] text-zinc-500">{log.timestamp}</td>
-                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-zinc-100">{log.actor}</td>
+                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-[#E7ECF5]">{log.actor}</td>
                         <td className="py-3 px-4">{log.action}</td>
                         <td className="py-3 px-4 text-zinc-500">{log.target}</td>
                         <td className="py-3 px-4 font-mono text-[11px]" dir="ltr">{log.ipAddress}</td>
@@ -229,15 +229,15 @@ export const SecurityView: React.FC = () => {
             {sessions.map((sess) => (
               <div
                 key={sess.id}
-                className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex items-center justify-between"
+                className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                  <div className="p-2.5 rounded-xl bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2]">
                     <Laptop className="w-5 h-5" />
                   </div>
                   <div className="text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-zinc-900 dark:text-zinc-100">{sess.userName}</span>
+                      <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{sess.userName}</span>
                       {sess.isCurrent && (
                         <span className="px-1.5 py-0.2 text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-md font-bold">
                           نشست فعلی شما
@@ -268,8 +268,8 @@ export const SecurityView: React.FC = () => {
       {/* Tab 3: Firewall */}
       {activeSubTab === 'firewall' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] mb-1">
               افزودن IP به لیست سیاه فایروال
             </h3>
             <p className="text-xs text-zinc-500 mb-4">
@@ -283,7 +283,7 @@ export const SecurityView: React.FC = () => {
                 value={newBlacklistIp}
                 onChange={(e) => setNewBlacklistIp(e.target.value)}
                 placeholder="192.168.1.100"
-                className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-zinc-100 font-mono"
+                className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-xs text-zinc-900 dark:text-[#E7ECF5] font-mono"
               />
               <button
                 type="submit"
@@ -294,8 +294,8 @@ export const SecurityView: React.FC = () => {
             </form>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-3">
+          <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] mb-3">
               آدرس‌های مسدودشده فعال ({toPersianDigits(securitySettings.ipBlacklist.length)})
             </h3>
 
@@ -303,7 +303,7 @@ export const SecurityView: React.FC = () => {
               {securitySettings.ipBlacklist.map((ip) => (
                 <div
                   key={ip}
-                  className="px-3 py-1.5 rounded-xl bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 text-xs font-mono flex items-center gap-2"
+                  className="px-3 py-1.5 rounded-xl bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] text-xs font-mono flex items-center gap-2"
                 >
                   <span className="text-zinc-800 dark:text-zinc-200" dir="ltr">{ip}</span>
                   <button

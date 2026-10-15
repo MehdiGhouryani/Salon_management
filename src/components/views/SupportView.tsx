@@ -65,11 +65,11 @@ export const SupportView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             مرکز پشتیبانی و تیکت‌های سالن‌ها
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
             رسیدگی به درخواست‌های فنی، مالی و راهنمایی مدیران سالن‌ها
           </p>
         </div>
@@ -78,7 +78,7 @@ export const SupportView: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
           >
             <option value="all">تمام وضعیت‌ها</option>
             <option value="open">تیکت‌های باز</option>
@@ -90,7 +90,7 @@ export const SupportView: React.FC = () => {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
           >
             <option value="all">تمام اولویت‌ها</option>
             <option value="critical">بحرانی</option>
@@ -103,8 +103,8 @@ export const SupportView: React.FC = () => {
       {/* Main Split: Ticket List & Conversation View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ticket List */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs space-y-3">
-          <h3 className="font-bold text-xs text-zinc-700 dark:text-zinc-300 px-1">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs space-y-3">
+          <h3 className="font-bold text-xs text-zinc-700 dark:text-[#9AAAC2] px-1">
             لیست تیکت‌ها ({toPersianDigits(filteredTickets.length)})
           </h3>
 
@@ -120,11 +120,11 @@ export const SupportView: React.FC = () => {
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer text-xs ${
                     isSelected
                       ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/20 shadow-xs'
-                      : 'border-stone-100 dark:border-zinc-800 hover:border-stone-200 dark:hover:border-zinc-700'
+                      : 'border-stone-100 dark:border-[#344258] hover:border-stone-200 dark:hover:border-zinc-700'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{t.subject}</h4>
+                    <h4 className="font-bold text-zinc-900 dark:text-[#E7ECF5] truncate">{t.subject}</h4>
                     <span className={`px-1.5 py-0.2 text-[10px] rounded-md font-semibold border shrink-0 ${prio.color}`}>
                       {prio.label}
                     </span>
@@ -148,12 +148,12 @@ export const SupportView: React.FC = () => {
 
         {/* Selected Ticket Conversation */}
         {selectedTicket ? (
-          <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between">
             <div>
               {/* Ticket Header */}
-              <div className="flex items-start justify-between pb-3 border-b border-stone-100 dark:border-zinc-800">
+              <div className="flex items-start justify-between pb-3 border-b border-stone-100 dark:border-[#344258]">
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{selectedTicket.subject}</h3>
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">{selectedTicket.subject}</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">
                     سالن: {selectedTicket.salonName} · ثبت توسط: {selectedTicket.creatorName}
                   </p>
@@ -187,7 +187,7 @@ export const SupportView: React.FC = () => {
                     className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
                       m.senderRole === 'admin'
                         ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-500/20 text-zinc-800 dark:text-zinc-200 mr-auto'
-                        : 'bg-stone-50 dark:bg-[#12141C] border border-stone-200/80 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 ml-auto'
+                        : 'bg-stone-50 dark:bg-[#111B2E] border border-stone-200/80 dark:border-[#344258] text-zinc-800 dark:text-zinc-200 ml-auto'
                     }`}
                   >
                     <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1">
@@ -201,13 +201,13 @@ export const SupportView: React.FC = () => {
             </div>
 
             {/* Quick Canned Responses & Reply Form */}
-            <div className="pt-3 border-t border-stone-100 dark:border-zinc-800 space-y-2.5">
+            <div className="pt-3 border-t border-stone-100 dark:border-[#344258] space-y-2.5">
               <div className="flex flex-wrap gap-1.5">
                 {CANNED_RESPONSES.map((res, idx) => (
                   <button
                     key={idx}
                     onClick={() => setReplyText(res)}
-                    className="px-2 py-0.5 text-[10px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-stone-200 cursor-pointer"
+                    className="px-2 py-0.5 text-[10px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2] rounded-lg hover:bg-stone-200 cursor-pointer"
                   >
                     {res.slice(0, 30)}...
                   </button>
@@ -220,7 +220,7 @@ export const SupportView: React.FC = () => {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="پاسخ به تیکت سالن..."
-                  className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
+                  className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-xs text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                 />
                 <button
                   type="submit"
@@ -233,7 +233,7 @@ export const SupportView: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="lg:col-span-2 p-12 text-center text-zinc-400 bg-white dark:bg-[#181B24] rounded-2xl border border-stone-200 dark:border-zinc-800">
+          <div className="lg:col-span-2 p-12 text-center text-zinc-400 bg-white dark:bg-[#18243A] rounded-2xl border border-stone-200 dark:border-[#344258]">
             لطفاً یک تیکت را از لیست انتخاب کنید.
           </div>
         )}

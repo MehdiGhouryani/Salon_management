@@ -78,11 +78,11 @@ export const MessagesView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             مرکز پیامک و دیسپچ نوبت‌ها
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
             پایش لحظه‌ای پیامک‌های نوبت‌دهی، الگوهای خدماتی و رفع خطای ارسال
           </p>
         </div>
@@ -90,7 +90,7 @@ export const MessagesView: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsBroadcastModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-xl transition-colors cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-[#9AAAC2] bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-xl transition-colors cursor-pointer shadow-xs"
           >
             <Send className="w-3.5 h-3.5" />
             <span>پیامک همگانی</span>
@@ -110,7 +110,7 @@ export const MessagesView: React.FC = () => {
 
       {/* KPI Stats Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <span className="text-zinc-500 block mb-1">پیامک‌های تحویل‌شده</span>
           <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             {toPersianDigits(deliveredCount)} عدد
@@ -118,7 +118,7 @@ export const MessagesView: React.FC = () => {
           <p className="text-[11px] text-zinc-400 mt-1">نرخ تحویل ۹۸.۷٪ در شبکه مخابرات</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <span className="text-zinc-500 block mb-1">ناموفق / بلک‌لیست</span>
           <span className={`text-xl font-bold tabular-nums ${failedCount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-400'}`}>
             {toPersianDigits(failedCount)} عدد
@@ -126,7 +126,7 @@ export const MessagesView: React.FC = () => {
           <p className="text-[11px] text-zinc-400 mt-1">آماده ارسال مجدد با خط اشتراکی</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <span className="text-zinc-500 block mb-1">در صف دیسپچ</span>
           <span className="text-xl font-bold text-sky-600 dark:text-sky-400 tabular-nums">
             {toPersianDigits(queuedCount)} عدد
@@ -134,9 +134,9 @@ export const MessagesView: React.FC = () => {
           <p className="text-[11px] text-zinc-400 mt-1">سرعت: ۵۰ پیام در ثانیه</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
           <span className="text-zinc-500 block mb-1">درگاه اصلی</span>
-          <span className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <span className="text-xl font-bold text-zinc-900 dark:text-[#E7ECF5]">
             کاوه‌نگار خدماتی
           </span>
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">سرویس فعال و پایدار</p>
@@ -144,7 +144,7 @@ export const MessagesView: React.FC = () => {
       </div>
 
       {/* Subtab Toggle (Queue vs Templates) */}
-      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-zinc-800 pb-2 text-xs">
+      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-[#344258] pb-2 text-xs">
         <button
           onClick={() => setActiveSubTab('queue')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
@@ -173,7 +173,7 @@ export const MessagesView: React.FC = () => {
       {activeSubTab === 'queue' ? (
         <div className="space-y-4">
           {/* Search & Filter */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-xs text-xs">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-xs text-xs">
             <div className="relative w-full sm:w-80">
               <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
               <input
@@ -181,7 +181,7 @@ export const MessagesView: React.FC = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="جستجوی شماره، متن یا سالن..."
-                className="w-full pl-3 pr-9 py-1.5 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-rose-500"
+                className="w-full pl-3 pr-9 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] placeholder-zinc-400 focus:outline-none focus:border-rose-500"
               />
             </div>
 
@@ -193,7 +193,7 @@ export const MessagesView: React.FC = () => {
                   className={`px-3 py-1 rounded-lg transition-colors cursor-pointer text-xs ${
                     filterStatus === st
                       ? 'bg-rose-600 text-white font-bold'
-                      : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-800'
+                      : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-[#18243A]'
                   }`}
                 >
                   {st === 'all' ? 'همه' : st === 'delivered' ? 'تحویل شده' : st === 'failed' ? 'ناموفق' : 'در صف'}
@@ -203,10 +203,10 @@ export const MessagesView: React.FC = () => {
           </div>
 
           {/* Messages List / Table */}
-          <div className="rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 overflow-hidden shadow-xs">
+          <div className="rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-stone-50 dark:bg-[#12141C] border-b border-stone-200 dark:border-zinc-800 text-zinc-500 font-semibold">
+                <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
                   <tr>
                     <th className="py-3 px-4">گیرنده و سالن</th>
                     <th className="py-3 px-4">متن پیامک</th>
@@ -215,19 +215,19 @@ export const MessagesView: React.FC = () => {
                     <th className="py-3 px-4 text-center">عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
+                <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
                   {filteredMessages.map((msg) => {
                     const badge = getStatusBadge(msg.status);
                     return (
-                      <tr key={msg.id} className="hover:bg-stone-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                      <tr key={msg.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
                         <td className="py-3 px-4">
-                          <span className="font-mono block font-semibold text-zinc-900 dark:text-zinc-100" dir="ltr">
+                          <span className="font-mono block font-semibold text-zinc-900 dark:text-[#E7ECF5]" dir="ltr">
                             {maskPhone(msg.recipientPhone)}
                           </span>
                           <span className="text-[11px] text-zinc-500 block">{msg.salonName}</span>
                         </td>
                         <td className="py-3 px-4 max-w-md">
-                          <p className="leading-relaxed text-zinc-700 dark:text-zinc-300 line-clamp-2">{msg.text}</p>
+                          <p className="leading-relaxed text-zinc-700 dark:text-[#9AAAC2] line-clamp-2">{msg.text}</p>
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
@@ -259,25 +259,25 @@ export const MessagesView: React.FC = () => {
           {templates.map((tpl) => (
             <div
               key={tpl.id}
-              className="p-5 rounded-2xl bg-white dark:bg-[#181B24] border border-stone-200/90 dark:border-zinc-800 shadow-xs flex flex-col justify-between"
+              className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">{tpl.title}</h4>
+                  <h4 className="font-bold text-zinc-900 dark:text-[#E7ECF5] text-sm">{tpl.title}</h4>
                   <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${tpl.enabled ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600' : 'bg-stone-100 text-zinc-500'}`}>
                     {tpl.enabled ? 'فعال' : 'غیرفعال'}
                   </span>
                 </div>
 
-                <div className="p-3 bg-stone-50 dark:bg-[#12141C] rounded-xl border border-stone-100 dark:border-zinc-800/80 my-3 text-xs font-mono text-zinc-700 dark:text-zinc-300 leading-relaxed" dir="rtl">
+                <div className="p-3 bg-stone-50 dark:bg-[#111B2E] rounded-xl border border-stone-100 dark:border-[#344258]/80 my-3 text-xs font-mono text-zinc-700 dark:text-[#9AAAC2] leading-relaxed" dir="rtl">
                   {tpl.pattern}
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-stone-100 dark:border-zinc-800 flex justify-end">
+              <div className="pt-3 border-t border-stone-100 dark:border-[#344258] flex justify-end">
                 <button
                   onClick={() => openTemplateEdit(tpl)}
-                  className="px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl cursor-pointer"
                 >
                   ویرایش الگو
                 </button>
@@ -292,9 +292,9 @@ export const MessagesView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="fixed inset-0" onClick={() => setIsBroadcastModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-md bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">ارسال پیامک همگانی</h3>
+          <div className="relative w-full max-w-md bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">ارسال پیامک همگانی</h3>
               <button onClick={() => setIsBroadcastModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-700">
                 <X className="w-4 h-4" />
               </button>
@@ -302,32 +302,32 @@ export const MessagesView: React.FC = () => {
 
             <form onSubmit={handleSendBroadcast} className="space-y-3 text-xs">
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1">فرستنده</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">فرستنده</label>
                 <input
                   type="text"
                   value={broadcastSalonName}
                   onChange={(e) => setBroadcastSalonName(e.target.value)}
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5]"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1">متن پیامک</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">متن پیامک</label>
                 <textarea
                   required
                   rows={4}
                   value={broadcastText}
                   onChange={(e) => setBroadcastText(e.target.value)}
                   placeholder="متن اطلاع‌رسانی به سالن‌ها و مشتریان..."
-                  className="w-full p-3 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-rose-500"
+                  className="w-full p-3 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-zinc-800">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-[#344258]">
                 <button
                   type="button"
                   onClick={() => setIsBroadcastModalOpen(false)}
-                  className="px-4 py-2 text-zinc-600 dark:text-zinc-400 bg-stone-100 dark:bg-zinc-800 rounded-xl"
+                  className="px-4 py-2 text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
                 >
                   انصراف
                 </button>
@@ -348,9 +348,9 @@ export const MessagesView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
           <div className="fixed inset-0" onClick={() => setEditingTemplate(null)}></div>
 
-          <div className="relative w-full max-w-md bg-white dark:bg-[#181B24] border border-stone-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-zinc-800">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">ویرایش الگوی پیامک</h3>
+          <div className="relative w-full max-w-md bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">ویرایش الگوی پیامک</h3>
               <button onClick={() => setEditingTemplate(null)} className="p-1 text-zinc-400 hover:text-zinc-700">
                 <X className="w-4 h-4" />
               </button>
@@ -358,12 +358,12 @@ export const MessagesView: React.FC = () => {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-zinc-600 dark:text-zinc-400 mb-1">متن الگو و متغیرها</label>
+                <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">متن الگو و متغیرها</label>
                 <textarea
                   rows={4}
                   value={templatePattern}
                   onChange={(e) => setTemplatePattern(e.target.value)}
-                  className="w-full p-3 bg-stone-50 dark:bg-[#12141C] border border-stone-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 font-mono"
+                  className="w-full p-3 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono"
                 />
               </div>
 
@@ -375,16 +375,16 @@ export const MessagesView: React.FC = () => {
                   onChange={(e) => setTemplateEnabled(e.target.checked)}
                   className="rounded text-rose-600"
                 />
-                <label htmlFor="tpl-enable" className="text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                <label htmlFor="tpl-enable" className="text-zinc-700 dark:text-[#9AAAC2] cursor-pointer">
                   فعال بودن ارسال خودکار این الگو
                 </label>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-[#344258]">
               <button
                 onClick={() => setEditingTemplate(null)}
-                className="px-4 py-2 text-zinc-600 dark:text-zinc-400 bg-stone-100 dark:bg-zinc-800 rounded-xl"
+                className="px-4 py-2 text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
               >
                 انصراف
               </button>

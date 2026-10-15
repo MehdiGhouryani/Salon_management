@@ -3,41 +3,102 @@
 /* Enable class-based dark mode in Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-subsurface: var(--bg-subsurface);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-text-main: var(--text-primary);
+  --color-text-muted: var(--text-secondary);
+  --color-brand: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
+}
+
 @layer base {
   :root {
-    --app-canvas: #F4F4F5;
-    --app-surface: #FFFFFF;
-    --app-subsurface: #ECEEF2;
-    --app-border: #E4E4E7;
-    --app-text-main: #0F172A;
-    --app-text-muted: #64748B;
-    --app-primary: #E11D48;
+    --bg-canvas: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-elevated: #F1F5F9;
+    --bg-subsurface: #F8FAFC;
+    --border-subtle: #E2E8F0;
+    --border-strong: #CBD5E1;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    
+    --brand-primary: #E11D48;
+    --brand-accent: #F43F7A;
+    --brand-subdued: rgba(225, 29, 72, 0.08);
+    --brand-border: rgba(225, 29, 72, 0.25);
+
+    --status-success: #059669;
+    --status-success-bg: rgba(5, 150, 105, 0.08);
+    --status-success-border: rgba(5, 150, 105, 0.25);
+
+    --status-warning: #D97706;
+    --status-warning-bg: rgba(217, 119, 6, 0.08);
+    --status-warning-border: rgba(217, 119, 6, 0.25);
+
+    --status-error: #E11D48;
+    --status-error-bg: rgba(225, 29, 72, 0.08);
+    --status-error-border: rgba(225, 29, 72, 0.25);
+
+    --status-info: #0284C7;
+    --status-info-bg: rgba(2, 132, 199, 0.08);
+    --status-info-border: rgba(2, 132, 199, 0.25);
+
     color-scheme: light;
   }
 
   html.dark,
   [data-theme="dark"] {
-    --app-canvas: #0A0F1D;
-    --app-surface: #0F172A;
-    --app-subsurface: #151F32;
-    --app-border: #1E293B;
-    --app-text-main: #F8FAFC;
-    --app-text-muted: #94A3B8;
-    --app-primary: #F43F5E;
+    --bg-canvas: #0B1120;
+    --bg-surface: #111B2E;
+    --bg-elevated: #18243A;
+    --bg-subsurface: #0D1527;
+    --border-subtle: #344258;
+    --border-strong: #4A5D7C;
+    --text-primary: #E7ECF5;
+    --text-secondary: #9AAAC2;
+    --text-muted: #6B7D99;
+
+    --brand-primary: #F43F7A;
+    --brand-accent: #FB7185;
+    --brand-subdued: rgba(244, 63, 122, 0.12);
+    --brand-border: rgba(244, 63, 122, 0.3);
+
+    --status-success: #34D399;
+    --status-success-bg: rgba(52, 211, 153, 0.12);
+    --status-success-border: rgba(52, 211, 153, 0.3);
+
+    --status-warning: #FBBF24;
+    --status-warning-bg: rgba(251, 191, 36, 0.12);
+    --status-warning-border: rgba(251, 191, 36, 0.3);
+
+    --status-error: #FB7185;
+    --status-error-bg: rgba(251, 113, 133, 0.12);
+    --status-error-border: rgba(251, 113, 133, 0.3);
+
+    --status-info: #38BDF8;
+    --status-info-bg: rgba(56, 189, 248, 0.12);
+    --status-info-border: rgba(56, 189, 248, 0.3);
+
     color-scheme: dark;
   }
 
   body {
     font-family: 'Vazirmatn', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: var(--app-canvas);
-    color: var(--app-text-main);
-    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     min-height: 100vh;
   }
 
   html.dark body {
-    background-color: var(--app-canvas);
-    color: var(--app-text-main);
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
   }
   
   [dir="rtl"] {
@@ -46,23 +107,36 @@
   }
 }
 
-/* Global utility classes for explicit canvas & soft platinum card differentiation */
-.app-canvas {
-  background-color: #F4F4F5;
-}
-html.dark .app-canvas {
-  background-color: #0A0F1D;
+/* Global utility classes for centralized semantic styling */
+.nobat-canvas {
+  background-color: var(--bg-canvas);
 }
 
-.app-card {
-  background-color: #FFFFFF;
-  border: 1px solid #E4E4E7;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 3px 8px -1px rgba(0, 0, 0, 0.05);
+.nobat-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
-html.dark .app-card {
-  background-color: #0F172A;
-  border-color: #1E293B;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.25);
+
+.nobat-card-elevated {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.nobat-input {
+  background-color: var(--bg-subsurface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.nobat-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+/* Tabular numerals standard */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Smooth customized scrollbars */
@@ -82,12 +156,14 @@ html.dark .app-card {
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(244, 63, 94, 0.35);
+  background: rgba(244, 63, 122, 0.35);
 }
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(244, 63, 94, 0.55);
+  background: rgba(244, 63, 122, 0.55);
 }
 
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
+/* Focus visible styling */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
