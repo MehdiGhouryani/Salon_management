@@ -134,6 +134,7 @@ export interface AuditLog {
   severity: AuditSeverity;
   category: 'auth' | 'privilege' | 'business' | 'financial' | 'system';
   details: string;
+  isDemo?: boolean;
 }
 
 export interface ActiveSession {
@@ -148,6 +149,7 @@ export interface ActiveSession {
   startedAt: string;
   lastActive: string;
   isCurrent: boolean;
+  isDemo?: boolean;
 }
 
 export interface SystemMetrics {
@@ -189,4 +191,5 @@ export interface CustomerBooking {
   createdAt: string;
   status: 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
+  isDemo?: boolean;
 }

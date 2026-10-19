@@ -75,13 +75,13 @@ export const SalonWebsiteView: React.FC = () => {
   const [activeReceiptBooking, setActiveReceiptBooking] = useState<CustomerBooking | null>(null);
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
 
-  // Active bookings count for logged in customer
+  // Active bookings count: Only for the authenticated customer
   const clientBookingsCount = useMemo(() => {
-    if (!clientSession.isLoggedIn) {
-      return customerBookings.filter((b) => b.salonId === currentSalon.id).length;
+    if (!clientSession.isLoggedIn || !clientSession.phone) {
+      return 0;
     }
     return customerBookings.filter((b) => b.clientPhone === clientSession.phone).length;
-  }, [customerBookings, clientSession, currentSalon]);
+  }, [customerBookings, clientSession]);
 
   // Services filtered for current salon
   const filteredServices = useMemo(() => {

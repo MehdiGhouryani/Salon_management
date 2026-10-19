@@ -36,7 +36,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onBookingSuccess,
   initialServiceId,
 }) => {
-  const { clientSession, setClientSession, addToast } = useAdmin();
+  const { isDemoMode, clientSession, setClientSession, addToast } = useAdmin();
 
   if (!isOpen) return null;
 
@@ -78,7 +78,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     clientSession.isLoggedIn ? 'verified' : 'input_phone'
   );
   const [otpCode, setOtpCode] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('4821');
+  const [generatedOtp, setGeneratedOtp] = useState('');
   const [otpTimer, setOtpTimer] = useState(60);
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -151,6 +151,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       return;
     }
 
+    if (!isDemoMode) {
+      setErrorMsg('سرویس ارسال پیامک در نسخه عملیاتی هنوز متصل نشده است (در انتظار فاز ۱۰). امکان ارسال واقعی پیامک در این مرحله وجود ندارد.');
+      return;
+    }
+
+    // In demo mode: Clearly labeled local simulation
     const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
     setGeneratedOtp(randomCode);
     setOtpTimer(60);
@@ -159,16 +165,22 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     addToast({
       type: 'info',
-      title: 'پیامک ارسال شد',
-      message: `کد تایید پیامکی: ${randomCode}`,
+      title: '[شبیه‌ساز پیش‌نمایش دمو] تولید کد آزمایشی',
+      message: `توجه: هیچ پیامکی به مخابرات ارسال نشد. کد شبیه‌سازی برای تست: ${randomCode}`,
     });
   };
 
   // Verify OTP
   const handleVerifyOtp = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (otpCode !== generatedOtp && otpCode !== '1234') {
-      setErrorMsg('کد تایید اشتباه است. مجدداً بررسی فرمایید.');
+    if (!isDemoMode) {
+      setErrorMsg('احراز هویت سرور در این فاز پیکربندی نشده است.');
+      return;
+    }
+
+    // Strict check against simulated code only; no hardcoded bypass 1234
+    if (!generatedOtp || otpCode.trim() !== generatedOtp) {
+      setErrorMsg('کد وارد شده صحیح نمی‌باشد. لطفاً کد ۴ رقمی شبیه‌سازی شده را وارد فرمایید.');
       return;
     }
 
@@ -178,19 +190,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       isLoggedIn: true,
       phone: clientPhone,
       name: clientName,
+      verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
     });
 
     addToast({
-      type: 'success',
-      title: 'شماره شما تایید شد',
-      message: `${clientName} عزیز، خوش آمدید.`,
+      type: 'info',
+      title: '[شبیه‌سازی دمو] نشست آزمایشی فعال شد',
+      message: `${clientName} عزیز، ورود آزمایشی شما در مرورگر ثبت شد.`,
     });
   };
 
   // Final booking confirmation
   const handleFinalConfirm = () => {
     if (otpStage !== 'verified') {
-      setErrorMsg('لطفاً ابتدا شماره موبایل خود را تایید کنید');
+      setErrorMsg('لطفاً ابتدا مرحله شماره موبایل را تکمیل فرمایید.');
+      return;
+    }
+
+    if (!isDemoMode) {
+      setErrorMsg('ثبت قطعی نوبت در نسخه عملیاتی نیازمند اتصال پایگاه‌داده در فاز ۳ تا ۵ است.');
       return;
     }
 
@@ -215,6 +233,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       createdAt: 'هم‌اکنون',
       status: 'confirmed',
       notes: notes.trim() || undefined,
+      isDemo: true,
     };
 
     onBookingSuccess(newBooking);
@@ -487,10 +506,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                   {otpStage === 'input_code' && (
                     <form onSubmit={handleVerifyOtp} className="space-y-3">
-                      <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-xs text-amber-800 dark:text-amber-300">
-                        کد تایید به شماره {clientPhone} ارسال شد.
-                        <div className="font-mono font-bold mt-1 text-sm text-rose-600 dark:text-rose-400">
-                          کد پیامک شده: {generatedOtp}
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 rounded-xl text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                        <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <span>شبیه‌ساز پیش‌نمایش کد تایید (حالت آزمایشی دمو)</span>
+                        </div>
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300/80 leading-relaxed">
+                          در این فاز هیچ پیامک مخابراتی واقعی ارسال نمی‌شود. جهت تست ادامه فرآیند، از کد شبیه‌سازی زیر استفاده نمایید:
+                        </p>
+                        <div className="font-mono font-bold pt-1 text-sm text-rose-600 dark:text-rose-400">
+                          کد شبیه‌سازی تست: {generatedOtp}
                         </div>
                       </div>
 

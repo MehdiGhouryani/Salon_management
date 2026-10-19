@@ -46,6 +46,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
   onOpenReceipt,
 }) => {
   const {
+    isDemoMode,
     salons,
     setCurrentSalonSlug,
     clientSession,
@@ -70,14 +71,11 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  // Filter bookings for current logged-in client or current salon
-  const relevantBookings = customerBookings.filter((b) => {
-    return (
-      (clientSession.isLoggedIn && b.clientPhone === clientSession.phone) ||
-      b.salonId === currentSalon.id ||
-      b.salonName.includes(currentSalon.name)
-    );
-  });
+  // PRIVACY FIX (Phase 2): Strictly show bookings belonging ONLY to the verified logged-in client.
+  // NEVER fall back to exposing all bookings of the salon to unauthenticated visitors!
+  const relevantBookings = (clientSession.isLoggedIn && clientSession.phone)
+    ? customerBookings.filter((b) => b.clientPhone === clientSession.phone)
+    : [];
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,17 +88,26 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
       return;
     }
 
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ورود مستقیم بدون احراز هویت پیامکی مسدود است',
+        message: 'در نسخه عملیاتی، ورود با کد تایید پیامکی از طریق سرور انجام خواهد شد.',
+      });
+      return;
+    }
+
     setClientSession({
       isLoggedIn: true,
       phone: inputPhone.trim(),
-      name: inputName.trim() || 'کاربر گرامی',
-      verifiedAt: 'هم‌اکنون',
+      name: inputName.trim() || 'کاربر آزمایشی',
+      verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
     });
 
     addToast({
-      type: 'success',
-      title: 'ورود موفقیت‌آمیز بود',
-      message: `خوش آمدید، ${inputName.trim() || 'کاربر گرامی'}`,
+      type: 'info',
+      title: '[شبیه‌سازی دمو] ورود به پیش‌نمایش آزمایشی',
+      message: `خوش آمدید، ${inputName.trim() || 'کاربر آزمایشی'} (این یک نشست محلی شبیه‌سازی شده است).`,
     });
   };
 
@@ -382,11 +389,19 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                             {!isCancelled && !isCompleted && (
                               <button
                                 onClick={() => {
+                                  if (!isDemoMode) {
+                                    addToast({
+                                      type: 'error',
+                                      title: 'لغو نوبت در محیط عملیاتی مسدود است',
+                                      message: 'لغو نوبت نیازمند احراز هویت پیامکی در فاز ۵ است.',
+                                    });
+                                    return;
+                                  }
                                   cancelCustomerBooking(b.id);
                                   addToast({
-                                    type: 'warning',
-                                    title: 'نوبت لغو شد',
-                                    message: `نوبت ${b.serviceName} با موفقیت لغو شد.`,
+                                    type: 'info',
+                                    title: '[شبیه‌سازی دمو] نوبت لغو شد',
+                                    message: `نوبت ${b.serviceName} در حافظه موقت لغو شد.`,
                                   });
                                 }}
                                 className="text-[11px] text-rose-500 hover:text-rose-700 cursor-pointer"
@@ -472,17 +487,25 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
         <div className="p-3 border-t border-slate-200 dark:border-[#344258] bg-slate-50/70 dark:bg-[#0B1120]/70 flex items-center justify-between text-[11px] text-slate-500">
           <button
             onClick={() => {
+              if (!isDemoMode) {
+                addToast({
+                  type: 'error',
+                  title: 'دسترسی مسدود است',
+                  message: 'ورود به اپلیکیشن سالن نیازمند احراز هویت است و دسترسی مستقیم عمومی در نسخه عملیاتی غیرفعال است.',
+                });
+                return;
+              }
               onClose();
               setPersona('salon_app');
             }}
             className="flex items-center gap-1.5 text-slate-600 dark:text-[#9AAAC2] hover:text-rose-600 dark:hover:text-rose-400 font-medium cursor-pointer"
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span>ورود به اپلیکیشن مدیر سالن</span>
+            <span>{isDemoMode ? '[پیش‌نمایش دمو] ورود به اپلیکیشن سالن' : 'ورود مدیر سالن (نیازمند احراز هویت)'}</span>
           </button>
 
           <span className="font-mono text-slate-400 text-[10px]">
-            سامانه نوبت‌آرا
+            {isDemoMode ? 'سامانه نوبت‌آرا (نسخه آزمایشی)' : 'سامانه نوبت‌آرا'}
           </span>
         </div>
       </div>

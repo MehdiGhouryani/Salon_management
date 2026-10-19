@@ -26,23 +26,45 @@ export const MyBookingsDrawer: React.FC<MyBookingsDrawerProps> = ({
   onClose,
   onOpenReceipt,
 }) => {
-  const { customerBookings, cancelCustomerBooking } = useAdmin();
+  const { isDemoMode, clientSession, customerBookings, cancelCustomerBooking, addToast } = useAdmin();
   const [filterPhone, setFilterPhone] = useState('');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
+  // PRIVACY FIX (Phase 2): Never return all bookings when input is empty!
+  // Only return bookings if client is logged in and phone matches, OR if user specifically searches their phone/tracking code.
   const filteredBookings = customerBookings.filter((b) => {
-    if (!filterPhone.trim()) return true;
-    return (
-      b.clientPhone.includes(filterPhone.trim()) ||
-      b.trackingCode.toLowerCase().includes(filterPhone.toLowerCase())
-    );
+    const q = filterPhone.trim().toLowerCase();
+    if (q) {
+      return (
+        b.clientPhone.replace(/\s+/g, '').includes(q) ||
+        b.trackingCode.toLowerCase().includes(q)
+      );
+    }
+    // If logged in, show their own bookings
+    if (clientSession.isLoggedIn && clientSession.phone) {
+      return b.clientPhone === clientSession.phone;
+    }
+    // If unauthenticated and no search term, return NOTHING
+    return false;
   });
 
   const handleCancelClick = (id: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'لغو نوبت در محیط عملیاتی مسدود است',
+        message: 'در نسخه عملیاتی، لغو نوبت منوط به احراز هویت پیامکی در فاز ۵ است.',
+      });
+      return;
+    }
     cancelCustomerBooking(id);
     setCancellingId(null);
+    addToast({
+      type: 'info',
+      title: '[شبیه‌سازی دمو] نوبت در حافظه موقت لغو شد',
+    });
   };
 
   return (
@@ -87,7 +109,10 @@ export const MyBookingsDrawer: React.FC<MyBookingsDrawerProps> = ({
           {filteredBookings.length === 0 ? (
             <div className="py-12 text-center text-slate-400 space-y-2">
               <Calendar className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 stroke-1" />
-              <p className="text-xs">هیچ نوبتی ثبت نشده است</p>
+              <p className="text-xs font-bold text-slate-600 dark:text-[#9AAAC2]">نوبتی برای نمایش یافت نشد</p>
+              <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                جهت حفظ حریم خصوصی مراجعین، لطفاً شماره موبایل یا کد رهگیری نوبت خود را در کادر بالا وارد فرمایید.
+              </p>
             </div>
           ) : (
             filteredBookings.map((b) => {
@@ -107,6 +132,11 @@ export const MyBookingsDrawer: React.FC<MyBookingsDrawerProps> = ({
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold">
                         {toPersianDigits(b.trackingCode)}
                       </span>
+                      {b.isDemo && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold">
+                          نمونه دمو
+                        </span>
+                      )}
                     </div>
 
                     {isCancelled ? (

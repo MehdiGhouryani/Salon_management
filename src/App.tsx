@@ -201,9 +201,9 @@ const AdminLayout: React.FC = () => {
 
               {/* Quick Persona Indicators */}
               <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 dark:text-[#9AAAC2] pl-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] text-[11px] font-medium text-slate-700 dark:text-[#E7ECF5]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#34D399]"></span>
-                  شبکه نوبت‌آرا فعال
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  پیش‌نمایش آزمایشی (داده‌های سنتتیک دمو)
                 </span>
               </div>
             </div>
@@ -321,11 +321,46 @@ const AdminLayout: React.FC = () => {
 };
 
 const MainSwitcher: React.FC = () => {
-  const { persona, setPersona } = useAdmin();
+  const { persona, setPersona, isDemoMode, toggleDemoModeSimulation } = useAdmin();
   const [mobilePersonaOpen, setMobilePersonaOpen] = useState(false);
   const [isPillCollapsed, setIsPillCollapsed] = useState(true);
 
   const renderContent = () => {
+    // SECURITY BARRIER (Phase 2): Block unauthenticated client-side admin access in production mode
+    if (persona === 'super_admin' && !isDemoMode) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
+          <div className="max-w-md w-full bg-[#111B2E] border border-rose-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-white">دسترسی مسدود است</h2>
+              <p className="text-xs text-rose-300 font-semibold">احراز هویت سرور برای پنل مدیریت کل پیکربندی نشده است</p>
+              <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                در محیط عملیاتی (Production)، جابجایی کلاینت‌ساید به عنوان احراز هویت پذیرفته نمی‌شود. دسترسی به پنل مدیریت کل مستلزم ورود ایمن از طریق کوکی‌های HttpOnly، توکن‌های معتبر و کنترل دسترسی بر مبنای نقش (RBAC) در سطح سرور است (برنامه‌ریزی شده در فاز ۳ تا ۵).
+              </p>
+            </div>
+
+            <div className="pt-2 flex flex-col gap-2.5">
+              <button
+                onClick={() => setPersona('salon_website')}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+              >
+                بازگشت به وب‌سایت سالن (رزرو مشتریان)
+              </button>
+              <button
+                onClick={toggleDemoModeSimulation}
+                className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer"
+              >
+                تغییر به حالت پیش‌نمایش آزمایشی (Demo Mode)
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     switch (persona) {
       case 'salon_website':
         return <SalonWebsiteView />;
@@ -365,9 +400,44 @@ const MainSwitcher: React.FC = () => {
 
   return (
     <div className="relative min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-[#E7ECF5] transition-colors duration-200">
+      {/* Top Governance / Security Environment Mode Indicator */}
+      <div
+        className={`px-3 py-1.5 text-[11px] flex items-center justify-between border-b transition-colors select-none ${
+          isDemoMode
+            ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-300'
+            : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-300'
+        }`}
+        dir="rtl"
+      >
+        <div className="flex items-center gap-2 truncate">
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              isDemoMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+            }`}
+          />
+          <span className="truncate">
+            {isDemoMode ? (
+              <span>
+                <strong>حالت پیش‌نمایش آزمایشی (Demo Mode):</strong> داده‌ها و عملیات جنبه شبیه‌سازی محلی دارند و سوئیچر نقش‌ها فقط ابزار تست است.
+              </span>
+            ) : (
+              <span>
+                <strong>شبیه‌سازی محیط عملیاتی (Production Mode):</strong> احراز هویت کلاینت‌ساید مسدود بوده و دسترسی به ادمین نیازمند سرور است.
+              </span>
+            )}
+          </span>
+        </div>
+        <button
+          onClick={toggleDemoModeSimulation}
+          className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/80 dark:bg-[#18243A] border border-slate-300 dark:border-[#344258] hover:bg-slate-100 dark:hover:bg-[#1f2f4c] transition-colors cursor-pointer shrink-0 ml-2 shadow-2xs"
+        >
+          {isDemoMode ? 'تست رفتار در حالت عملیاتی' : 'بازگشت به حالت دمو'}
+        </button>
+      </div>
+
       {renderContent()}
 
-      {/* MOBILE COLLAPSIBLE FLOATING BUTTON (Small non-intrusive button that never overlaps booking button) */}
+      {/* MOBILE COLLAPSIBLE FLOATING BUTTON */}
       <div className="sm:hidden fixed bottom-16 left-3.5 z-40">
         {isPillCollapsed ? (
           <button
@@ -477,6 +547,11 @@ const MainSwitcher: React.FC = () => {
                 <span className="flex items-center gap-2">
                   <Shield className="w-4 h-4" />
                   <span>پنل مدیریت و نظارت کل</span>
+                  {!isDemoMode && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      مسدود
+                    </span>
+                  )}
                 </span>
                 {persona === 'super_admin' && <Check className="w-4 h-4" />}
               </button>
@@ -529,10 +604,15 @@ const MainSwitcher: React.FC = () => {
                 ? 'bg-rose-50 dark:bg-[#F43F7A]/20 text-[#E11D48] dark:text-[#FB7185] border border-rose-200 dark:border-[#F43F7A]/40 shadow-xs'
                 : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A]'
             }`}
-            title="پنل مدیریت کل پلتفرم"
+            title={!isDemoMode ? 'پنل مدیریت کل (مسدود در محیط بدون سرور)' : 'پنل مدیریت کل پلتفرم (پیش‌نمایش آزمایشی)'}
           >
             <Shield className="w-3.5 h-3.5" />
             <span>پنل مدیریت کل</span>
+            {!isDemoMode && (
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold">
+                مسدود
+              </span>
+            )}
           </button>
 
           <div className="w-px h-5 bg-slate-200 dark:border-[#344258] mx-1" />

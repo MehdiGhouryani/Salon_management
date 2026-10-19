@@ -54,6 +54,7 @@ import { SalonQrModal } from '../common/SalonQrModal';
 
 export const SalonAppView: React.FC = () => {
   const {
+    isDemoMode,
     salons,
     currentSalonSlug,
     setCurrentSalonSlug,
@@ -211,6 +212,15 @@ export const SalonAppView: React.FC = () => {
       return;
     }
 
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ثبت در نسخه عملیاتی مسدود است',
+        message: 'در محیط عملیاتی، ثبت نوبت منوط به اتصال پایگاه‌داده و سرور در فاز ۳ تا ۵ است.',
+      });
+      return;
+    }
+
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const trackingPrefix = currentSalon.slug ? currentSalon.slug.slice(0, 3).toUpperCase() : 'ARA';
 
@@ -230,6 +240,8 @@ export const SalonAppView: React.FC = () => {
       paymentMethod: 'in_person',
       createdAt: 'هم‌اکنون',
       status: 'confirmed',
+      isDemo: true,
+      notes: 'ثبت دستی در حافظه آزمایشی',
     });
 
     setManualClientName('');
@@ -237,8 +249,8 @@ export const SalonAppView: React.FC = () => {
     setNewBookingSheetOpen(false);
 
     addToast({
-      type: 'success',
-      title: 'نوبت جدید ثبت شد',
+      type: 'info',
+      title: '[شبیه‌سازی دمو] نوبت جدید در حافظه مرورگر ثبت شد',
       message: `${manualClientName.trim()} · ساعت ${manualTime}`,
     });
   };
@@ -255,6 +267,14 @@ export const SalonAppView: React.FC = () => {
   // Save changes to existing booking from bottom sheet
   const handleSaveBookingChanges = () => {
     if (!selectedBookingForSheet) return;
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ویرایش نوبت در محیط عملیاتی مسدود است',
+        message: 'پایدارسازی تغییرات نوبت در فاز ۴ با پایگاه‌داده انجام خواهد شد.',
+      });
+      return;
+    }
     updateCustomerBooking(selectedBookingForSheet.id, {
       time: editBookingTime,
       staffName: editBookingStaff,
@@ -271,27 +291,47 @@ export const SalonAppView: React.FC = () => {
         : null
     );
     setIsEditingTimeMode(false);
+    addToast({
+      type: 'info',
+      title: '[شبیه‌سازی دمو] تغییرات نوبت در حافظه کلاینت ثبت شد',
+    });
   };
 
   const handleSendClientSms = (phone: string, clientName: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'سرویس پیامک در سرور متصل نیست',
+        message: 'ارسال پیامک واقعی نیازمند اتصال وب‌سرویس پیامک در فاز ۱۰ است.',
+      });
+      return;
+    }
     addToast({
       type: 'info',
-      title: 'پیامک تایید به مشتری صادر شد',
-      message: `اطلاعیه نوبت به ${phone} (${clientName}) تحویل داده شد.`,
+      title: '[شبیه‌سازی دمو] ثبت درخواست پیامک در حافظه آزمایشی',
+      message: `توجه: هیچ پیامکی به شبکه مخابرات ارسال نشد. در حالت دمو، ثبت پیامک به ${phone} (${clientName}) صرفاً شبیه‌سازی گردید.`,
     });
   };
 
   // Handle B2B Subscription Payment simulation
   const handlePaySubscription = () => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'درگاه بانکی متصل نیست',
+        message: 'در محیط عملیاتی، اتصال به درگاه شاپرک در فاز ۱۰ پیاده‌سازی خواهد شد.',
+      });
+      return;
+    }
     setIsProcessingPayment(true);
     setTimeout(() => {
       setIsProcessingPayment(false);
       updateSalonPlan(currentSalon.id, selectedPlanToBuy);
       setSubModalOpen(false);
       addToast({
-        type: 'success',
-        title: 'اشتراک سالن با موفقیت تمدید شد',
-        message: 'تراکنش موفق درگاه بانکی شاپرک. پلن جدید فعال گردید.',
+        type: 'info',
+        title: '[شبیه‌سازی دمو] اشتراک سالن در حافظه آزمایشی ارتقا یافت',
+        message: 'توجه: این یک پرداخت شبیه‌سازی شده است و هیچ تراکنش مالی واقعی انجام نشد.',
       });
     }, 1200);
   };

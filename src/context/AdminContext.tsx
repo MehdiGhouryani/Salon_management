@@ -30,6 +30,7 @@ import {
   initialMetrics,
   initialSecuritySettings,
 } from '../mock/initialData';
+import { getIsDemoMode, setSimulateProductionMode } from '../utils/env';
 
 export type AdminTab =
   | 'overview'
@@ -54,6 +55,9 @@ export interface ToastMessage {
 export type AppPersona = 'salon_website' | 'salon_app' | 'super_admin';
 
 export interface AdminContextType {
+  // Demo Mode and Environment Simulation
+  isDemoMode: boolean;
+  toggleDemoModeSimulation: () => void;
   // Existing Tab Navigation for Super Admin
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
@@ -147,6 +151,14 @@ export interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(getIsDemoMode);
+
+  const toggleDemoModeSimulation = () => {
+    const nextVal = !isDemoMode;
+    setIsDemoMode(nextVal);
+    setSimulateProductionMode(!nextVal);
+  };
+
   const [persona, setPersonaState] = useState<AppPersona>('salon_website');
   const [currentSalonSlug, setCurrentSalonSlug] = useState<string>('gisara');
   const [clientSession, setClientSession] = useState<ClientAuthSession>({
@@ -177,7 +189,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       trackingCode: 'ARA-8921',
       salonId: 'sal-101',
       salonName: 'سالن زیبایی و عروس گیس‌آرا',
-      clientName: 'سارا تهرانی',
+      clientName: 'سارا تهرانی (نمونه آزمایشی)',
       clientPhone: '09121112233',
       serviceName: 'رنگ و هایلایت تخصصی مو',
       serviceCategory: 'خدمات تخصصی مو',
@@ -188,13 +200,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       paymentMethod: 'in_person',
       createdAt: 'امروز',
       status: 'confirmed',
+      isDemo: true,
+      notes: 'رکورد سنتتیک نمونه آزمایشی',
     },
     {
       id: 'cb-2',
       trackingCode: 'RES-8922',
       salonId: 'sal-102',
       salonName: 'مرکز تخصصی مراقبت پوست و مو کژال',
-      clientName: 'مهناز شریفی',
+      clientName: 'مهناز شریفی (نمونه آزمایشی)',
       clientPhone: '09354445566',
       serviceName: 'فیشیال و پاکسازی عمیق پوست',
       serviceCategory: 'مراقبت پوست و فیشیال',
@@ -205,6 +219,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       paymentMethod: 'in_person',
       createdAt: 'دیروز',
       status: 'confirmed',
+      isDemo: true,
+      notes: 'رکورد سنتتیک نمونه آزمایشی',
     },
   ]);
 
@@ -299,17 +315,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     category: AuditLog['category'] = 'business'
   ) => {
     const newLog: AuditLog = {
-      id: `aud-${Date.now()}`,
+      id: `aud-sim-${Date.now()}`,
       timestamp: 'هم‌اکنون',
-      actor: 'مهدی غوریانی',
-      actorRole: 'super_admin',
-      action,
+      actor: isDemoMode ? 'کاربر شبیه‌ساز (Demo Client)' : 'کاربر احرازنشده',
+      actorRole: isDemoMode ? 'demo_tester' : 'guest',
+      action: isDemoMode ? `[شبیه‌سازی دمو] ${action}` : action,
       target,
-      ipAddress: '185.120.24.12',
-      userAgent: 'Chrome 130 / macOS Sequoia',
+      ipAddress: '127.0.0.1 (کلاینت محلی)',
+      userAgent: 'کلاینت پیش‌نمایش مرورگر (غیرمرجع)',
       severity,
       category,
-      details,
+      details: isDemoMode ? `[رویداد غیرپایدار در حافظه کلاینت] ${details}` : details,
+      isDemo: true,
     };
     setAuditLogs((prev) => [newLog, ...prev]);
   };
@@ -473,6 +490,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Dispatch & Message handlers
   const retryFailedMessage = (id: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'سرویس پیامک در سرور متصل نیست',
+        message: 'در نسخه عملیاتی، ارسال واقعی نیازمند اتصال وب‌سرویس پیامک در فاز ۱۰ است.',
+      });
+      return;
+    }
+
     const target = messages.find((m) => m.id === id);
     if (!target) return;
 
@@ -489,15 +515,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : m
       )
     );
-    logAction('ارسال مجدد پیامک ناموفق', target.recipientPhone, `ارسال موفق به شماره ${target.recipientPhone}`, 'info', 'system');
+    logAction('ارسال مجدد پیامک ناموفق', target.recipientPhone, `ارسال شبیه‌سازی شده در حافظه به شماره ${target.recipientPhone}`, 'info', 'system');
     addToast({
-      type: 'success',
-      title: 'پیامک با موفقیت ارسال شد',
-      message: `پیام به ${target.recipientPhone} تحویل داده شد.`,
+      type: 'info',
+      title: '[شبیه‌سازی دمو] پیامک در حافظه مرورگر شبیه‌سازی شد',
+      message: `پیام به ${target.recipientPhone} در حافظه موقت کلاینت ثبت شد (پیامک مخابراتی واقعی ارسال نشد).`,
     });
   };
 
   const retryAllFailedMessages = () => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'سرویس پیامک در سرور متصل نیست',
+        message: 'در نسخه عملیاتی، اتصال به وب‌سرویس در فاز ۱۰ پیاده‌سازی خواهد شد.',
+      });
+      return;
+    }
+
     const failedCount = messages.filter((m) => m.status === 'failed' || m.status === 'retrying').length;
     if (failedCount === 0) {
       addToast({ type: 'info', title: 'پیام ناموفقی در صف وجود ندارد' });
@@ -511,31 +546,40 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : m
       )
     );
-    logAction('تلاش مجدد برای تمام پیام‌های ناموفق', `${failedCount} پیامک`, 'تمامی پیام‌های صف ناموفق با موفقیت تحویل شدند', 'info', 'system');
+    logAction('تلاش مجدد برای تمام پیام‌های ناموفق', `${failedCount} پیامک`, 'تمامی پیام‌های صف ناموفق در حافظه شبیه‌سازی شدند', 'info', 'system');
     addToast({
-      type: 'success',
-      title: `${failedCount} پیامک ناموفق مجدداً ارسال و تحویل شدند`,
+      type: 'info',
+      title: `[شبیه‌سازی دمو] ${failedCount} پیامک در حافظه آزمایشی شبیه‌سازی شدند`,
     });
   };
 
   const sendBroadcastMessage = (salonName: string, text: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ارسال همگانی غیرفعال است',
+        message: 'وب‌سرویس کاوه‌نگار در سمت سرور هنوز متصل نشده است.',
+      });
+      return;
+    }
+
     const newMsg: DispatchMessage = {
       id: `msg-${Date.now()}`,
-      recipientPhone: 'ارسال همگانی به اعضای فعال',
+      recipientPhone: 'ارسال همگانی شبیه‌سازی شده',
       salonName,
       templateType: 'custom_broadcast',
       text,
       status: 'delivered',
       gateway: 'Kavenegar',
-      sentAt: 'هم‌اکنون',
+      sentAt: 'هم‌اکنون (شبیه‌سازی)',
       retryCount: 0,
       costRials: 4200000,
     };
     setMessages((prev) => [newMsg, ...prev]);
     logAction('ارسال پیامک همگانی سیستم', salonName, text.slice(0, 50) + '...', 'info', 'system');
     addToast({
-      type: 'success',
-      title: 'پیامک عمومی با موفقیت ارسال گردید',
+      type: 'info',
+      title: '[شبیه‌سازی دمو] پیامک همگانی در حافظه موقت ثبت گردید',
     });
   };
 
@@ -606,93 +650,169 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Security handlers
   const terminateSession = (sessionId: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ابطال نشست نیازمند احراز هویت سرور است',
+        message: 'در نسخه عملیاتی، ابطال نشست مستلزم پیاده‌سازی سرور و JWT در فاز ۵ است.',
+      });
+      return;
+    }
+
     const target = sessions.find((s) => s.id === sessionId);
     if (!target) return;
     setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     logAction('خروج اجباری نشست کاربری', target.userName, `IP: ${target.ipAddress} - مرورگر: ${target.browser}`, 'warning', 'auth');
     addToast({
       type: 'warning',
-      title: 'نشست کاربری لغو و مسدود شد',
+      title: '[شبیه‌سازی دمو] نشست از حافظه آزمایشی مرورگر حذف شد',
       message: `${target.userName} (${target.ipAddress})`,
     });
   };
 
   const terminateAllOtherSessions = () => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ابطال نشست‌ها نیازمند احراز هویت سرور است',
+      });
+      return;
+    }
+
     setSessions((prev) => prev.filter((s) => s.isCurrent));
     logAction('لغو تمام نشست‌های دیگر', 'کل سیستم', 'تمام نشست‌های فعال به جز نشست جاری خاتمه یافتند', 'warning', 'auth');
     addToast({
       type: 'info',
-      title: 'تمامی نشست‌های دیگر مسدود و خاتمه یافتند',
+      title: '[شبیه‌سازی دمو] تمامی نشست‌های دیگر در حافظه موقت لغو شدند',
     });
   };
 
   const addIpToBlacklist = (ip: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'فایروال سرور متصل نیست',
+        message: 'مسدودسازی آدرس IP در سطح سرور در فاز ۳ پیاده‌سازی می‌شود.',
+      });
+      return;
+    }
+
     if (securitySettings.ipBlacklist.includes(ip)) return;
     setSecuritySettings((prev) => ({
       ...prev,
       ipBlacklist: [...prev.ipBlacklist, ip],
     }));
-    logAction('افزودن IP به لیست سیاه فایروال', ip, 'مسدودسازی دسترسی ورودی', 'critical', 'auth');
+    logAction('افزودن IP به لیست سیاه فایروال', ip, 'مسدودسازی موقت در حافظه کلاینت', 'critical', 'auth');
     addToast({
-      type: 'error',
-      title: `آدرس ${ip} به لیست سیاه اضافه شد`,
+      type: 'info',
+      title: `[شبیه‌سازی دمو] آدرس ${ip} در لیست محلی فایروال اضافه شد`,
     });
   };
 
   const removeIpFromBlacklist = (ip: string) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'فایروال سرور متصل نیست',
+      });
+      return;
+    }
+
     setSecuritySettings((prev) => ({
       ...prev,
       ipBlacklist: prev.ipBlacklist.filter((item) => item !== ip),
     }));
-    logAction('حذف IP از لیست سیاه فایروال', ip, 'رفع مسدودیت آدرس IP', 'info', 'auth');
+    logAction('حذف IP از لیست سیاه فایروال', ip, 'رفع مسدودیت محلی آدرس IP', 'info', 'auth');
     addToast({
-      type: 'success',
-      title: `آدرس ${ip} از لیست سیاه خارج شد`,
+      type: 'info',
+      title: `[شبیه‌سازی دمو] آدرس ${ip} از لیست سیاه محلی خارج شد`,
     });
   };
 
   const updateSecuritySettings = (settings: Partial<SecuritySettings>) => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'تنظیمات امنیتی در پایگاه‌داده ذخیره نشد',
+        message: 'پایدارسازی پایگاه‌داده در فاز ۴ پیاده‌سازی می‌شود.',
+      });
+      return;
+    }
+
     setSecuritySettings((prev) => ({ ...prev, ...settings }));
     logAction('بروزرسانی تنظیمات امنیتی سیستم', 'پیکربندی امنیتی', JSON.stringify(settings), 'warning', 'system');
     addToast({
-      type: 'success',
-      title: 'تنظیمات امنیتی ذخیره و بلافاصله اعمال شدند',
+      type: 'info',
+      title: '[شبیه‌سازی دمو] تنظیمات امنیتی در حافظه کلاینت بروز شد (غیرپایدار)',
     });
   };
 
   // Operations handlers
   const flushRedisCache = () => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'سرور Redis متصل نیست',
+        message: 'عملیات تخلیه کش نیازمند راه‌اندازی سرور Redis در فاز ۳ است.',
+      });
+      return;
+    }
+
     setMetrics((prev) => ({
       ...prev,
       redisCacheHitRate: 99.2,
       memoryUsageMb: 980,
     }));
-    logAction('پاکسازی کامل کش Redis', 'سرور کش حافظه', 'دستور FLUSHALL اجرا شد', 'warning', 'system');
+    logAction('پاکسازی کامل کش Redis', 'سرور کش حافظه', 'دستور FLUSHALL شبیه‌سازی شد', 'warning', 'system');
     addToast({
-      type: 'success',
-      title: 'حافظه کش Redis با موفقیت تخلیه شد',
-      message: 'کلیدهای منقضی و موقت پاکسازی شدند.',
+      type: 'info',
+      title: '[شبیه‌سازی دمو] حافظه موقت کلاینت تخلیه شد',
+      message: 'کلیدهای موقت در حافظه مرورگر ریست شدند (سرور Redis واقعی متصل نیست).',
     });
   };
 
   const runSystemDiagnostic = () => {
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'سرویس عیب‌یابی سرور متصل نیست',
+        message: 'پایش سلامت سیستم در فاز ۳ پیاده‌سازی می‌شود.',
+      });
+      return;
+    }
+
     setMetrics((prev) => ({
       ...prev,
       avgResponseTimeMs: 38,
       errorRatePercentage: 0.01,
       cpuLoadPercentage: 18,
     }));
-    logAction('اجرای پایش سلامت خودکار', 'سیستم مرکزی', 'تمام تست‌های سلامت با موفقیت پاس شدند', 'info', 'system');
+    logAction('اجرای پایش سلامت خودکار', 'سیستم مرکزی', 'تمام تست‌های سلامت شبیه‌سازی شدند', 'info', 'system');
     addToast({
-      type: 'success',
-      title: 'تست سلامت سرورها با موفقیت انجام شد',
-      message: 'تمامی سرویس‌های پایگاه‌داده، پیامک، درگاه پرداخت و وب‌ساکت فعال و پایدار هستند.',
+      type: 'info',
+      title: '[شبیه‌سازی دمو] پایش سلامت کلاینت انجام شد',
+      message: 'این داده‌ها شبیه‌سازی در مرورگر هستند و وضعیت سرور واقعی نیستند.',
     });
   };
 
   // Customer booking operations
   const addCustomerBooking = (booking: CustomerBooking) => {
-    setCustomerBookings((prev) => [booking, ...prev]);
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ثبت نوبت در محیط عملیاتی مسدود است',
+        message: 'ثبت قطعی نوبت در نسخه عملیاتی منوط به پایگاه‌داده و احراز هویت در فازهای ۳ تا ۵ است.',
+      });
+      return;
+    }
+
+    const demoBooking: CustomerBooking = {
+      ...booking,
+      isDemo: true,
+      notes: booking.notes ? `${booking.notes} [دمو]` : '[رزرو آزمایشی در حافظه موقت]',
+    };
+
+    setCustomerBookings((prev) => [demoBooking, ...prev]);
     // Increase salon appointments count
     setSalons((prev) =>
       prev.map((s) => (s.id === booking.salonId ? { ...s, totalAppointments: s.totalAppointments + 1 } : s))
@@ -705,9 +825,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       'business'
     );
     addToast({
-      type: 'success',
-      title: `نوبت شما با کد ${booking.trackingCode} با موفقیت ثبت شد`,
-      message: `پرداخت به صورت ۱۰۰٪ حضوری در سالن انجام خواهد شد. پیامک تایید صادر شد.`,
+      type: 'info',
+      title: `[شبیه‌سازی دمو] نوبت با کد ${booking.trackingCode} در حافظه موقت ثبت شد`,
+      message: `تسویه ۱۰۰٪ حضوری در سالن. (توجه: این یک ثبت آزمایشی در حافظه موقت است)`,
     });
   };
 
@@ -788,6 +908,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <AdminContext.Provider
       value={{
+        isDemoMode,
+        toggleDemoModeSimulation,
         activeTab,
         setActiveTab,
         salons,

@@ -29,28 +29,52 @@ export function maskApiKey(key: string): string {
   return `${key.slice(0, 4)}••••••••••••${key.slice(-4)}`;
 }
 
+/**
+ * Sanitizes a single CSV cell value to neutralize CSV / Formula Injection attacks (DDE injection).
+ * Dangerous prefixes in spreadsheet software include: '=', '+', '-', '@', '\t', '\r'.
+ * If a cell begins with any of these characters (including after leading whitespace),
+ * we prepend a single quote (') which forces spreadsheet applications (Excel, Calc, Sheets)
+ * to interpret the content purely as literal text rather than executable formula/command.
+ */
+export function sanitizeCsvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  let str = String(value);
+
+  // Check if string starts with dangerous characters (or whitespace followed by dangerous characters)
+  // Dangerous prefixes: =, +, -, @, tab (\t), carriage return (\r)
+  const isDangerousFormula = /^[\s]*[=+\-@\t\r]/.test(str);
+
+  if (isDangerousFormula) {
+    // Prepend a single quote to neutralize formula execution in Excel/Calc
+    str = `'${str}`;
+  }
+
+  // Escape existing double quotes
+  str = str.replace(/"/g, '""');
+
+  // If contains delimiter, quotes, or newlines, wrap in quotes
+  if (str.search(/("|,|\n|\r)/g) >= 0 || isDangerousFormula) {
+    str = `"${str}"`;
+  }
+
+  return str;
+}
+
 export function exportToCsv(filename: string, rows: Record<string, unknown>[]): void {
   if (!rows || !rows.length) return;
   const separator = ',';
   const keys = Object.keys(rows[0]);
+  const sanitizedHeaders = keys.map((k) => sanitizeCsvCell(k)).join(separator);
+
+  const csvRows = rows.map((row) => {
+    return keys.map((k) => sanitizeCsvCell(row[k])).join(separator);
+  });
+
   const csvContent =
     '\uFEFF' + // UTF-8 BOM for Persian excel compatibility
-    keys.join(separator) +
+    sanitizedHeaders +
     '\n' +
-    rows
-      .map((row) => {
-        return keys
-          .map((k) => {
-            let cell = row[k] === null || row[k] === undefined ? '' : String(row[k]);
-            cell = cell.replace(/"/g, '""');
-            if (cell.search(/("|,|\n)/g) >= 0) {
-              cell = `"${cell}"`;
-            }
-            return cell;
-          })
-          .join(separator);
-      })
-      .join('\n');
+    csvRows.join('\n');
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');

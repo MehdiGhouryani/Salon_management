@@ -188,7 +188,16 @@ export const SecurityView: React.FC = () => {
                     return (
                       <tr key={log.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
                         <td className="py-3 px-4 font-mono text-[11px] text-zinc-500">{log.timestamp}</td>
-                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-[#E7ECF5]">{log.actor}</td>
+                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-[#E7ECF5]">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>{log.actor}</span>
+                            {log.isDemo && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold">
+                                داده آزمایشی
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-3 px-4">{log.action}</td>
                         <td className="py-3 px-4 text-zinc-500">{log.target}</td>
                         <td className="py-3 px-4 font-mono text-[11px]" dir="ltr">{log.ipAddress}</td>

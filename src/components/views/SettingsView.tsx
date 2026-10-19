@@ -17,12 +17,12 @@ import { useAdmin } from '../../context/AdminContext';
 import { maskApiKey } from '../../utils/formatters';
 
 export const SettingsView: React.FC = () => {
-  const { securitySettings, updateSecuritySettings, addToast } = useAdmin();
+  const { isDemoMode, securitySettings, updateSecuritySettings, addToast } = useAdmin();
 
-  // API credentials state
-  const [kavenegarKey, setKavenegarKey] = useState('746162384742394541306C62376C544F3532446A31773D3D');
-  const [zarinpalMerchant, setZarinpalMerchant] = useState('a9b8c7d6-1234-5678-90ab-cdef12345678');
-  const [samanTerminal, setSamanTerminal] = useState('89012345');
+  // API credentials state - Empty defaults for secure configuration state
+  const [kavenegarKey, setKavenegarKey] = useState('');
+  const [zarinpalMerchant, setZarinpalMerchant] = useState('');
+  const [samanTerminal, setSamanTerminal] = useState('');
   const [showKeys, setShowKeys] = useState(false);
 
   // Broadcast banner state
@@ -31,22 +31,50 @@ export const SettingsView: React.FC = () => {
 
   const handleSaveApiKeys = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'تنظیمات در محیط عملیاتی مسدود است',
+        message: 'در نسخه عملیاتی، کلیدهای وب‌سرویس باید در متغیرهای محرمانه سرور (.env) تعریف شوند.',
+      });
+      return;
+    }
     addToast({
-      type: 'success',
-      title: 'تنظیمات درگاه و پیامک ذخیره شد',
+      type: 'info',
+      title: '[شبیه‌سازی دمو] کلیدها در حافظه موقت کلاینت ذخیره شدند',
+      message: 'توجه: هیچ داده‌ای در سرور ذخیره نشد و پس از بازنشانی صفحه پاک می‌شود.',
     });
   };
 
   const handleSaveBanner = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isDemoMode) {
+      addToast({
+        type: 'error',
+        title: 'ذخیره اطلاعیه نیازمند سرور است',
+        message: 'پایدارسازی اطلاعیه در فاز ۴ با پایگاه‌داده انجام خواهد شد.',
+      });
+      return;
+    }
     addToast({
       type: 'info',
-      title: bannerActive ? 'اطلاعیه سراسری فعال گردید' : 'اطلاعیه سراسری غیرفعال شد',
+      title: bannerActive ? '[شبیه‌سازی دمو] اطلاعیه سراسری در حافظه موقت فعال شد' : '[شبیه‌سازی دمو] اطلاعیه غیرفعال شد',
     });
   };
 
   return (
     <div className="space-y-6">
+      {/* Security Advisory Banner */}
+      <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3 text-xs text-amber-800 dark:text-amber-300">
+        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <span className="font-bold block">خط‌مشی امنیت سرور و مدیریت اسرار (Secrets Management):</span>
+          <p className="leading-relaxed text-[11px] text-amber-700 dark:text-amber-300/90">
+            بر اساس الزامات فاز ۲، هیچ‌گونه کلید امنیتی یا مرچنت درگاه بانکی در کدهای فرانت‌اند نگهداری نمی‌شود. در محیط عملیاتی، این مقادیر مستقیماً از طریق متغیرهای محیطی سمت سرور (<code className="font-mono bg-amber-500/20 px-1 py-0.5 rounded">.env</code>) خوانده می‌شوند و فرم زیر صرفاً به عنوان پیش‌نمایش رابط کاربری است.
+          </p>
+        </div>
+      </div>
+
       {/* Header */}
       <div>
         <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">

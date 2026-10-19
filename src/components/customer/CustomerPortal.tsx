@@ -57,8 +57,10 @@ const citiesList = [
 
 export const CustomerPortal: React.FC = () => {
   const {
+    isDemoMode,
     salons,
     setViewMode,
+    clientSession,
     customerBookings,
     addCustomerBooking,
   } = useAdmin();
@@ -79,8 +81,13 @@ export const CustomerPortal: React.FC = () => {
   const [myBookingsOpen, setMyBookingsOpen] = useState(false);
   const [selectedSalonDetailModal, setSelectedSalonDetailModal] = useState<DetailedSalonData | null>(null);
 
-  // Active confirmed bookings count
-  const activeBookingsCount = customerBookings.filter((b) => b.status === 'confirmed').length;
+  // Active confirmed bookings count strictly for verified current client session (Privacy Protection)
+  const activeBookingsCount =
+    clientSession.isLoggedIn && clientSession.phone
+      ? customerBookings.filter(
+          (b) => b.clientPhone === clientSession.phone && b.status === 'confirmed'
+        ).length
+      : 0;
 
   // Filter salons
   const filteredSalons = useMemo(() => {
@@ -142,16 +149,22 @@ export const CustomerPortal: React.FC = () => {
           </span>
         </div>
 
-        {/* PROMINENT SWITCH TO ADMIN PANEL BUTTON */}
-        <button
-          onClick={() => setViewMode('admin')}
-          className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-rose-300 hover:text-white border border-rose-500/30 rounded-lg transition-all shrink-0 cursor-pointer shadow-sm group"
-          title="ورود به سامانه نظارت و مدیریت ادمین کل"
-        >
-          <Building className="w-3.5 h-3.5 text-rose-400 group-hover:rotate-12 transition-transform" />
-          <span>ورود به پنل مدیریت ادمین اصلی</span>
-          <ChevronLeft className="w-3 h-3 text-rose-400" />
-        </button>
+        {/* DEMO-ONLY SWITCH TO ADMIN PANEL BUTTON */}
+        {isDemoMode ? (
+          <button
+            onClick={() => setViewMode('admin')}
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-rose-300 hover:text-white border border-rose-500/30 rounded-lg transition-all shrink-0 cursor-pointer shadow-sm group"
+            title="مشاهده پیش‌نمایش پنل ادمین (حالت آزمایشی)"
+          >
+            <Building className="w-3.5 h-3.5 text-rose-400 group-hover:rotate-12 transition-transform" />
+            <span>پیش‌نمایش ادمین (حالت آزمایشی دمو)</span>
+            <ChevronLeft className="w-3 h-3 text-rose-400" />
+          </button>
+        ) : (
+          <span className="text-[11px] text-slate-400">
+            ورود ادمین: منحصراً از درگاه امن
+          </span>
+        )}
       </div>
 
       {/* 2. MAIN CLIENT HEADER */}
@@ -663,13 +676,17 @@ export const CustomerPortal: React.FC = () => {
 
           <div className="flex items-center gap-4 text-slate-400">
             <span>شرایط پرداخت: تسویه حضوری در محل سالن</span>
-            <span>•</span>
-            <button
-              onClick={() => setViewMode('admin')}
-              className="text-rose-400 hover:text-rose-300 font-bold cursor-pointer underline underline-offset-4"
-            >
-              ورود به پنل مدیریت ادمین کل
-            </button>
+            {isDemoMode && (
+              <>
+                <span>•</span>
+                <button
+                  onClick={() => setViewMode('admin')}
+                  className="text-rose-400 hover:text-rose-300 font-bold cursor-pointer underline underline-offset-4"
+                >
+                  پیش‌نمایش پنل مدیریت ادمین کل (دمو)
+                </button>
+              </>
+            )}
           </div>
         </div>
       </footer>
