@@ -1,7 +1,7 @@
 # NobatAra — Relational Data Model & Schema Design
 
-**Status:** PROPOSED (Phase 1 Specification)  
-**Target Engine:** PostgreSQL 15+ / Cloud SQL  
+**Status:** IMPLEMENTED (Phase 4 — `server/db/migrations/001_initial_schema.sql`)  
+**Target Engine:** PostgreSQL 14+ / Cloud SQL for PostgreSQL  
 
 ---
 

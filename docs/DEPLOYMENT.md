@@ -52,21 +52,30 @@ npm run dev
 # 1. Clean previous build artifacts
 npm run clean
 
-# 2. Compile frontend assets into /dist
+# 2. Compile frontend assets into dist/
 npm run build
 
 # 3. Launch production server
 npm start
-# Command executed: node dist/server.js (or tsx server.ts)
+# Command executed: node server.ts (respects PORT and serves dist/)
 ```
 
 ---
 
-## 3. Rollback & Disaster Recovery Procedures
+## 3. API Health Endpoints & Probes
 
-1. **Database Rollbacks**:
-   - Each migration file has a strictly matching `down()` migration.
-   - Automated daily snapshots configured at 03:00 AM IRST.
-2. **Graceful Degradation**:
-   - If Kavenegar SMS experiences downtime, the system automatically falls back to secondary provider MelliSMS or FarazSMS without halting booking creations.
-   - If the database is under maintenance, a maintenance page is served with `503 Service Unavailable` headers.
+| Endpoint | Method | Success Response | Status | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `/api/health/live` | GET | `{"status":"ok","service":"nobatara-server","environment":"...","uptimeSeconds":...}` | 200 | Liveness probe confirming HTTP process is alive |
+| `/api/health/ready` | GET | `{"status":"ready","subsystems":{"database":"not_configured (Phase 4)",...}}` | 200 | Readiness probe with honest dependency status |
+| `/api/nonexistent` | ANY | `{"success":false,"error":{"code":"API_ENDPOINT_NOT_FOUND",...}}` | 404 | Strict JSON 404 for unknown API paths |
+
+---
+
+## 4. Rollback & Disaster Recovery Procedures
+
+1. **Static Build Rollback**: Revert `dist/` to prior tested artifact.
+2. **Server Runtime Rollback**: Restore previous Git commit tag.
+3. **Graceful Degradation**:
+   - If external services are unavailable, endpoints report precise subsystem status.
+   - If the database is under maintenance (Phase 4), a maintenance page is served with `503 Service Unavailable`.

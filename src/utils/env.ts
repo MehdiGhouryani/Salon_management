@@ -1,32 +1,35 @@
 /**
- * Environment & Security Controls
+ * Environment & Security Governance
  * 
- * IMPORTANT SECURITY GOVERNANCE:
- * Client-side flags are strictly UI presentation controls.
- * They MUST NEVER be treated as server-side authorization or security guarantees.
+ * IMPORTANT SECURITY RULES:
+ * 1. Runtime environment mode (demo vs production) is strictly server / build configured.
+ * 2. It MUST NEVER be mutable by client-side browser controls (sessionStorage, localStorage, URL params, or UI toggles).
+ * 3. In production builds (import.meta.env.PROD or VITE_APP_MODE === 'production'), safe production posture is ALWAYS enforced.
+ * 4. Client-side flags are UI presentation hints ONLY and NEVER serve as authorization boundaries.
  */
 
-// Check if running in demo/development simulation mode
-export const getIsDemoMode = (): boolean => {
-  // Check if user manually toggled production simulation mode in session storage for testing
-  if (typeof window !== 'undefined') {
-    const override = sessionStorage.getItem('nobatara_simulate_prod');
-    if (override === 'true') return false;
-    if (override === 'false') return true;
-  }
+export type AppMode = 'development' | 'production' | 'test';
 
-  // By default, if VITE_DEMO_MODE is explicitly 'false' or VITE_APP_MODE is 'production', treat as production
-  if (import.meta.env.VITE_DEMO_MODE === 'false' || import.meta.env.VITE_APP_MODE === 'production') {
+export const getAppMode = (): AppMode => {
+  if (import.meta.env.PROD || import.meta.env.VITE_APP_MODE === 'production') {
+    return 'production';
+  }
+  if (import.meta.env.MODE === 'test' || import.meta.env.VITE_APP_MODE === 'test') {
+    return 'test';
+  }
+  return 'development';
+};
+
+export const getIsDemoMode = (): boolean => {
+  // Production posture: If built for production or VITE_APP_MODE is production, demo is strictly disabled
+  if (
+    import.meta.env.PROD ||
+    import.meta.env.VITE_APP_MODE === 'production' ||
+    import.meta.env.VITE_DEMO_MODE === 'false'
+  ) {
     return false;
   }
 
-  // Otherwise default to demo preview in development environments
-  return true;
-};
-
-export const setSimulateProductionMode = (simulateProd: boolean): void => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem('nobatara_simulate_prod', simulateProd ? 'true' : 'false');
-    window.location.reload();
-  }
+  // Development posture: Permitted in development mode unless explicitly set to false
+  return import.meta.env.DEV;
 };

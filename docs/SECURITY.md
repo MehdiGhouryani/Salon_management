@@ -45,3 +45,21 @@
    - No bank card numbers, CVV2, or banking passwords ever touch NobatAra servers. All online B2B payments redirect to Shaparak/Zarinpal gateway servers.
 3. **Session Revocation**:
    - The security console (`SecurityView.tsx`) allows super admins to terminate individual active sessions or terminate all other sessions globally, revoking the session token in the database.
+
+---
+
+## 4. Phase 3 Runtime Security Controls
+
+1. **Non-Bypassable Mode Governance**:
+   - Runtime mode (`production` vs `development`) is strictly determined by server/build configuration.
+   - Client-side storage (`sessionStorage`, `localStorage`) is completely excluded from mode determination.
+   - Production mode enforces a hard barrier preventing unauthenticated access to super-admin functionality.
+2. **Security Headers & CORS**:
+   - `X-Content-Type-Options: nosniff` protects against MIME sniffing.
+   - `X-XSS-Protection: 1; mode=block` enabled.
+   - `Referrer-Policy: strict-origin-when-cross-origin` enabled.
+   - Production enforces explicit CORS origin matching or same-origin.
+3. **Information Disclosure Prevention**:
+   - Centralized error handler strictly suppresses error stacks and internal diagnostic messages in production.
+   - Request logger formats method, path, and duration without logging request payloads, query tokens, passwords, or Authorization headers.
+   - Unknown `/api/*` routes consistently return JSON 404 rather than leaking frontend HTML.

@@ -82,6 +82,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [otpTimer, setOtpTimer] = useState(60);
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync client session if logged in
   useEffect(() => {
@@ -139,7 +140,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   // Send OTP
-  const handleSendOtp = (e?: React.FormEvent) => {
+  const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!clientName.trim() || clientName.trim().length < 2) {
       setErrorMsg('لطفاً نام خود را وارد کنید');
@@ -151,53 +152,137 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       return;
     }
 
-    if (!isDemoMode) {
-      setErrorMsg('سرویس ارسال پیامک در نسخه عملیاتی هنوز متصل نشده است (در انتظار فاز ۱۰). امکان ارسال واقعی پیامک در این مرحله وجود ندارد.');
-      return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/otp/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-NobatAra-Client': 'web',
+        },
+        body: JSON.stringify({
+          phone: clientPhone.trim(),
+          purpose: 'booking_verification',
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (isDemoMode) {
+          const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+          setGeneratedOtp(randomCode);
+          setOtpTimer(60);
+          setOtpStage('input_code');
+          setErrorMsg('');
+          addToast({
+            type: 'info',
+            title: '[شبیه‌ساز پیش‌نمایش دمو] تولید کد آزمایشی',
+            message: `توجه: سرور دمو کد آزمایشی ۶ رقمی را شبیه‌سازی کرد: ${randomCode}`,
+          });
+          return;
+        }
+        setErrorMsg(data.message || 'ارسال کد تایید با خطا مواجه شد.');
+        return;
+      }
+
+      setOtpTimer(data.resendAvailableInSeconds || 60);
+      setOtpStage('input_code');
+      setErrorMsg('');
+      addToast({
+        type: 'info',
+        title: 'کد تایید ارسال شد',
+        message: data.message || `کد تایید به شماره ${data.phone} ارسال گردید.`,
+      });
+    } catch {
+      if (isDemoMode) {
+        const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedOtp(randomCode);
+        setOtpTimer(60);
+        setOtpStage('input_code');
+        setErrorMsg('');
+        addToast({
+          type: 'info',
+          title: '[شبیه‌ساز دمو] کد آزمایشی تولید شد',
+          message: `کد تایید آزمایشی: ${randomCode}`,
+        });
+        return;
+      }
+      setErrorMsg('خطا در برقراری ارتباط با سرور.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // In demo mode: Clearly labeled local simulation
-    const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
-    setGeneratedOtp(randomCode);
-    setOtpTimer(60);
-    setOtpStage('input_code');
-    setErrorMsg('');
-
-    addToast({
-      type: 'info',
-      title: '[شبیه‌ساز پیش‌نمایش دمو] تولید کد آزمایشی',
-      message: `توجه: هیچ پیامکی به مخابرات ارسال نشد. کد شبیه‌سازی برای تست: ${randomCode}`,
-    });
   };
 
   // Verify OTP
-  const handleVerifyOtp = (e?: React.FormEvent) => {
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!isDemoMode) {
-      setErrorMsg('احراز هویت سرور در این فاز پیکربندی نشده است.');
-      return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-NobatAra-Client': 'web',
+        },
+        body: JSON.stringify({
+          phone: clientPhone.trim(),
+          code: otpCode.trim(),
+          purpose: 'booking_verification',
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (isDemoMode && generatedOtp && otpCode.trim() === generatedOtp) {
+          setOtpStage('verified');
+          setErrorMsg('');
+          setClientSession({
+            isLoggedIn: true,
+            phone: clientPhone,
+            name: clientName,
+            verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
+          });
+          addToast({
+            type: 'info',
+            title: '[شبیه‌سازی دمو] ورود آزمایشی تایید شد',
+            message: `${clientName} عزیز، نوبت آماده ثبت نهایی است.`,
+          });
+          return;
+        }
+        setErrorMsg(data.message || 'کد وارد شده صحیح نمی‌باشد.');
+        return;
+      }
+
+      setOtpStage('verified');
+      setErrorMsg('');
+      setClientSession({
+        isLoggedIn: true,
+        phone: clientPhone,
+        name: clientName,
+        verifiedAt: 'نشست معتبر سرور',
+      });
+      addToast({
+        type: 'success',
+        title: 'شماره همراه تایید شد',
+        message: `${clientName} عزیز، هویت شما با موفقیت تایید شد.`,
+      });
+    } catch {
+      if (isDemoMode && generatedOtp && otpCode.trim() === generatedOtp) {
+        setOtpStage('verified');
+        setErrorMsg('');
+        setClientSession({
+          isLoggedIn: true,
+          phone: clientPhone,
+          name: clientName,
+          verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
+        });
+        return;
+      }
+      setErrorMsg('خطا در اعتبارسنجی کد با سرور.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Strict check against simulated code only; no hardcoded bypass 1234
-    if (!generatedOtp || otpCode.trim() !== generatedOtp) {
-      setErrorMsg('کد وارد شده صحیح نمی‌باشد. لطفاً کد ۴ رقمی شبیه‌سازی شده را وارد فرمایید.');
-      return;
-    }
-
-    setOtpStage('verified');
-    setErrorMsg('');
-    setClientSession({
-      isLoggedIn: true,
-      phone: clientPhone,
-      name: clientName,
-      verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
-    });
-
-    addToast({
-      type: 'info',
-      title: '[شبیه‌سازی دمو] نشست آزمایشی فعال شد',
-      message: `${clientName} عزیز، ورود آزمایشی شما در مرورگر ثبت شد.`,
-    });
   };
 
   // Final booking confirmation

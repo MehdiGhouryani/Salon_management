@@ -60,35 +60,27 @@
 
 ---
 
-## 2. Directory & Component Organization
+## 2. Directory & Component Organization (Phase 3 Implemented Architecture)
 
-When the full-stack server is established (Phase 3), the repository will follow this clean, modular architecture:
+The full-stack server architecture is established and verified in Phase 3:
 
 ```
+├── server.ts                   # Root unified entry point (dev: Vite middleware, prod: static dist/ + API)
 ├── server/
-│   ├── server.ts               # Express entry point & Vite middleware mounting
-│   ├── config/                 # Environment variables & runtime constants
-│   ├── middleware/             # Auth, RBAC, tenant isolation, rate limiting
-│   ├── routes/                 # Express API routes grouped by persona & domain
-│   │   ├── auth.routes.ts
-│   │   ├── public.routes.ts
-│   │   ├── salon.routes.ts
-│   │   ├── admin.routes.ts
-│   │   └── webhooks.routes.ts
-│   ├── services/               # Business logic (Booking, SMS, Payment, Audit)
-│   ├── db/                     # Database client, migrations, and schema
-│   │   ├── schema.ts           # Drizzle / ORM relational schema definition
-│   │   └── client.ts           # Database connection pool
-│   └── utils/                  # Server-side hashing, crypto, OTP generators
+│   ├── index.ts                # Server runner & graceful shutdown lifecycle
+│   ├── app.ts                  # Express application factory & middleware composition
+│   ├── config.ts               # Centralized configuration parser with fail-fast validation
+│   ├── middleware/
+│   │   ├── security.ts         # Security headers, CORS policy, sanitized HTTP logger
+│   │   └── errorHandler.ts     # Centralized error handler & strict /api/* 404 handler
+│   └── routes/
+│       ├── index.ts            # Root API aggregator mounted under /api
+│       └── health.ts           # GET /api/health/live and GET /api/health/ready
 ├── src/                        # React 19 Frontend
-│   ├── components/
-│   │   ├── common/             # Header, Sidebar, Modals, ThemeToggle, Toasts
-│   │   ├── customer/           # SalonWebsiteView, BookingModal, Receipts
-│   │   └── views/              # Super admin views & SalonAppView
-│   ├── context/                # ThemeContext, AuthContext, AdminContext
-│   ├── types/                  # Shared TypeScript interfaces & API contracts
-│   ├── utils/                  # Persian date/numeral formatters
-│   └── mock/                   # Demo fixtures strictly used in DEMO_MODE
+│   ├── components/             # Reusable UI components for 3 personas
+│   ├── context/                # Client state management
+│   ├── utils/                  # Environment & date formatting utilities
+│   └── mock/                   # Explicitly tagged demo fixtures
 └── docs/                       # Architecture, PRD, Security, and QA docs
 ```
 

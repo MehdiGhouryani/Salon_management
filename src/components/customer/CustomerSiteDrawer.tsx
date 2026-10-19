@@ -31,6 +31,7 @@ import { DetailedSalonData } from '../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../types/admin';
 import { toPersianDigits, formatCurrency } from '../../utils/formatters';
 import { SalonQrModal } from '../common/SalonQrModal';
+import { ServerAuthModal } from '../common/ServerAuthModal';
 
 interface CustomerSiteDrawerProps {
   isOpen: boolean;
@@ -62,6 +63,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
 
   // Modals & Sub-states inside drawer
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState<'bookings' | 'profile'>('bookings');
 
@@ -79,20 +81,16 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isDemoMode) {
+      setAuthModalOpen(true);
+      return;
+    }
+
     if (!inputPhone.trim() || inputPhone.trim().length < 10) {
       addToast({
         type: 'error',
         title: 'شماره موبایل نامعتبر است',
         message: 'لطفاً یک شماره معتبر مانند 09121112233 وارد کنید.',
-      });
-      return;
-    }
-
-    if (!isDemoMode) {
-      addToast({
-        type: 'error',
-        title: 'ورود مستقیم بدون احراز هویت پیامکی مسدود است',
-        message: 'در نسخه عملیاتی، ورود با کد تایید پیامکی از طریق سرور انجام خواهد شد.',
       });
       return;
     }
@@ -515,6 +513,12 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
         salon={currentSalon}
+      />
+
+      {/* SERVER AUTH MODAL */}
+      <ServerAuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
       />
     </div>
   );

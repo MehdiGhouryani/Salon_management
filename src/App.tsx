@@ -41,14 +41,18 @@ import {
   ShieldAlert,
   Settings as SettingsIcon,
   Layers,
-  X,
   Check,
+  X,
+  Loader2,
+  LogOut,
 } from 'lucide-react';
+import { ProductionAdminLogin } from './components/common/ProductionAdminLogin';
+
 
 type MainCategory = 'overview' | 'businesses' | 'users' | 'finance' | 'system';
 
 const AdminLayout: React.FC = () => {
-  const { activeTab, setActiveTab, salons, messages, tickets } = useAdmin();
+  const { activeTab, setActiveTab, salons, messages, tickets, isDemoMode, serverAuth, serverLogout } = useAdmin();
 
   const pendingSalons = salons.filter((s) => s.status === 'pending').length;
   const failedMessages = messages.filter((m) => m.status === 'failed' || m.status === 'retrying').length;
@@ -199,12 +203,29 @@ const AdminLayout: React.FC = () => {
                 })}
               </div>
 
-              {/* Quick Persona Indicators */}
+              {/* Quick Persona / Auth Indicators */}
               <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 dark:text-[#9AAAC2] pl-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                  پیش‌نمایش آزمایشی (داده‌های سنتتیک دمو)
-                </span>
+                {serverAuth.authenticated && !isDemoMode ? (
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      مدیر کل: {serverAuth.user?.fullName} ({serverAuth.user?.phone})
+                    </span>
+                    <button
+                      onClick={() => serverLogout()}
+                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-[#334155] transition-colors flex items-center gap-1 cursor-pointer"
+                      title="خروج از حساب مدیر"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      <span>خروج</span>
+                    </button>
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    پیش‌نمایش آزمایشی (داده‌های سنتتیک دمو)
+                  </span>
+                )}
               </div>
             </div>
 
@@ -321,44 +342,60 @@ const AdminLayout: React.FC = () => {
 };
 
 const MainSwitcher: React.FC = () => {
-  const { persona, setPersona, isDemoMode, toggleDemoModeSimulation } = useAdmin();
+  const { persona, setPersona, isDemoMode, serverAuth, serverLogout } = useAdmin();
   const [mobilePersonaOpen, setMobilePersonaOpen] = useState(false);
   const [isPillCollapsed, setIsPillCollapsed] = useState(true);
 
   const renderContent = () => {
-    // SECURITY BARRIER (Phase 2): Block unauthenticated client-side admin access in production mode
+    // SERVER AUTHENTICATION & RBAC GATE (Phase 5):
     if (persona === 'super_admin' && !isDemoMode) {
-      return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
-          <div className="max-w-md w-full bg-[#111B2E] border border-rose-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
-              <ShieldAlert className="w-8 h-8" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-lg font-bold text-white">دسترسی مسدود است</h2>
-              <p className="text-xs text-rose-300 font-semibold">احراز هویت سرور برای پنل مدیریت کل پیکربندی نشده است</p>
-              <p className="text-xs text-slate-400 leading-relaxed pt-2">
-                در محیط عملیاتی (Production)، جابجایی کلاینت‌ساید به عنوان احراز هویت پذیرفته نمی‌شود. دسترسی به پنل مدیریت کل مستلزم ورود ایمن از طریق کوکی‌های HttpOnly، توکن‌های معتبر و کنترل دسترسی بر مبنای نقش (RBAC) در سطح سرور است (برنامه‌ریزی شده در فاز ۳ تا ۵).
-              </p>
-            </div>
-
-            <div className="pt-2 flex flex-col gap-2.5">
-              <button
-                onClick={() => setPersona('salon_website')}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-colors cursor-pointer"
-              >
-                بازگشت به وب‌سایت سالن (رزرو مشتریان)
-              </button>
-              <button
-                onClick={toggleDemoModeSimulation}
-                className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer"
-              >
-                تغییر به حالت پیش‌نمایش آزمایشی (Demo Mode)
-              </button>
+      if (serverAuth.isLoading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
+              <p className="text-sm text-slate-300">در حال بررسی نشست امن سرور...</p>
             </div>
           </div>
-        </div>
-      );
+        );
+      }
+
+      if (!serverAuth.authenticated) {
+        return <ProductionAdminLogin onCancel={() => setPersona('salon_website')} />;
+      }
+
+      if (serverAuth.user?.platformRole !== 'super_admin') {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
+            <div className="max-w-md w-full bg-[#111B2E] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-bold text-white">دسترسی مسدود است (403 Forbidden)</h2>
+                <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد مجوز مدیر کل است</p>
+                <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                  شماره شما ({serverAuth.user?.phone}) با موفقیت احراز هویت شد، اما نقش شما در سرور ({serverAuth.user?.platformRole}) مجوز دسترسی به پنل مدیریت کل پلتفرم را ندارد.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-col gap-2">
+                <button
+                  onClick={() => serverLogout()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors cursor-pointer"
+                >
+                  خروج از حساب
+                </button>
+                <button
+                  onClick={() => setPersona('salon_website')}
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                >
+                  بازگشت به وب‌سایت سالن
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
     }
 
     switch (persona) {
@@ -418,21 +455,26 @@ const MainSwitcher: React.FC = () => {
           <span className="truncate">
             {isDemoMode ? (
               <span>
-                <strong>حالت پیش‌نمایش آزمایشی (Demo Mode):</strong> داده‌ها و عملیات جنبه شبیه‌سازی محلی دارند و سوئیچر نقش‌ها فقط ابزار تست است.
+                <strong>محیط پیش‌نمایش آزمایشی (Demo Mode):</strong> داده‌ها و عملیات جنبه شبیه‌سازی دارند و سوئیچر نقش‌ها ابزار تست توسعه است.
               </span>
             ) : (
               <span>
-                <strong>شبیه‌سازی محیط عملیاتی (Production Mode):</strong> احراز هویت کلاینت‌ساید مسدود بوده و دسترسی به ادمین نیازمند سرور است.
+                <strong>محیط عملیاتی سرور (Production Mode):</strong> دسترسی به ادمین منوط به احراز هویت سرور است.
               </span>
             )}
           </span>
         </div>
-        <button
-          onClick={toggleDemoModeSimulation}
-          className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/80 dark:bg-[#18243A] border border-slate-300 dark:border-[#344258] hover:bg-slate-100 dark:hover:bg-[#1f2f4c] transition-colors cursor-pointer shrink-0 ml-2 shadow-2xs"
-        >
-          {isDemoMode ? 'تست رفتار در حالت عملیاتی' : 'بازگشت به حالت دمو'}
-        </button>
+        <div className="shrink-0 mr-2">
+          {isDemoMode ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+              توسعه / Demo Preview
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
+              عملیاتی / Production
+            </span>
+          )}
+        </div>
       </div>
 
       {renderContent()}

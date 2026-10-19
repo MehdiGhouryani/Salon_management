@@ -30,7 +30,7 @@ import {
   initialMetrics,
   initialSecuritySettings,
 } from '../mock/initialData';
-import { getIsDemoMode, setSimulateProductionMode } from '../utils/env';
+import { getIsDemoMode } from '../utils/env';
 
 export type AdminTab =
   | 'overview'
@@ -55,9 +55,8 @@ export interface ToastMessage {
 export type AppPersona = 'salon_website' | 'salon_app' | 'super_admin';
 
 export interface AdminContextType {
-  // Demo Mode and Environment Simulation
+  // Demo Mode - Governed strictly by server and build environment
   isDemoMode: boolean;
-  toggleDemoModeSimulation: () => void;
   // Existing Tab Navigation for Super Admin
   activeTab: AdminTab;
   setActiveTab: (tab: AdminTab) => void;
@@ -130,6 +129,10 @@ export interface AdminContextType {
   setPersona: (p: AppPersona) => void;
   currentSalonSlug: string;
   setCurrentSalonSlug: (slug: string) => void;
+  // Server-Verified Authentication (Phase 5)
+  serverAuth: ServerAuthProfile;
+  checkServerSession: () => Promise<void>;
+  serverLogout: () => Promise<void>;
   clientSession: ClientAuthSession;
   setClientSession: (session: ClientAuthSession) => void;
   logoutClientSession: () => void;
@@ -148,16 +151,30 @@ export interface AdminContextType {
   setMobileSidebarOpen: (open: boolean) => void;
 }
 
+export interface ServerAuthProfile {
+  authenticated: boolean;
+  isLoading: boolean;
+  user: {
+    id: string;
+    phone: string;
+    fullName: string;
+    email: string | null;
+    platformRole: string;
+    status: string;
+  } | null;
+  salonMemberships: Array<{
+    salonId: string;
+    role: string;
+    status: string;
+    permissions: string[];
+  }>;
+}
+
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(getIsDemoMode);
-
-  const toggleDemoModeSimulation = () => {
-    const nextVal = !isDemoMode;
-    setIsDemoMode(nextVal);
-    setSimulateProductionMode(!nextVal);
-  };
+  // Demo mode is non-mutable from client UI; strictly determined by server/build environment
+  const isDemoMode = getIsDemoMode();
 
   const [persona, setPersonaState] = useState<AppPersona>('salon_website');
   const [currentSalonSlug, setCurrentSalonSlug] = useState<string>('gisara');
@@ -166,6 +183,77 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     phone: '',
     name: '',
   });
+
+  const [serverAuth, setServerAuth] = useState<ServerAuthProfile>({
+    authenticated: false,
+    isLoading: true,
+    user: null,
+    salonMemberships: [],
+  });
+
+  const checkServerSession = async () => {
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { 'X-NobatAra-Client': 'web' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          setServerAuth({
+            authenticated: true,
+            isLoading: false,
+            user: data.user,
+            salonMemberships: data.salonMemberships || [],
+          });
+          // Synchronize verified client session
+          setClientSession({
+            isLoggedIn: true,
+            phone: data.user.phone,
+            name: data.user.fullName,
+            verifiedAt: 'نشست معتبر سرور',
+          });
+          return;
+        }
+      }
+      setServerAuth({
+        authenticated: false,
+        isLoading: false,
+        user: null,
+        salonMemberships: [],
+      });
+    } catch {
+      setServerAuth({
+        authenticated: false,
+        isLoading: false,
+        user: null,
+        salonMemberships: [],
+      });
+    }
+  };
+
+  const serverLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'X-NobatAra-Client': 'web' },
+      });
+    } catch {}
+    setServerAuth({
+      authenticated: false,
+      isLoading: false,
+      user: null,
+      salonMemberships: [],
+    });
+    setClientSession({
+      isLoggedIn: false,
+      phone: '',
+      name: '',
+    });
+  };
+
+  useEffect(() => {
+    checkServerSession();
+  }, []);
 
   const setPersona = (p: AppPersona) => {
     setPersonaState(p);
@@ -909,7 +997,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <AdminContext.Provider
       value={{
         isDemoMode,
-        toggleDemoModeSimulation,
         activeTab,
         setActiveTab,
         salons,
@@ -967,6 +1054,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setPersona,
         currentSalonSlug,
         setCurrentSalonSlug,
+        serverAuth,
+        checkServerSession,
+        serverLogout,
         clientSession,
         setClientSession,
         logoutClientSession,
