@@ -12,16 +12,35 @@
   --color-border-strong: var(--border-strong);
   --color-text-main: var(--text-primary);
   --color-text-muted: var(--text-secondary);
+  --color-text-subtle: var(--text-muted);
   --color-brand: var(--brand-primary);
   --color-brand-accent: var(--brand-accent);
+  --color-brand-subdued: var(--brand-subdued);
+  --color-brand-border: var(--brand-border);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-error: var(--status-error);
+  --color-status-info: var(--status-info);
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
   :root {
-    --bg-canvas: #F8FAFC;
+    /* Coherent Warm Light Theme */
+    --bg-canvas: #F8F9FA;
     --bg-surface: #FFFFFF;
-    --bg-elevated: #F1F5F9;
-    --bg-subsurface: #F8FAFC;
+    --bg-elevated: #F1F3F5;
+    --bg-subsurface: #F8F9FA;
     --border-subtle: #E2E8F0;
     --border-strong: #CBD5E1;
     --text-primary: #0F172A;
@@ -54,11 +73,12 @@
 
   html.dark,
   [data-theme="dark"] {
+    /* Deep Navy Dark Mode (#0B1120) */
     --bg-canvas: #0B1120;
     --bg-surface: #111B2E;
     --bg-elevated: #18243A;
     --bg-subsurface: #0D1527;
-    --border-subtle: #344258;
+    --border-subtle: #23324B;
     --border-strong: #4A5D7C;
     --text-primary: #E7ECF5;
     --text-secondary: #9AAAC2;
@@ -134,6 +154,12 @@
   border-color: var(--brand-primary);
 }
 
+/* Touch targets: 44x44px minimum touch target ergonomics */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
 /* Tabular numerals standard */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
@@ -167,3 +193,16 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
+
+/* Accessibility: Reduced-Motion compliance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

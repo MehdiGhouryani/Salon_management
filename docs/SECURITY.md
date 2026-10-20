@@ -63,3 +63,33 @@
    - Centralized error handler strictly suppresses error stacks and internal diagnostic messages in production.
    - Request logger formats method, path, and duration without logging request payloads, query tokens, passwords, or Authorization headers.
    - Unknown `/api/*` routes consistently return JSON 404 rather than leaking frontend HTML.
+
+---
+
+## 5. Phase 5 Authentication, Sessions & Server-Side RBAC
+
+1. **Cryptographic OTP Architecture**:
+   - Phone normalization guarantees single canonical format (`09xxxxxxxxx` national and `+989xxxxxxxxx` E.164).
+   - OTP codes are 6 digits generated via OS-level CSPRNG (`crypto.randomInt`).
+   - Plaintext OTPs are NEVER persisted or logged; challenges store HMAC-SHA256 keyed hashes (`code:phone:purpose`).
+   - Challenge state enforcement: 120-second validity, 60-second resend cooldown, 3 max failed attempts, atomic consumption (`consumed_at = NOW()`), and anti-replay prevention.
+   - Purpose binding prevents cross-purpose reuse (`login`, `booking_verification`, `admin_step_up`).
+2. **Session Security & Hashing at Rest**:
+   - 256-bit entropy opaque tokens generated via `crypto.randomBytes(32).toString('hex')`.
+   - Raw tokens are transmitted exclusively via `HttpOnly`, `Path=/`, `SameSite=lax`, `Secure` (production) cookies (`nobatara_session`).
+   - The database stores only the one-way SHA-256 hash (`token_hash`). Compromise of the database does not compromise raw session cookies.
+   - Sessions enforce dual-expiration: 14 days absolute (`expires_at`) and 2 hours inactivity (`idle_expires_at`), updated at most once every 5 minutes on active requests.
+   - Granular session revocation allows logging out, terminating remote sessions by ID, or revoking all other sessions.
+3. **State-Changing CSRF & Origin Validation**:
+   - All state-changing HTTP requests (`POST`, `PUT`, `PATCH`, `DELETE`) are protected by `csrfProtection`.
+   - Rejection occurs if Origin/Referer is invalid or mismatched, unless accompanied by a verified client anti-CSRF header (`X-NobatAra-Client`).
+4. **Platform Privilege Isolation & Controlled Provisioning**:
+   - Customer public phone registration strictly defaults to `platform_role = 'user'`.
+   - Customer phone verification never grants administrative or salon management roles.
+   - Initial super-admin bootstrap is restricted to a CLI operator command (`scripts/bootstrapAdmin.ts`) requiring explicit `--confirm` flag, phone normalization, and tamper-evident audit logging. No public HTTP admin-registration endpoint exists.
+5. **Server-Enforced RBAC & Policy Middleware**:
+   - `requireAuth`: Validates active, unexpired, non-revoked session.
+   - `requirePlatformRole`: Enforces platform role boundaries (`super_admin`, `platform_support`, `platform_auditor`, `financial_manager`).
+   - `requireSalonMembership`: Strictly binds salon managers and staff to authorized tenants.
+   - `requireSalonPermission`: Granularly checks staff permissions (`appointments:read`, `appointments:write`, `cashflow:read`, etc.) while granting full governance to salon owners and managers.
+

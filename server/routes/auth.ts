@@ -5,6 +5,8 @@ import { sessionService, extractClientIp } from '../services/auth/sessionService
 import { requireAuth } from '../middleware/auth.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 
+import { config } from '../config.ts';
+
 export const authRouter = express.Router();
 
 /**
@@ -165,7 +167,7 @@ authRouter.get('/me', (req: Request, res: Response) => {
  * Revokes current session and clears the session cookie
  */
 authRouter.post('/logout', requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const cookieToken = req.cookies?.['nobatara_session'];
+  const cookieToken = req.cookies?.[config.auth.sessionCookieName];
   let rawToken: string | undefined = cookieToken;
 
   if (!rawToken) {
@@ -197,3 +199,111 @@ authRouter.post('/logout', requireAuth, async (req: Request, res: Response): Pro
     message: 'با موفقیت از سامانه خارج شدید.',
   });
 });
+
+/**
+ * GET /api/auth/sessions
+ * Returns all active sessions for the currently authenticated user
+ */
+authRouter.get('/sessions', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: 'AUTHENTICATION_REQUIRED' });
+    return;
+  }
+
+  try {
+    const sessions = await sessionService.getUserSessions(req.user.id);
+    const currentSessionId = req.session?.id;
+
+    res.status(200).json({
+      success: true,
+      currentSessionId,
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        ipAddress: s.ip_address,
+        userAgent: s.user_agent,
+        sessionType: s.session_type,
+        createdAt: s.created_at,
+        lastActiveAt: s.last_active_at,
+        expiresAt: s.expires_at,
+        isCurrent: s.id === currentSessionId,
+      })),
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SESSIONS_FETCH_ERROR',
+      message: err.message,
+    });
+  }
+});
+
+/**
+ * POST /api/auth/sessions/:sessionId/revoke
+ * Granularly revokes a specific session of the authenticated user
+ */
+authRouter.post('/sessions/:sessionId/revoke', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: 'AUTHENTICATION_REQUIRED' });
+    return;
+  }
+
+  const sessionId = String(req.params.sessionId);
+  const revoked = await sessionService.revokeSessionById(sessionId, req.user.id);
+
+  if (!revoked) {
+    res.status(404).json({
+      error: 'SESSION_NOT_FOUND',
+      message: 'نشست مورد نظر یافت نشد یا قبلا ابطال شده است.',
+    });
+    return;
+  }
+
+  // Audit log the remote session revocation
+  await auditLogRepository.create({
+    actor: req.user.full_name,
+    actorRole: req.user.platform_role,
+    action: 'ابطال نشست راه دور کاربر',
+    target: `Session:${sessionId}`,
+    ipAddress: extractClientIp(req),
+    userAgent: String(req.headers['user-agent'] || 'Unknown'),
+    severity: 'info',
+    category: 'auth',
+    details: { revokedSessionId: sessionId },
+  }).catch(() => {});
+
+  res.status(200).json({
+    success: true,
+    message: 'نشست با موفقیت باطل شد.',
+  });
+});
+
+/**
+ * POST /api/auth/sessions/revoke-others
+ * Revokes all other active sessions for the current user
+ */
+authRouter.post('/sessions/revoke-others', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  if (!req.user || !req.session) {
+    res.status(401).json({ error: 'AUTHENTICATION_REQUIRED' });
+    return;
+  }
+
+  const count = await sessionService.revokeOtherSessions(req.user.id, req.session.id);
+
+  await auditLogRepository.create({
+    actor: req.user.full_name,
+    actorRole: req.user.platform_role,
+    action: 'خروج از کلیه دستگاه‌های دیگر (Revoke Others)',
+    target: `User:${req.user.id}`,
+    ipAddress: extractClientIp(req),
+    userAgent: String(req.headers['user-agent'] || 'Unknown'),
+    severity: 'info',
+    category: 'auth',
+    details: { revokedSessionsCount: count },
+  }).catch(() => {});
+
+  res.status(200).json({
+    success: true,
+    revokedCount: count,
+    message: `${count} نشست دیگر با موفقیت باطل شدند.`,
+  });
+});
+

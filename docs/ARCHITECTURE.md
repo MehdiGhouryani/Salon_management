@@ -86,17 +86,20 @@ The full-stack server architecture is established and verified in Phase 3:
 
 ---
 
-## 3. Security Architecture & Threat Mitigation
+## 3. Security Architecture & Threat Mitigation (Phase 5 Implemented)
 
 1. **Authentication Architecture**:
-   - Customer authentication: Stateless SMS OTP issuing a temporary JWT (`role: 'customer'`, `phone: '09...'`, expires in 30 days).
-   - Salon manager authentication: Phone + OTP or Password issuing an HTTP-only secure cookie or Authorization Bearer header (`role: 'salon_admin'`, `salonId: '...'`).
-   - Super admin authentication: Strict 2FA (TOTP / SMS) issuing short-lived admin tokens (`role: 'super_admin'`).
+   - Customer & Staff authentication: Phone-based cryptographic OTP issuing a 256-bit entropy session token (`nobatara_session`) stored hashed at rest (`SHA-256`) and transmitted via `HttpOnly`, `Path=/`, `SameSite=lax`, `Secure` (production) cookies.
+   - Public registration strictly binds users to `platform_role = 'user'`.
+   - Super admin authentication: Dedicated server session verification (`requirePlatformRole('super_admin')`). Bootstrapping initial super admin is restricted exclusively to CLI operator command (`scripts/bootstrapAdmin.ts`), never exposed over HTTP.
 2. **Tenant Isolation Enforcement**:
-   - Every `/api/salon/*` route passes through `requireSalonAuth` which extracts `salonId` from the cryptographically verified session token.
-   - Any query to the database must include `WHERE salon_id = :salonId`. It is architecturally impossible for a salon manager to pass an arbitrary `salonId` in request parameters to access another salon's records.
+   - Every `/api/salon/:salonId/*` route passes through `requireSalonMembership`, validating active membership in the target salon. Super admins have platform-wide governance override.
+   - Staff operations pass through `requireSalonPermission` checking fine-grained permissions (e.g. `appointments:write`).
 3. **Double-Booking & Concurrency Protection**:
    - A PostgreSQL unique constraint `UNIQUE (salon_id, staff_id, booking_date, booking_time)` prevents simultaneous booking of the same specialist.
 4. **Rate Limiting & Anti-Bruteforce**:
-   - `/api/auth/otp/send`: Limited to 3 requests per 10 minutes per IP and phone number.
-   - `/api/auth/otp/verify`: Max 3 attempts before code invalidation.
+   - `/api/auth/otp/request`: Enforces 60-second resend cooldown and 5 requests per 10 minutes limit.
+   - `/api/auth/otp/verify`: Max 3 failed attempts before code invalidation; atomic single-use consumption (`consumed_at = NOW()`) prevents replay.
+5. **CSRF & Origin Protection**:
+   - `csrfProtection` middleware validates Origin/Referer or enforces custom anti-CSRF header (`X-NobatAra-Client`) on all state-changing requests (`POST`, `PUT`, `PATCH`, `DELETE`).
+

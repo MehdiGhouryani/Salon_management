@@ -116,3 +116,51 @@ This guarantees no specialist can ever be double-booked at the same minute.
 | `category` | `VARCHAR(64)` | NOT NULL | `auth`, `privilege`, `business`, `financial`, `system` |
 | `details` | `TEXT` | NULL | Complete JSON payload / metadata |
 | `created_at` | `TIMESTAMP` | NOT NULL, DEFAULT NOW() | Exact event timestamp |
+
+---
+
+## 3. Phase 5 Authentication & Session Tables
+
+### Table: `otp_challenges` (Migration 002)
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | PRIMARY KEY, DEFAULT `gen_random_uuid()` | Challenge UUID |
+| `phone` | `VARCHAR(20)` | NOT NULL | Canonical Iranian mobile (`09xxxxxxxxx`) |
+| `purpose` | `VARCHAR(32)` | NOT NULL, DEFAULT 'login', CHECK (`login`, `booking_verification`, `admin_step_up`) | Purpose binding |
+| `code_hash` | `VARCHAR(64)` | NOT NULL | HMAC-SHA256 hash of OTP code with secret key |
+| `attempts` | `INT` | NOT NULL, DEFAULT 0, CHECK (`attempts >= 0`) | Number of failed verification tries |
+| `max_attempts` | `INT` | NOT NULL, DEFAULT 3, CHECK (`max_attempts > 0`) | Max allowed attempts before invalidation |
+| `resend_available_at`| `TIMESTAMPTZ` | NOT NULL | 60-second resend cooldown threshold |
+| `expires_at` | `TIMESTAMPTZ` | NOT NULL | 120-second hard TTL |
+| `consumed_at`| `TIMESTAMPTZ` | NULL | Timestamp when verified; prevents replay |
+| `ip_address` | `VARCHAR(45)` | NOT NULL | Requester IP address |
+| `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Challenge creation time |
+
+Indices:
+- `idx_otp_challenges_phone_purpose ON (phone, purpose, created_at DESC)`
+- `idx_otp_challenges_expires_at ON (expires_at)`
+
+---
+
+### Table: `user_sessions` (Migrations 001, 002, 003)
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | PRIMARY KEY, DEFAULT `gen_random_uuid()` | Session UUID |
+| `user_id` | `UUID` | REFERENCES `users(id)` ON DELETE CASCADE | Associated authenticated user |
+| `token_hash`| `VARCHAR(64)`| UNIQUE, NOT NULL | SHA-256 one-way hash of raw 256-bit token |
+| `ip_address`| `VARCHAR(45)`| NOT NULL | Client IP on session establishment |
+| `user_agent`| `TEXT` | NOT NULL | Client User-Agent string |
+| `expires_at`| `TIMESTAMPTZ` | NOT NULL | Absolute expiration (14 days from issue) |
+| `idle_expires_at` | `TIMESTAMPTZ` | NOT NULL | Inactivity timeout (2 hours, sliding window) |
+| `revoked_at`| `TIMESTAMPTZ` | NULL | Timestamp when revoked/logged out |
+| `revocation_reason` | `VARCHAR(64)` | NULL | Reason: `user_requested`, `revoked_other_devices`, etc. |
+| `session_type` | `VARCHAR(32)` | NOT NULL, DEFAULT 'web', CHECK (`web`, `mobile`, `api`) | Session type |
+| `last_active_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Last request timestamp |
+| `created_at`| `TIMESTAMPTZ` | NOT NULL, DEFAULT NOW() | Session creation timestamp |
+
+Indices:
+- `idx_user_sessions_token_hash ON (token_hash)`
+- `idx_user_sessions_user_active ON (user_id, revoked_at, expires_at)`
+- `idx_user_sessions_expires_at ON (expires_at)`
+- `idx_user_sessions_idle ON (idle_expires_at)`
+

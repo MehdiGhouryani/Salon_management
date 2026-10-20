@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Scissors,
   User,
@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Check,
   RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { DetailedSalonData, SalonServiceItem, SalonStaffItem } from '../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../types/admin';
@@ -27,6 +28,50 @@ interface BookingModalProps {
   salon: DetailedSalonData;
   onBookingSuccess: (booking: CustomerBooking) => void;
   initialServiceId?: string;
+}
+
+interface AvailableSlotItem {
+  time: string;
+  endTime: string;
+  available: boolean;
+  staffId?: string;
+  staffName?: string;
+  conflictReason?: string;
+}
+
+function getUpcomingBookingDays() {
+  const days = [];
+  const now = new Date();
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() + i);
+    const isoKey = d.toISOString().split('T')[0];
+
+    let label = '';
+    try {
+      const persianFormatted = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }).format(d);
+      if (i === 0) label = `امروز (${persianFormatted})`;
+      else if (i === 1) label = `فردا (${persianFormatted})`;
+      else label = persianFormatted;
+    } catch {
+      const fallbackDays = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
+      const dayName = fallbackDays[d.getDay()];
+      if (i === 0) label = `امروز (${dayName})`;
+      else if (i === 1) label = `فردا (${dayName})`;
+      else label = `${dayName} (${toPersianDigits(d.getDate())})`;
+    }
+
+    days.push({
+      dateKey: isoKey,
+      label,
+    });
+  }
+  return days;
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({
@@ -50,26 +95,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [selectedStaff, setSelectedStaff] = useState<SalonStaffItem | 'any'>('any');
 
   // Step 2: Date & Time
-  const availableDates = [
-    { label: 'امروز (فوری)', value: 'امروز ۲۳ آبان', active: true },
-    { label: 'فردا', value: 'فردا ۲۴ آبان', active: true },
-    { label: 'شنبه', value: 'شنبه ۲۵ آبان', active: true },
-    { label: 'یکشنبه', value: 'یکشنبه ۲۶ آبان', active: true },
-    { label: 'دوشنبه', value: 'دوشنبه ۲۷ آبان', active: true },
-  ];
-  const [selectedDate, setSelectedDate] = useState<string>(availableDates[1].value);
+  const upcomingDays = useMemo(() => getUpcomingBookingDays(), []);
+  const [selectedDateItem, setSelectedDateItem] = useState<{ dateKey: string; label: string }>(upcomingDays[0]);
 
-  const timeSlots = [
-    '۱۰:۰۰',
-    '۱۱:۱۵',
-    '۱۲:۳۰',
-    '۱۴:۰۰',
-    '۱۵:۳۰',
-    '۱۷:۰۰',
-    '۱۸:۱۵',
-    '۱۹:۳۰',
-  ];
-  const [selectedTime, setSelectedTime] = useState<string>(timeSlots[2]);
+  // Live slots from server
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [isSalonOpenOnDate, setIsSalonOpenOnDate] = useState(true);
+  const [closedReason, setClosedReason] = useState('');
+  const [serverSlots, setServerSlots] = useState<AvailableSlotItem[]>([]);
+  const [selectedTime, setSelectedTime] = useState<string>('');
 
   // Step 3: Customer Info & OTP verification
   const [clientName, setClientName] = useState(clientSession.name || '');
@@ -87,8 +121,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   // Sync client session if logged in
   useEffect(() => {
     if (clientSession.isLoggedIn) {
-      setClientName(clientSession.name);
-      setClientPhone(clientSession.phone);
+      if (clientSession.name) setClientName(clientSession.name);
+      if (clientSession.phone) setClientPhone(clientSession.phone);
       setOtpStage('verified');
     }
   }, [clientSession]);
@@ -112,6 +146,70 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return () => clearInterval(interval);
   }, [otpStage, otpTimer]);
 
+  // Fetch real available slots when date, service, or staff changes
+  useEffect(() => {
+    if (!isOpen || !selectedService) return;
+
+    let isMounted = true;
+    setSlotsLoading(true);
+    setErrorMsg('');
+
+    const staffQuery = selectedStaff === 'any' ? '' : `&staffId=${encodeURIComponent(selectedStaff.id)}`;
+    const url = `/api/public/salons/${encodeURIComponent(salon.id)}/availability?serviceId=${encodeURIComponent(selectedService.id)}&date=${encodeURIComponent(selectedDateItem.dateKey)}${staffQuery}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        setSlotsLoading(false);
+
+        if (data.success) {
+          setIsSalonOpenOnDate(data.isOpen);
+          setClosedReason(data.reason || '');
+          setServerSlots(data.slots || []);
+
+          // Auto-select first available slot if previous selection is invalid
+          const firstFree = (data.slots || []).find((s: AvailableSlotItem) => s.available);
+          if (firstFree && (!selectedTime || !data.slots.some((s: AvailableSlotItem) => s.time === selectedTime && s.available))) {
+            setSelectedTime(firstFree.time);
+          } else if (!firstFree) {
+            setSelectedTime('');
+          }
+        } else {
+          // Fallback to default slots if network/offline
+          setIsSalonOpenOnDate(true);
+          const fallbackSlots: AvailableSlotItem[] = [
+            { time: '10:00', endTime: '11:00', available: true },
+            { time: '11:30', endTime: '12:30', available: true },
+            { time: '14:00', endTime: '15:00', available: true },
+            { time: '15:30', endTime: '16:30', available: true },
+            { time: '17:00', endTime: '18:00', available: true },
+            { time: '18:30', endTime: '19:30', available: true },
+          ];
+          setServerSlots(fallbackSlots);
+          setSelectedTime('10:00');
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setSlotsLoading(false);
+        setIsSalonOpenOnDate(true);
+        const fallbackSlots: AvailableSlotItem[] = [
+          { time: '10:00', endTime: '11:00', available: true },
+          { time: '11:30', endTime: '12:30', available: true },
+          { time: '14:00', endTime: '15:00', available: true },
+          { time: '15:30', endTime: '16:30', available: true },
+          { time: '17:00', endTime: '18:00', available: true },
+        ];
+        setServerSlots(fallbackSlots);
+        setSelectedTime('10:00');
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [salon.id, selectedService, selectedStaff, selectedDateItem, isOpen]);
+
   const staffNameLabel =
     selectedStaff === 'any'
       ? (salon.staff[0]?.name || 'نزدیک‌ترین متخصص خالی')
@@ -126,8 +224,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       }
       setStep(2);
     } else if (step === 2) {
-      if (!selectedDate || !selectedTime) {
-        setErrorMsg('لطفاً روز و ساعت نوبت را مشخص کنید');
+      if (!isSalonOpenOnDate) {
+        setErrorMsg(closedReason || 'سالن در این تاریخ تعطیل است.');
+        return;
+      }
+      if (!selectedTime) {
+        setErrorMsg('لطفاً یک ساعت آزاد از فهرست انتخاب نمایید.');
         return;
       }
       setStep(3);
@@ -139,11 +241,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setStep((prev) => (Math.max(prev - 1, 1) as 1 | 2 | 3));
   };
 
-  // Send OTP
+  // Send real cryptographic OTP via server
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!clientName.trim() || clientName.trim().length < 2) {
-      setErrorMsg('لطفاً نام خود را وارد کنید');
+      setErrorMsg('لطفاً نام و نام خانوادگی خود را کامل وارد کنید');
       return;
     }
     const cleanPhone = clientPhone.replace(/\D/g, '');
@@ -168,19 +270,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const data = await res.json();
 
       if (!res.ok) {
-        if (isDemoMode) {
-          const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-          setGeneratedOtp(randomCode);
-          setOtpTimer(60);
-          setOtpStage('input_code');
-          setErrorMsg('');
-          addToast({
-            type: 'info',
-            title: '[شبیه‌ساز پیش‌نمایش دمو] تولید کد آزمایشی',
-            message: `توجه: سرور دمو کد آزمایشی ۶ رقمی را شبیه‌سازی کرد: ${randomCode}`,
-          });
-          return;
-        }
         setErrorMsg(data.message || 'ارسال کد تایید با خطا مواجه شد.');
         return;
       }
@@ -188,36 +277,29 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setOtpTimer(data.resendAvailableInSeconds || 60);
       setOtpStage('input_code');
       setErrorMsg('');
+
+      // In development mode, the mock provider logs OTP
       addToast({
         type: 'info',
         title: 'کد تایید ارسال شد',
         message: data.message || `کد تایید به شماره ${data.phone} ارسال گردید.`,
       });
     } catch {
-      if (isDemoMode) {
-        const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-        setGeneratedOtp(randomCode);
-        setOtpTimer(60);
-        setOtpStage('input_code');
-        setErrorMsg('');
-        addToast({
-          type: 'info',
-          title: '[شبیه‌ساز دمو] کد آزمایشی تولید شد',
-          message: `کد تایید آزمایشی: ${randomCode}`,
-        });
-        return;
-      }
       setErrorMsg('خطا در برقراری ارتباط با سرور.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Verify OTP
+  // Verify real cryptographic OTP
   const handleVerifyOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setIsSubmitting(true);
+    if (!otpCode.trim() || otpCode.trim().length < 4) {
+      setErrorMsg('لطفاً کد تایید دریافتی را کامل وارد کنید');
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
@@ -225,6 +307,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           'Content-Type': 'application/json',
           'X-NobatAra-Client': 'web',
         },
+        credentials: 'include',
         body: JSON.stringify({
           phone: clientPhone.trim(),
           code: otpCode.trim(),
@@ -234,22 +317,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       const data = await res.json();
 
       if (!res.ok) {
-        if (isDemoMode && generatedOtp && otpCode.trim() === generatedOtp) {
-          setOtpStage('verified');
-          setErrorMsg('');
-          setClientSession({
-            isLoggedIn: true,
-            phone: clientPhone,
-            name: clientName,
-            verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
-          });
-          addToast({
-            type: 'info',
-            title: '[شبیه‌سازی دمو] ورود آزمایشی تایید شد',
-            message: `${clientName} عزیز، نوبت آماده ثبت نهایی است.`,
-          });
-          return;
-        }
         setErrorMsg(data.message || 'کد وارد شده صحیح نمی‌باشد.');
         return;
       }
@@ -258,90 +325,118 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setErrorMsg('');
       setClientSession({
         isLoggedIn: true,
-        phone: clientPhone,
-        name: clientName,
-        verifiedAt: 'نشست معتبر سرور',
+        phone: clientPhone.trim(),
+        name: clientName.trim(),
+        verifiedAt: 'نشست احراز هویت شده سرور',
       });
       addToast({
         type: 'success',
-        title: 'شماره همراه تایید شد',
-        message: `${clientName} عزیز، هویت شما با موفقیت تایید شد.`,
+        title: 'هویت تایید شد',
+        message: `${clientName} عزیز، نشست شما با موفقیت تایید شد.`,
       });
     } catch {
-      if (isDemoMode && generatedOtp && otpCode.trim() === generatedOtp) {
-        setOtpStage('verified');
-        setErrorMsg('');
-        setClientSession({
-          isLoggedIn: true,
-          phone: clientPhone,
-          name: clientName,
-          verifiedAt: 'شبیه‌سازی آزمایشی کلاینت',
-        });
-        return;
-      }
       setErrorMsg('خطا در اعتبارسنجی کد با سرور.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Final booking confirmation
-  const handleFinalConfirm = () => {
+  // Final booking confirmation: Real Server-Side Atomic Persistence (Phase 7)
+  const handleFinalConfirm = async () => {
     if (otpStage !== 'verified') {
-      setErrorMsg('لطفاً ابتدا مرحله شماره موبایل را تکمیل فرمایید.');
+      setErrorMsg('لطفاً ابتدا مرحله تایید شماره موبایل را انجام دهید.');
       return;
     }
 
-    if (!isDemoMode) {
-      setErrorMsg('ثبت قطعی نوبت در نسخه عملیاتی نیازمند اتصال پایگاه‌داده در فاز ۳ تا ۵ است.');
+    if (!selectedTime) {
+      setErrorMsg('ساعت نوبت مشخص نشده است.');
       return;
     }
 
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const trackingPrefix = salon.slug ? salon.slug.slice(0, 3).toUpperCase() : 'ARA';
-    const trackingCode = `${trackingPrefix}-${randomSuffix}`;
+    setIsSubmitting(true);
+    setErrorMsg('');
 
-    const newBooking: CustomerBooking = {
-      id: `bk-${Date.now()}`,
-      trackingCode,
-      salonId: salon.id,
-      salonName: salon.name,
-      clientName: clientName.trim(),
-      clientPhone: clientPhone.trim(),
-      serviceName: selectedService.name,
-      serviceCategory: selectedService.category,
-      staffName: staffNameLabel,
-      date: selectedDate,
-      time: selectedTime,
-      price: selectedService.price,
-      paymentMethod: 'in_person',
-      createdAt: 'هم‌اکنون',
-      status: 'confirmed',
-      notes: notes.trim() || undefined,
-      isDemo: true,
-    };
+    try {
+      const res = await fetch('/api/public/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-NobatAra-Client': 'web',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          salonId: salon.id,
+          serviceId: selectedService.id,
+          staffId: selectedStaff === 'any' ? undefined : selectedStaff.id,
+          bookingDate: selectedDateItem.dateKey,
+          bookingTime: selectedTime,
+          clientName: clientName.trim(),
+          clientPhone: clientPhone.trim(),
+          notes: notes.trim() || undefined,
+        }),
+      });
 
-    onBookingSuccess(newBooking);
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === 'SLOT_ALREADY_TAKEN') {
+          setErrorMsg('این زمان نوبت قبلاً رزرو شده است یا با نوبت دیگری تداخل دارد. لطفاً ساعت دیگری را انتخاب فرمایید.');
+        } else if (data.error === 'DATABASE_UNAVAILABLE') {
+          setErrorMsg('پایگاه داده در محیط عملیاتی هنوز متصل نشده است (آماده‌سازی فاز ۴).');
+        } else {
+          setErrorMsg(data.message || 'ثبت نوبت با خطا مواجه شد.');
+        }
+        return;
+      }
+
+      // Authoritative booking record returned from server
+      const appt = data.appointment;
+      const bookedRecord: CustomerBooking = {
+        id: appt.id,
+        trackingCode: data.trackingCode || appt.tracking_code,
+        salonId: salon.id,
+        salonName: salon.name,
+        clientName: appt.client_name,
+        clientPhone: appt.client_phone,
+        serviceName: selectedService.name,
+        serviceCategory: selectedService.category,
+        staffName: staffNameLabel,
+        date: selectedDateItem.label,
+        time: selectedTime,
+        price: typeof appt.price === 'string' ? parseInt(appt.price, 10) : appt.price,
+        paymentMethod: 'in_person',
+        createdAt: 'هم‌اکنون',
+        status: appt.status || 'confirmed',
+        notes: appt.notes || undefined,
+        isDemo: appt.is_demo,
+      };
+
+      onBookingSuccess(bookedRecord);
+    } catch {
+      setErrorMsg('خطا در اتصال به سرور جهت ثبت قطعی نوبت.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
-      <div className="relative w-full max-w-xl bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-slate-900 dark:text-[#E7ECF5] transition-colors">
+      <div className="relative w-full max-w-xl bg-surface border border-border-subtle rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-text-main transition-colors">
         {/* Modal Top Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-[#344258] flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-border-subtle flex items-center justify-between">
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#E7ECF5] flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            <h2 className="text-base sm:text-lg font-bold text-text-main flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-brand" />
               <span>رزرو نوبت {salon.name}</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-[#9AAAC2] mt-0.5">
-              مرحله {toPersianDigits(step)} از ۳: {step === 1 ? 'خدمت و آرایشگر' : step === 2 ? 'تاریخ و ساعت' : 'تایید شماره و ثبت'}
+            <p className="text-xs text-text-muted mt-0.5">
+              مرحله {toPersianDigits(step)} از ۳: {step === 1 ? 'خدمت و متخصص' : step === 2 ? 'تاریخ و ساعت' : 'تایید شماره و ثبت'}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#18243A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-text-subtle hover:text-text-main hover:bg-elevated transition-colors cursor-pointer"
             aria-label="بستن"
           >
             <X className="w-5 h-5" />
@@ -349,15 +444,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         </div>
 
         {/* 3-Step Clean Progress Bar */}
-        <div className="px-3 sm:px-5 pt-2.5 pb-2 bg-slate-50 dark:bg-[#18243A]/60 border-b border-slate-100 dark:border-[#344258]">
+        <div className="px-3 sm:px-5 pt-2.5 pb-2 bg-elevated/40 border-b border-border-subtle">
           <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] sm:text-xs">
-            <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 1 ? 'bg-rose-600 text-white shadow-xs' : step > 1 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-400 dark:text-slate-600'}`}>
-              ۱. خدمت و آرایشگر
+            <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 1 ? 'bg-brand text-white shadow-xs' : step > 1 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : 'text-text-subtle'}`}>
+              ۱. خدمت و متخصص
             </div>
-            <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 2 ? 'bg-rose-600 text-white shadow-xs' : step > 2 ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40' : 'text-slate-400 dark:text-slate-600'}`}>
-              ۲. زمان نوبت
+            <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 2 ? 'bg-brand text-white shadow-xs' : step > 2 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : 'text-text-subtle'}`}>
+              ۲. تاریخ و ساعت
             </div>
-            <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 3 ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-400 dark:text-slate-600'}`}>
+            <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 3 ? 'bg-brand text-white shadow-xs' : 'text-text-subtle'}`}>
               ۳. تایید و ثبت
             </div>
           </div>
@@ -366,7 +461,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         {/* Modal Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {errorMsg && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl flex items-center gap-2 text-xs text-rose-800 dark:text-rose-200">
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
               <span>{errorMsg}</span>
             </div>
@@ -377,8 +472,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <div className="space-y-5">
               {/* Service Selection */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block">
-                  انتخاب خدمت:
+                <label className="text-xs font-bold text-text-muted block">
+                  انتخاب خدمت مورد نظر:
                 </label>
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {salon.services.map((srv) => {
@@ -389,20 +484,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         onClick={() => setSelectedService(srv)}
                         className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                           isSelected
-                            ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-500 shadow-xs ring-1 ring-rose-500/30'
-                            : 'bg-stone-50 dark:bg-[#18243A] border-stone-200 dark:border-[#344258] hover:border-stone-300 dark:hover:border-zinc-700'
+                            ? 'bg-brand-subdued border-brand shadow-xs ring-1 ring-brand/30'
+                            : 'bg-elevated/50 border-border-subtle hover:border-border-strong'
                         }`}
                       >
                         <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] truncate">
+                          <h4 className="text-xs sm:text-sm font-bold text-text-main truncate">
                             {srv.name}
                           </h4>
-                          <p className="text-[11px] text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
+                          <p className="text-[11px] text-text-muted mt-0.5">
                             {srv.duration} · {srv.description}
                           </p>
                         </div>
                         <div className="text-left shrink-0">
-                          <span className="text-xs sm:text-sm font-extrabold text-rose-600 dark:text-rose-400 font-mono tabular-nums">
+                          <span className="text-xs sm:text-sm font-extrabold text-brand font-mono tabular-nums">
                             {formatCurrency(srv.price)}
                           </span>
                         </div>
@@ -413,8 +508,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
 
               {/* Staff Specialist Selection */}
-              <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-[#344258]">
-                <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block">
+              <div className="space-y-2 pt-2 border-t border-border-subtle">
+                <label className="text-xs font-bold text-text-muted block">
                   انتخاب متخصص:
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -423,12 +518,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     onClick={() => setSelectedStaff('any')}
                     className={`p-2.5 rounded-xl border text-right transition-all cursor-pointer ${
                       selectedStaff === 'any'
-                        ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-500 text-rose-700 dark:text-rose-300 font-bold ring-1 ring-rose-500/30'
-                        : 'bg-stone-50 dark:bg-[#18243A] border-stone-200 dark:border-[#344258] text-zinc-700 dark:text-[#9AAAC2]'
+                        ? 'bg-brand-subdued border-brand text-brand font-bold ring-1 ring-brand/30'
+                        : 'bg-elevated/50 border-border-subtle text-text-main'
                     }`}
                   >
                     <div className="text-xs font-bold">اولین متخصص خالی</div>
-                    <div className="text-[10px] text-zinc-400 mt-0.5">پیشنهادی سالن</div>
+                    <div className="text-[10px] text-text-subtle mt-0.5">پیشنهادی سالن</div>
                   </button>
 
                   {salon.staff.map((st) => {
@@ -440,14 +535,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         onClick={() => setSelectedStaff(st)}
                         className={`p-2.5 rounded-xl border text-right transition-all cursor-pointer flex items-center gap-2 ${
                           isSelected
-                            ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-500 font-bold ring-1 ring-rose-500/30'
-                            : 'bg-stone-50 dark:bg-[#18243A] border-stone-200 dark:border-[#344258]'
+                            ? 'bg-brand-subdued border-brand font-bold ring-1 ring-brand/30'
+                            : 'bg-elevated/50 border-border-subtle'
                         }`}
                       >
-                        <img src={st.avatar} alt={st.name} className="w-8 h-8 rounded-full object-cover" />
+                        <img src={st.avatar} alt={st.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                         <div className="min-w-0">
-                          <div className="text-xs font-bold truncate text-zinc-800 dark:text-[#E7ECF5]">{st.name}</div>
-                          <div className="text-[10px] text-zinc-400 truncate">{st.role}</div>
+                          <div className="text-xs font-bold truncate text-text-main">{st.name}</div>
+                          <div className="text-[10px] text-text-subtle truncate">{st.specialty || st.role}</div>
                         </div>
                       </button>
                     );
@@ -462,24 +557,29 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <div className="space-y-5">
               {/* Date Selection */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block">
-                  انتخاب روز نوبت:
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-text-muted block">
+                    انتخاب روز نوبت (۷ روز آینده):
+                  </label>
+                  <span className="text-[11px] text-text-subtle">
+                    مدت خدمت: {selectedService.duration}
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {availableDates.map((d, idx) => {
-                    const isSelected = selectedDate === d.value;
+                  {upcomingDays.map((d) => {
+                    const isSelected = selectedDateItem.dateKey === d.dateKey;
                     return (
                       <button
-                        key={idx}
+                        key={d.dateKey}
                         type="button"
-                        onClick={() => setSelectedDate(d.value)}
-                        className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                        onClick={() => setSelectedDateItem(d)}
+                        className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-rose-600 text-white border-rose-600 shadow-sm font-bold'
-                            : 'bg-stone-50 dark:bg-[#18243A] border-stone-200 dark:border-[#344258] text-zinc-700 dark:text-[#9AAAC2] hover:border-stone-300 dark:hover:border-zinc-700'
+                            ? 'bg-brand text-white border-brand shadow-xs font-bold'
+                            : 'bg-elevated/50 border-border-subtle text-text-main hover:border-border-strong'
                         }`}
                       >
-                        <div className="text-xs">{d.label}</div>
+                        <div className="text-xs leading-tight">{d.label}</div>
                       </button>
                     );
                   })}
@@ -488,54 +588,66 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
               {/* Time Slots */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block">
-                  انتخاب ساعت:
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {timeSlots.map((time, idx) => {
-                    const isSelected = selectedTime === time;
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setSelectedTime(time)}
-                        className={`py-2 px-1 rounded-xl border text-center text-xs font-mono font-bold transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
-                            : 'bg-stone-50 dark:bg-[#18243A] border-stone-200 dark:border-[#344258] text-zinc-700 dark:text-[#9AAAC2] hover:border-stone-300 dark:hover:border-zinc-700'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-text-muted block">
+                    ساعت‌های آزاد نوبت:
+                  </label>
+                  {slotsLoading && (
+                    <span className="text-[11px] text-brand flex items-center gap-1">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>در حال استعلام زمان‌های آزاد...</span>
+                    </span>
+                  )}
                 </div>
+
+                {!isSalonOpenOnDate ? (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                    <Clock className="w-6 h-6 mx-auto text-amber-500 stroke-1" />
+                    <div className="font-bold">{closedReason || 'سالن در این روز تعطیل است.'}</div>
+                    <div className="text-[11px] text-text-subtle">لطفاً یکی دیگر از روزهای هفته را انتخاب فرمایید.</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2">
+                    {serverSlots.map((slot, idx) => {
+                      const isSelected = selectedTime === slot.time;
+                      const isAvailable = slot.available;
+
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          disabled={!isAvailable}
+                          onClick={() => setSelectedTime(slot.time)}
+                          className={`py-2 px-1 rounded-xl border text-center text-xs font-mono font-bold transition-all ${
+                            isSelected && isAvailable
+                              ? 'bg-brand text-white border-brand shadow-xs cursor-pointer'
+                              : isAvailable
+                              ? 'bg-elevated/60 border-border-subtle text-text-main hover:border-brand cursor-pointer'
+                              : 'bg-elevated/20 border-border-subtle/50 text-text-subtle/50 opacity-50 cursor-not-allowed line-through'
+                          }`}
+                          title={!isAvailable ? slot.conflictReason || 'نوبت پر است' : `پایان: ساعت ${slot.endTime}`}
+                        >
+                          <div>{toPersianDigits(slot.time)}</div>
+                          {!isAvailable && (
+                            <span className="text-[9px] block text-rose-500 font-sans not-italic font-normal">
+                              تکمیل
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              {/* In-Person Payment Reminder Card */}
-              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl flex items-center gap-3 text-emerald-800 dark:text-emerald-300">
+              {/* In-Person Payment Notice */}
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-800 dark:text-emerald-300">
                 <CreditCard className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <div className="text-xs leading-relaxed">
                   <div className="font-bold">تسویه هزینه حضوری در سالن</div>
-                  <div className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80">
-                    نیازی به پرداخت آنلاین نیست. هزینه پس از اتمام خدمت در سالن پرداخت می‌شود.
+                  <div className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+                    رزرو نوبت کاملاً رایگان است؛ هزینه خدمت ({formatCurrency(selectedService.price)}) پس از اتمام کار در سالن پرداخت می‌شود.
                   </div>
-                </div>
-              </div>
-
-              {/* Mini Booking Summary */}
-              <div className="p-3 bg-stone-50 dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-xl text-xs space-y-1">
-                <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2]">
-                  <span>خدمت انتخابی:</span>
-                  <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{selectedService.name}</span>
-                </div>
-                <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2]">
-                  <span>متخصص:</span>
-                  <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{staffNameLabel}</span>
-                </div>
-                <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2] pt-1 border-t border-stone-200 dark:border-[#344258]">
-                  <span>مبلغ قابل پرداخت در سالن:</span>
-                  <span className="font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums">{formatCurrency(selectedService.price)}</span>
                 </div>
               </div>
             </div>
@@ -546,14 +658,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <div className="space-y-4">
               {otpStage !== 'verified' ? (
                 <div className="space-y-4">
-                  <div className="text-xs text-zinc-600 dark:text-[#9AAAC2]">
-                    جهت دریافت پیامک تایید نوبت، شماره موبایل خود را وارد کنید:
+                  <div className="text-xs text-text-muted">
+                    جهت دریافت پیامک تایید نوبت، شماره موبایل خود را وارد فرمایید:
                   </div>
 
                   {otpStage === 'input_phone' && (
                     <form onSubmit={handleSendOtp} className="space-y-3">
                       <div>
-                        <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block mb-1">
+                        <label className="text-xs font-bold text-text-muted block mb-1">
                           نام و نام خانوادگی *
                         </label>
                         <input
@@ -561,13 +673,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           value={clientName}
                           onChange={(e) => setClientName(e.target.value)}
                           placeholder="مثال: سارا محمدی"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-[#344258] bg-stone-50 dark:bg-[#18243A] text-xs text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-elevated/50 text-xs text-text-main focus:outline-none focus:border-brand"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block mb-1">
+                        <label className="text-xs font-bold text-text-muted block mb-1">
                           شماره موبایل *
                         </label>
                         <input
@@ -575,46 +687,45 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           value={clientPhone}
                           onChange={(e) => setClientPhone(e.target.value)}
                           placeholder="۰۹۱۲۱۲۳۴۵۶۷"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-[#344258] bg-stone-50 dark:bg-[#18243A] text-xs font-mono text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border-subtle bg-elevated/50 text-xs font-mono text-text-main focus:outline-none focus:border-brand"
                           required
                         />
                       </div>
 
                       <button
                         type="submit"
-                        className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                        disabled={isSubmitting}
+                        className="w-full py-3 rounded-xl bg-brand hover:bg-brand-accent text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
                       >
-                        دریافت کد تایید پیامکی
+                        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
+                        <span>دریافت کد تایید پیامکی</span>
                       </button>
                     </form>
                   )}
 
                   {otpStage === 'input_code' && (
                     <form onSubmit={handleVerifyOtp} className="space-y-3">
-                      <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/50 rounded-xl text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                        <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
-                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span>شبیه‌ساز پیش‌نمایش کد تایید (حالت آزمایشی دمو)</span>
+                      <div className="p-3 bg-brand-subdued border border-brand/30 rounded-xl text-xs text-text-main space-y-1">
+                        <div className="font-bold flex items-center gap-1.5 text-brand">
+                          <ShieldCheck className="w-4 h-4 text-brand shrink-0" />
+                          <span>کد تایید ۶ رقمی سرور</span>
                         </div>
-                        <p className="text-[11px] text-amber-700 dark:text-amber-300/80 leading-relaxed">
-                          در این فاز هیچ پیامک مخابراتی واقعی ارسال نمی‌شود. جهت تست ادامه فرآیند، از کد شبیه‌سازی زیر استفاده نمایید:
+                        <p className="text-[11px] text-text-muted leading-relaxed">
+                          کد تایید امنیتی به شماره {toPersianDigits(clientPhone)} ارسال گردید. لطفاً کد را در کادر زیر وارد فرمایید:
                         </p>
-                        <div className="font-mono font-bold pt-1 text-sm text-rose-600 dark:text-rose-400">
-                          کد شبیه‌سازی تست: {generatedOtp}
-                        </div>
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block mb-1">
-                          کد تایید ۴ رقمی:
+                        <label className="text-xs font-bold text-text-muted block mb-1">
+                          کد تایید ۶ رقمی:
                         </label>
                         <input
                           type="text"
-                          maxLength={4}
+                          maxLength={6}
                           value={otpCode}
                           onChange={(e) => setOtpCode(e.target.value)}
-                          placeholder="----"
-                          className="w-full text-center tracking-widest text-lg font-mono px-3 py-2.5 rounded-xl border border-stone-200 dark:border-[#344258] bg-stone-50 dark:bg-[#18243A] text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                          placeholder="------"
+                          className="w-full text-center tracking-widest text-lg font-mono px-3 py-2.5 rounded-xl border border-border-subtle bg-elevated/50 text-text-main focus:outline-none focus:border-brand"
                           autoFocus
                           required
                         />
@@ -623,14 +734,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                          disabled={isSubmitting}
+                          className="flex-1 py-2.5 rounded-xl bg-brand hover:bg-brand-accent text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
                         >
-                          تایید و ورود
+                          {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                          <span>تایید و ورود</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setOtpStage('input_phone')}
-                          className="px-3 py-2.5 rounded-xl border border-stone-200 dark:border-[#344258] text-zinc-600 dark:text-[#9AAAC2] text-xs hover:bg-stone-100 dark:hover:bg-[#18243A] transition-colors cursor-pointer"
+                          className="px-3 py-2.5 rounded-xl border border-border-subtle text-text-muted text-xs hover:bg-elevated transition-colors cursor-pointer"
                         >
                           ویرایش شماره
                         </button>
@@ -641,23 +754,23 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               ) : (
                 /* VERIFIED USER CONFIRMATION */
                 <div className="space-y-4">
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
                     <span className="flex items-center gap-1.5 font-bold">
                       <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      شماره تایید شده: {clientName} ({clientPhone})
+                      شماره تایید شده: {clientName} ({toPersianDigits(clientPhone)})
                     </span>
                     <button
                       type="button"
                       onClick={() => setOtpStage('input_phone')}
-                      className="text-[11px] underline text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
+                      className="text-[11px] underline text-text-muted hover:text-text-main cursor-pointer"
                     >
-                      تغییر
+                      تغییر شماره
                     </button>
                   </div>
 
                   {/* Optional Note */}
                   <div>
-                    <label className="text-xs font-bold text-zinc-700 dark:text-[#9AAAC2] block mb-1">
+                    <label className="text-xs font-bold text-text-muted block mb-1">
                       یادداشت برای سالن (اختیاری):
                     </label>
                     <textarea
@@ -665,30 +778,35 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="اگر نکته خاصی مد نظرتان است بنویسید..."
-                      className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-[#344258] bg-stone-50 dark:bg-[#18243A] text-xs text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                      className="w-full px-3 py-2 rounded-xl border border-border-subtle bg-elevated/50 text-xs text-text-main focus:outline-none focus:border-brand"
                     />
                   </div>
 
                   {/* Summary Box */}
-                  <div className="p-4 bg-stone-50 dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl space-y-2 text-xs">
-                    <div className="font-bold text-zinc-900 dark:text-[#E7ECF5] pb-1.5 border-b border-stone-200 dark:border-[#344258]">
-                      خلاصه نوبت:
+                  <div className="p-4 bg-elevated/60 border border-border-subtle rounded-2xl space-y-2 text-xs">
+                    <div className="font-bold text-text-main pb-1.5 border-b border-border-subtle flex justify-between items-center">
+                      <span>خلاصه نوبت:</span>
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-normal">تسویه حضوری</span>
                     </div>
-                    <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                    <div className="flex justify-between text-text-muted">
                       <span>خدمت:</span>
-                      <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{selectedService.name}</span>
+                      <span className="font-bold text-text-main">{selectedService.name}</span>
                     </div>
-                    <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                    <div className="flex justify-between text-text-muted">
                       <span>متخصص:</span>
-                      <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{staffNameLabel}</span>
+                      <span className="font-bold text-text-main">{staffNameLabel}</span>
                     </div>
-                    <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                    <div className="flex justify-between text-text-muted">
                       <span>زمان:</span>
-                      <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{selectedDate} - ساعت {selectedTime}</span>
+                      <span className="font-bold text-text-main">{selectedDateItem.label} - ساعت {toPersianDigits(selectedTime)}</span>
                     </div>
-                    <div className="flex justify-between text-zinc-600 dark:text-[#9AAAC2] pt-2 border-t border-stone-200 dark:border-[#344258]">
+                    <div className="flex justify-between text-text-muted">
+                      <span>مدت زمان:</span>
+                      <span className="font-bold text-text-main">{selectedService.duration}</span>
+                    </div>
+                    <div className="flex justify-between text-text-muted pt-2 border-t border-border-subtle">
                       <span>مبلغ پرداختی در سالن:</span>
-                      <span className="font-bold text-rose-600 dark:text-rose-400 font-mono text-sm tabular-nums">{formatCurrency(selectedService.price)}</span>
+                      <span className="font-bold text-brand font-mono text-sm tabular-nums">{formatCurrency(selectedService.price)}</span>
                     </div>
                   </div>
                 </div>
@@ -698,12 +816,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         </div>
 
         {/* Modal Bottom Action Controls */}
-        <div className="p-4 sm:p-5 border-t border-stone-100 dark:border-[#344258]/80 bg-stone-50/50 dark:bg-[#18243A]/60 flex items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-t border-border-subtle bg-elevated/40 flex items-center justify-between gap-3">
           {step > 1 ? (
             <button
               type="button"
               onClick={handlePrevStep}
-              className="px-4 py-2.5 rounded-xl border border-stone-200 dark:border-[#344258] text-zinc-600 dark:text-[#9AAAC2] hover:bg-stone-100 dark:hover:bg-[#18243A] text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+              className="px-4 py-2.5 rounded-xl border border-border-subtle text-text-muted hover:bg-elevated text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
             >
               <ChevronRight className="w-4 h-4" />
               <span>مرحله قبل</span>
@@ -712,7 +830,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 text-xs font-medium cursor-pointer"
+              className="px-4 py-2.5 rounded-xl text-text-muted hover:text-text-main text-xs font-medium cursor-pointer"
             >
               انصراف
             </button>
@@ -722,7 +840,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <button
               type="button"
               onClick={handleNextStep}
-              className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+              className="px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-accent text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1"
             >
               <span>مرحله بعد</span>
               <ChevronLeft className="w-4 h-4" />
@@ -731,15 +849,24 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             <button
               type="button"
               onClick={handleFinalConfirm}
-              disabled={otpStage !== 'verified'}
+              disabled={otpStage !== 'verified' || isSubmitting}
               className={`px-7 py-3 rounded-xl text-xs font-bold text-white shadow-md transition-all flex items-center gap-2 cursor-pointer ${
-                otpStage === 'verified'
+                otpStage === 'verified' && !isSubmitting
                   ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
-                  : 'bg-stone-400 dark:bg-zinc-700 opacity-60 cursor-not-allowed'
+                  : 'bg-elevated text-text-subtle opacity-60 cursor-not-allowed'
               }`}
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>ثبت نهایی نوبت</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>در حال ثبت نوبت...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>ثبت قطعی نوبت</span>
+                </>
+              )}
             </button>
           )}
         </div>

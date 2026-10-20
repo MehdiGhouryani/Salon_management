@@ -466,7 +466,11 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-[#9AAAC2]">
                   <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>{currentSalon.workingHours}</span>
+                  <span>
+                    {typeof currentSalon.workingHours === 'string'
+                      ? currentSalon.workingHours
+                      : 'همه روزه ۹:۳۰ الی ۲۰:۰۰'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-[#9AAAC2]">
                   <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />

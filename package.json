@@ -15,7 +15,10 @@
     "db:status": "tsx scripts/migrate.ts status",
     "db:seed": "tsx scripts/seed.ts",
     "admin:bootstrap": "tsx scripts/bootstrapAdmin.ts",
-    "test:auth": "tsx tests/auth.test.ts"
+    "test:auth": "tsx tests/auth.test.ts",
+    "test:booking": "tsx tests/booking.test.ts",
+    "test:salon": "tsx tests/salon_manager.test.ts",
+    "test": "npm run test:auth && npm run test:booking && npm run test:salon"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

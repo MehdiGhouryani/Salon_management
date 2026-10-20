@@ -4,7 +4,13 @@ import { otpService } from '../server/services/auth/otpService.ts';
 import { sessionService, hashSessionToken } from '../server/services/auth/sessionService.ts';
 import { getDevMockSmsProvider } from '../server/services/sms/index.ts';
 import { NullSmsProvider } from '../server/services/sms/nullProvider.ts';
-import { requirePlatformRole, requireSalonMembership } from '../server/middleware/auth.ts';
+import {
+  requirePlatformRole,
+  requireSalonMembership,
+  requireSalonPermission,
+  csrfProtection,
+  Policies,
+} from '../server/middleware/auth.ts';
 
 async function runTestSuite() {
   console.log('====================================================');
@@ -287,6 +293,18 @@ async function runTestSuite() {
     assert.strictEqual(nextCalled, true);
   });
 
+  await test('requirePlatformRole allows financial_manager to access financial platform scope', async () => {
+    const req: any = {
+      isAuthenticated: true,
+      user: { ...mockUser, platform_role: 'financial_manager' },
+    };
+    let nextCalled = false;
+    const middleware = requirePlatformRole('super_admin', 'financial_manager');
+    middleware(req, {} as any, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, true);
+  });
+
   await test('requireSalonMembership prevents cross-salon unauthorized access', async () => {
     const req: any = {
       isAuthenticated: true,
@@ -331,6 +349,149 @@ async function runTestSuite() {
     const middleware = requireSalonMembership('owner', 'manager');
     middleware(req, {} as any, () => { nextCalled = true; });
 
+    assert.strictEqual(nextCalled, true);
+  });
+
+  await test('requireSalonPermission permits manager or owner unconditionally', async () => {
+    const req: any = {
+      isAuthenticated: true,
+      user: { ...mockUser, platform_role: 'user' },
+      params: { salonId: 'sal-101' },
+      salonMemberships: [
+        { salon_id: 'sal-101', role: 'manager', status: 'active', permissions: [] },
+      ],
+    };
+
+    let nextCalled = false;
+    const middleware = requireSalonPermission('appointments:write');
+    middleware(req, {} as any, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, true);
+  });
+
+  await test('requireSalonPermission enforces specific permission for staff', async () => {
+    // Staff WITHOUT permission
+    const reqNoPerm: any = {
+      isAuthenticated: true,
+      user: { ...mockUser, platform_role: 'user' },
+      params: { salonId: 'sal-101' },
+      salonMemberships: [
+        { salon_id: 'sal-101', role: 'staff', status: 'active', permissions: ['appointments:read'] },
+      ],
+    };
+
+    let statusCode = 200;
+    let jsonBody: any = null;
+    const res: any = {
+      status: (code: number) => {
+        statusCode = code;
+        return { json: (b: any) => { jsonBody = b; } };
+      },
+    };
+
+    let nextCalled = false;
+    const middleware = requireSalonPermission('appointments:write');
+    middleware(reqNoPerm, res, () => { nextCalled = true; });
+
+    assert.strictEqual(nextCalled, false);
+    assert.strictEqual(statusCode, 403);
+    assert.strictEqual(jsonBody?.error, 'FORBIDDEN_SALON_PERMISSION');
+
+    // Staff WITH permission
+    const reqWithPerm: any = {
+      isAuthenticated: true,
+      user: { ...mockUser, platform_role: 'user' },
+      params: { salonId: 'sal-101' },
+      salonMemberships: [
+        { salon_id: 'sal-101', role: 'staff', status: 'active', permissions: ['appointments:read', 'appointments:write'] },
+      ],
+    };
+
+    let permNextCalled = false;
+    middleware(reqWithPerm, {} as any, () => { permNextCalled = true; });
+    assert.strictEqual(permNextCalled, true);
+  });
+
+  // ---------------------------------------------------------------------------
+  // 6. Multi-Session Management Tests
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 6. Multi-Session Listing & Granular Revocation Tests ---');
+
+  await test('Lists multiple active sessions for user and revokes remote sessions', async () => {
+    sessionService.clearInMemory();
+    const testUser = { ...mockUser, id: 'multi-session-user-1' };
+
+    const sess1 = await sessionService.createSession(testUser, mockReq, mockRes, 'web');
+    const sess2 = await sessionService.createSession(testUser, mockReq, mockRes, 'mobile');
+
+    const sessions = await sessionService.getUserSessions(testUser.id);
+    assert.strictEqual(sessions.length, 2);
+
+    // Revoke sess2 by ID
+    const revoked = await sessionService.revokeSessionById(sess2.sessionId, testUser.id);
+    assert.strictEqual(revoked, true);
+
+    const sessionsAfter = await sessionService.getUserSessions(testUser.id);
+    assert.strictEqual(sessionsAfter.length, 1);
+    assert.strictEqual(sessionsAfter[0].id, sess1.sessionId);
+  });
+
+  await test('revokeOtherSessions leaves only current session active', async () => {
+    sessionService.clearInMemory();
+    const testUser = { ...mockUser, id: 'multi-session-user-2' };
+
+    const sess1 = await sessionService.createSession(testUser, mockReq, mockRes, 'web');
+    const sess2 = await sessionService.createSession(testUser, mockReq, mockRes, 'mobile');
+    const sess3 = await sessionService.createSession(testUser, mockReq, mockRes, 'api');
+
+    const revokedCount = await sessionService.revokeOtherSessions(testUser.id, sess1.sessionId);
+    assert.strictEqual(revokedCount, 2);
+
+    const remaining = await sessionService.getUserSessions(testUser.id);
+    assert.strictEqual(remaining.length, 1);
+    assert.strictEqual(remaining[0].id, sess1.sessionId);
+  });
+
+  // ---------------------------------------------------------------------------
+  // 7. Customer Identity Privilege Isolation
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 7. Customer Identity & Public Privilege Separation Tests ---');
+
+  await test('Public phone authentication strictly provisions role=user (never super_admin)', async () => {
+    const customerPhone = '09359876543';
+    const reqOtp = await otpService.requestOtp(customerPhone, 'login', '127.0.0.1');
+    assert.strictEqual(reqOtp.success, true);
+
+    const sent = mockSms?.getLastSentOtp(customerPhone);
+    assert.ok(sent);
+
+    const verified = await otpService.verifyOtp(customerPhone, sent.code, 'login', '127.0.0.1');
+    assert.strictEqual(verified.success, true);
+    assert.strictEqual(verified.user?.platform_role, 'user');
+    assert.strictEqual(Policies.isCustomer(verified.user), true);
+    assert.strictEqual(Policies.isSuperAdmin(verified.user), false);
+    assert.strictEqual(Policies.isFinancialManager(verified.user), false);
+  });
+
+  // ---------------------------------------------------------------------------
+  // 8. CSRF Protection
+  // ---------------------------------------------------------------------------
+  console.log('\n--- 8. CSRF & State-Changing Request Protection Tests ---');
+
+  await test('csrfProtection allows safe GET requests without tokens', () => {
+    const getReq: any = { method: 'GET', headers: {} };
+    let nextCalled = false;
+    csrfProtection(getReq, {} as any, () => { nextCalled = true; });
+    assert.strictEqual(nextCalled, true);
+  });
+
+  await test('csrfProtection allows state-changing POST when anti-CSRF header is present', () => {
+    const postReq: any = {
+      method: 'POST',
+      headers: { 'x-nobatara-client': 'web' },
+    };
+    let nextCalled = false;
+    csrfProtection(postReq, {} as any, () => { nextCalled = true; });
     assert.strictEqual(nextCalled, true);
   });
 

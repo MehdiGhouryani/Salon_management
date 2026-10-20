@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Phone, KeyRound, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext.tsx';
+import { Button } from '../ui/Button';
 
 interface ProductionAdminLoginProps {
   onCancel: () => void;

@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import { query } from '../db/pool.ts';
 
-export type PlatformRole = 'user' | 'super_admin' | 'platform_support' | 'platform_auditor';
+export type PlatformRole = 'user' | 'super_admin' | 'platform_support' | 'platform_auditor' | 'financial_manager';
 export type UserStatus = 'active' | 'suspended' | 'pending';
 
 export interface DbUser {

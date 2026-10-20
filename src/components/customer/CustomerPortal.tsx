@@ -442,7 +442,11 @@ export const CustomerPortal: React.FC = () => {
 
                       <div className="mt-3 flex items-center gap-1.5 text-slate-400 text-[11px]">
                         <Clock className="w-3 h-3 text-slate-500" />
-                        <span className="truncate">{detail.workingHours}</span>
+                        <span className="truncate">
+                          {typeof detail.workingHours === 'string'
+                            ? detail.workingHours
+                            : 'همه روزه ۹:۳۰ الی ۲۰:۰۰'}
+                        </span>
                       </div>
                     </div>
 
@@ -536,7 +540,12 @@ export const CustomerPortal: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <Clock className="w-4 h-4 text-blue-400 shrink-0" />
-                  <span>ساعات کاری: {selectedSalonDetailModal.workingHours}</span>
+                  <span>
+                    ساعات کاری:{' '}
+                    {typeof selectedSalonDetailModal.workingHours === 'string'
+                      ? selectedSalonDetailModal.workingHours
+                      : 'همه روزه ۹:۳۰ الی ۲۰:۰۰'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <Phone className="w-4 h-4 text-emerald-400 shrink-0" />

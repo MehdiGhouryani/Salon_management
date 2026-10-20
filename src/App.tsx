@@ -47,6 +47,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { ProductionAdminLogin } from './components/common/ProductionAdminLogin';
+import { ProductionSalonLogin } from './components/common/ProductionSalonLogin';
 
 
 type MainCategory = 'overview' | 'businesses' | 'users' | 'finance' | 'system';
@@ -376,6 +377,61 @@ const MainSwitcher: React.FC = () => {
                 <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد مجوز مدیر کل است</p>
                 <p className="text-xs text-slate-400 leading-relaxed pt-2">
                   شماره شما ({serverAuth.user?.phone}) با موفقیت احراز هویت شد، اما نقش شما در سرور ({serverAuth.user?.platformRole}) مجوز دسترسی به پنل مدیریت کل پلتفرم را ندارد.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-col gap-2">
+                <button
+                  onClick={() => serverLogout()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-bold text-white transition-colors cursor-pointer"
+                >
+                  خروج از حساب
+                </button>
+                <button
+                  onClick={() => setPersona('salon_website')}
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                >
+                  بازگشت به وب‌سایت سالن
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    // SERVER AUTHENTICATION & RBAC GATE FOR SALON MANAGER / STAFF (Phase 5):
+    if (persona === 'salon_app' && !isDemoMode) {
+      if (serverAuth.isLoading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
+              <p className="text-sm text-slate-300">در حال بررسی نشست امن سرور...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (!serverAuth.authenticated) {
+        return <ProductionSalonLogin onCancel={() => setPersona('salon_website')} />;
+      }
+
+      const hasSalonAccess =
+        (serverAuth.salonMemberships && serverAuth.salonMemberships.length > 0) ||
+        serverAuth.user?.platformRole === 'super_admin';
+
+      if (!hasSalonAccess) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
+            <div className="max-w-md w-full bg-[#111B2E] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-bold text-white">دسترسی مسدود است (403 Forbidden)</h2>
+                <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد عضویت در کادر سالن است</p>
+                <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                  شماره شما ({serverAuth.user?.phone}) احراز هویت شد، اما هنوز به عنوان مدیر یا پرسنل سالنی در سامانه ثبت نگردیده است.
                 </p>
               </div>
               <div className="pt-2 flex flex-col gap-2">

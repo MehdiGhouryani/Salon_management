@@ -266,9 +266,79 @@ export const sessionService = {
   },
 
   /**
+   * Retrieves all active sessions for a user (without exposing secret token hashes)
+   */
+  async getUserSessions(userId: string): Promise<Array<Omit<DbUserSession, 'token_hash'>>> {
+    const now = new Date();
+    if (isDatabaseConfigured()) {
+      const res = await query<DbUserSession>(
+        `SELECT id, user_id, '' AS token_hash, ip_address, user_agent, expires_at, idle_expires_at, revoked_at, session_type, last_active_at, created_at
+         FROM user_sessions
+         WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()
+         ORDER BY last_active_at DESC`,
+        [userId]
+      );
+      return res.rows;
+    }
+
+    const sessions: Array<Omit<DbUserSession, 'token_hash'>> = [];
+    for (const sess of inMemorySessions.values()) {
+      if (sess.user_id === userId && !sess.revoked_at && sess.expires_at > now) {
+        const { token_hash: _, ...safe } = sess;
+        sessions.push(safe);
+      }
+    }
+    return sessions.sort((a, b) => b.last_active_at.getTime() - a.last_active_at.getTime());
+  },
+
+  /**
+   * Revokes a specific session belonging to a user
+   */
+  async revokeSessionById(sessionId: string, userId: string, reason = 'user_requested'): Promise<boolean> {
+    if (isDatabaseConfigured()) {
+      const res = await query(
+        `UPDATE user_sessions SET revoked_at = NOW(), revocation_reason = $1 WHERE id = $2 AND user_id = $3 AND revoked_at IS NULL`,
+        [reason, sessionId, userId]
+      );
+      return (res.rowCount ?? 0) > 0;
+    }
+
+    for (const sess of inMemorySessions.values()) {
+      if (sess.id === sessionId && sess.user_id === userId && !sess.revoked_at) {
+        sess.revoked_at = new Date();
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * Revokes all other active sessions for a user except the current one
+   */
+  async revokeOtherSessions(userId: string, currentSessionId: string, reason = 'revoked_other_devices'): Promise<number> {
+    if (isDatabaseConfigured()) {
+      const res = await query(
+        `UPDATE user_sessions SET revoked_at = NOW(), revocation_reason = $1 WHERE user_id = $2 AND id != $3 AND revoked_at IS NULL`,
+        [reason, userId, currentSessionId]
+      );
+      return res.rowCount ?? 0;
+    }
+
+    let count = 0;
+    for (const sess of inMemorySessions.values()) {
+      if (sess.user_id === userId && sess.id !== currentSessionId && !sess.revoked_at) {
+        sess.revoked_at = new Date();
+        count++;
+      }
+    }
+    return count;
+  },
+
+  /**
    * Clears in-memory session map (for unit testing)
    */
   clearInMemory(): void {
     inMemorySessions.clear();
   },
 };
+

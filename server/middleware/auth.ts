@@ -211,3 +211,87 @@ export function requireSalonMembership(...allowedRoles: SalonRole[]) {
     next();
   };
 }
+
+/**
+ * Guard: Requires the user to have a specific permission in the target salon
+ */
+export function requireSalonPermission(...requiredPermissions: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.isAuthenticated || !req.user) {
+      res.status(401).json({
+        error: 'AUTHENTICATION_REQUIRED',
+        message: 'احراز هویت الزامی است.',
+      });
+      return;
+    }
+
+    // Super admins have platform-level governance override
+    if (req.user.platform_role === 'super_admin') {
+      return next();
+    }
+
+    const salonId = String(req.params.salonId || req.headers['x-salon-id'] || '').trim();
+    if (!salonId) {
+      res.status(400).json({
+        error: 'SALON_ID_REQUIRED',
+        message: 'شناسه سالن مشخص نشده است.',
+      });
+      return;
+    }
+
+    const membership = (req.salonMemberships || []).find(
+      (m) => m.salon_id === salonId && m.status === 'active'
+    );
+
+    if (!membership) {
+      res.status(403).json({
+        error: 'FORBIDDEN_SALON_ACCESS',
+        message: 'شما عضو این سالن نیستید یا دسترسی شما غیرفعال شده است.',
+      });
+      return;
+    }
+
+    // Owners and managers have full permissions within their salon
+    if (membership.role === 'owner' || membership.role === 'manager') {
+      return next();
+    }
+
+    // Check specific permissions
+    const userPermissions = membership.permissions || [];
+    const hasAll = requiredPermissions.every((perm) => userPermissions.includes(perm));
+
+    if (!hasAll) {
+      res.status(403).json({
+        error: 'FORBIDDEN_SALON_PERMISSION',
+        message: 'شما دسترسی لازم برای این عملیات را در این سالن ندارید.',
+      });
+      return;
+    }
+
+    next();
+  };
+}
+
+/**
+ * Reusable, centralized RBAC policy definitions across platform and tenant boundaries
+ */
+export const Policies = {
+  isCustomer: (user?: DbUser): boolean =>
+    Boolean(user && user.platform_role === 'user'),
+
+  isSalonAdmin: (membership?: DbSalonMembership): boolean =>
+    Boolean(membership && membership.status === 'active' && ['owner', 'manager'].includes(membership.role)),
+
+  isSalonStaff: (membership?: DbSalonMembership): boolean =>
+    Boolean(membership && membership.status === 'active' && ['owner', 'manager', 'staff', 'receptionist'].includes(membership.role)),
+
+  isSupportAuditor: (user?: DbUser): boolean =>
+    Boolean(user && (user.platform_role === 'platform_auditor' || user.platform_role === 'platform_support' || user.platform_role === 'super_admin')),
+
+  isFinancialManager: (user?: DbUser): boolean =>
+    Boolean(user && (user.platform_role === 'financial_manager' || user.platform_role === 'super_admin')),
+
+  isSuperAdmin: (user?: DbUser): boolean =>
+    Boolean(user && user.platform_role === 'super_admin'),
+};
+

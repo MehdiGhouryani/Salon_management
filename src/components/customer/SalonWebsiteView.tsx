@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Lock,
   Copy,
@@ -26,6 +26,8 @@ import {
   salonDirectoryDetails,
   getSalonBySlug,
   SalonServiceItem,
+  SalonStaffItem,
+  DetailedSalonData,
 } from '../../mock/salonDirectoryData';
 import { BookingModal } from './BookingModal';
 import { BookingReceiptModal } from './BookingReceiptModal';
@@ -58,10 +60,30 @@ export const SalonWebsiteView: React.FC = () => {
   const { theme } = useTheme();
 
 
-  // Current active salon data
+  // Live server salon data
+  const [liveSalon, setLiveSalon] = useState<DetailedSalonData | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch(`/api/public/salons/${encodeURIComponent(currentSalonSlug)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        if (data.success && data.salon) {
+          setLiveSalon(data.salon);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [currentSalonSlug]);
+
+  // Current active salon data (prioritizes live server data, falls back to static catalog)
   const currentSalon = useMemo(() => {
+    if (liveSalon) return liveSalon;
     return getSalonBySlug(currentSalonSlug, salons);
-  }, [currentSalonSlug, salons]);
+  }, [liveSalon, currentSalonSlug, salons]);
 
   // Search & Filter state for catalog / services
   const [activeCategory, setActiveCategory] = useState('all');
@@ -86,7 +108,7 @@ export const SalonWebsiteView: React.FC = () => {
   // Services filtered for current salon
   const filteredServices = useMemo(() => {
     if (!currentSalon.services) return [];
-    return currentSalon.services.filter((s) => {
+    return currentSalon.services.filter((s: SalonServiceItem) => {
       const matchCat = activeCategory === 'all' || s.category === activeCategory;
       const matchSearch =
         !searchTerm.trim() ||
@@ -216,7 +238,11 @@ export const SalonWebsiteView: React.FC = () => {
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
                   <span className="inline-flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-[#9AAAC2] shrink-0" />
-                    {currentSalon.workingHours}
+                    {typeof currentSalon.workingHours === 'string'
+                      ? currentSalon.workingHours
+                      : Array.isArray(currentSalon.workingHours)
+                      ? 'همه روزه ۹:۳۰ الی ۲۰:۰۰'
+                      : String(currentSalon.workingHours || 'همه روزه ۹:۳۰ الی ۲۰:۰۰')}
                   </span>
                 </div>
 
@@ -261,7 +287,7 @@ export const SalonWebsiteView: React.FC = () => {
             {/* Special Salon Features Line */}
             <div className="mt-6 pt-4 border-t border-slate-100 dark:border-[#344258] flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-[#9AAAC2]">
               <span className="font-semibold text-slate-700 dark:text-[#9AAAC2]">امکانات سالن:</span>
-              {currentSalon.features.map((feat, idx) => (
+              {currentSalon.features.map((feat: string, idx: number) => (
                 <span
                   key={idx}
                   className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#18243A] text-slate-600 dark:text-[#9AAAC2] text-[11px]"
@@ -334,7 +360,7 @@ export const SalonWebsiteView: React.FC = () => {
 
             {/* Services Grid with Direct Booking CTA */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredServices.map((service) => (
+              {filteredServices.map((service: SalonServiceItem) => (
                 <div
                   key={service.id}
                   className="bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] rounded-2xl p-5 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)] group"
@@ -386,7 +412,7 @@ export const SalonWebsiteView: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {currentSalon.staff.map((member) => (
+                {currentSalon.staff.map((member: SalonStaffItem) => (
                   <div
                     key={member.id}
                     className="p-4 bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] rounded-2xl flex items-center gap-3 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]"

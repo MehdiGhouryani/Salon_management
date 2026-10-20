@@ -179,6 +179,8 @@ export interface CustomerBooking {
   trackingCode: string;
   salonId: string;
   salonName: string;
+  serviceId?: string;
+  staffId?: string;
   clientName: string;
   clientPhone: string;
   serviceName: string;

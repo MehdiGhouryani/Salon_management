@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import { query } from '../db/pool.ts';
+import { query, isDatabaseConfigured } from '../db/pool.ts';
 
 export type SalonStatus = 'active' | 'pending' | 'suspended' | 'trial';
 export type PlanType = 'bronze' | 'silver' | 'gold_vip';
@@ -99,8 +99,107 @@ export interface DbWorkingHour {
   updated_at: Date;
 }
 
+export interface DbAvailabilityException {
+  id: string;
+  salon_id: string;
+  staff_id: string | null;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  reason: string;
+  exception_type: string;
+  is_available: boolean;
+  created_at: Date;
+}
+
+// In-memory fallback fixtures for development/tests when database is not configured
+const inMemorySalons: Map<string, DbSalon> = new Map([
+  [
+    'sal-101',
+    {
+      id: 'sal-101',
+      slug: 'gisara',
+      name: 'سالن زیبایی و عروس گیس‌آرا',
+      category: 'عروس و خدمات VIP',
+      tagline: 'مرکز تخصصی عروس، رنگ، لایت و خدمات VIP زیبایی در محیطی آرام و مجلل',
+      owner_name: 'سارا رادمنش',
+      phone: '02122409876',
+      email: 'info@gisara.ir',
+      province: 'تهران',
+      city: 'تهران (زعفرانیه)',
+      address: 'خیابان آصف، مجتمع تجاری رویال، طبقه ۳، واحد ۳۰۲',
+      status: 'active',
+      plan: 'gold_vip',
+      plan_expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      verified_badge: true,
+      timezone: 'Asia/Tehran',
+      banner_image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80',
+      gallery_images: [
+        'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80',
+      ],
+      features: ['پارکینگ اختصاصی', 'کافی‌شاپ VIP', 'مواد ارگانیک بدون آمونیاک', 'پرداخت حضوری با پوز'],
+      rating: 4.9,
+      reviews_count: 348,
+      created_at: new Date(),
+      updated_at: new Date(),
+    },
+  ],
+  [
+    'sal-102',
+    {
+      id: 'sal-102',
+      slug: 'kazhal',
+      name: 'کلینیک و مرکز ناخن کژال',
+      category: 'ناخن و پدیکور تخصصی',
+      tagline: 'طراحی ژورنالی ناخن و اسپا تخصصی دست و پا با متریال برتر آلمانی',
+      owner_name: 'مهسا کاظمی',
+      phone: '02634456789',
+      email: 'info@kazhalbeauty.ir',
+      province: 'البرز',
+      city: 'کرج (گوهردشت)',
+      address: 'فلکه اول گوهردشت، برج نیکامال، طبقه ۴',
+      status: 'active',
+      plan: 'silver',
+      plan_expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      verified_badge: true,
+      timezone: 'Asia/Tehran',
+      banner_image: 'https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?auto=format&fit=crop&w=1200&q=80',
+      gallery_images: ['https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?auto=format&fit=crop&w=800&q=80'],
+      features: ['استریلیزاسیون پزشکی اتوکلاو', 'لاک ژل‌های ضد حساسیت', 'تخفیف مشتریان وفادار'],
+      rating: 4.8,
+      reviews_count: 194,
+      created_at: new Date(),
+      updated_at: new Date(),
+    },
+  ],
+]);
+
+const inMemoryWorkingHours: Map<string, DbWorkingHour[]> = new Map([
+  [
+    'sal-101',
+    [
+      { id: 'wh-0', salon_id: 'sal-101', staff_id: null, day_of_week: 0, start_time: '09:30', end_time: '20:00', is_closed: false, created_at: new Date(), updated_at: new Date() },
+      { id: 'wh-1', salon_id: 'sal-101', staff_id: null, day_of_week: 1, start_time: '09:30', end_time: '20:00', is_closed: false, created_at: new Date(), updated_at: new Date() },
+      { id: 'wh-2', salon_id: 'sal-101', staff_id: null, day_of_week: 2, start_time: '09:30', end_time: '20:00', is_closed: false, created_at: new Date(), updated_at: new Date() },
+      { id: 'wh-3', salon_id: 'sal-101', staff_id: null, day_of_week: 3, start_time: '09:30', end_time: '20:00', is_closed: false, created_at: new Date(), updated_at: new Date() },
+      { id: 'wh-4', salon_id: 'sal-101', staff_id: null, day_of_week: 4, start_time: '09:30', end_time: '20:00', is_closed: false, created_at: new Date(), updated_at: new Date() },
+      { id: 'wh-5', salon_id: 'sal-101', staff_id: null, day_of_week: 5, start_time: '09:30', end_time: '18:00', is_closed: false, created_at: new Date(), updated_at: new Date() },
+      { id: 'wh-6', salon_id: 'sal-101', staff_id: null, day_of_week: 6, start_time: '10:00', end_time: '16:00', is_closed: true, created_at: new Date(), updated_at: new Date() }, // جمعه تعطیل
+    ],
+  ],
+]);
+
+const inMemoryExceptions: DbAvailabilityException[] = [];
+
 export const salonRepository = {
   async findById(id: string, client?: PoolClient): Promise<DbSalon | null> {
+    if (!isDatabaseConfigured()) {
+      return inMemorySalons.get(id) || null;
+    }
+
     const res = await query<DbSalon>(
       `SELECT * FROM salons WHERE id = $1 LIMIT 1`,
       [id],
@@ -110,6 +209,13 @@ export const salonRepository = {
   },
 
   async findBySlug(slug: string, client?: PoolClient): Promise<DbSalon | null> {
+    if (!isDatabaseConfigured()) {
+      for (const salon of inMemorySalons.values()) {
+        if (salon.slug === slug) return salon;
+      }
+      return null;
+    }
+
     const res = await query<DbSalon>(
       `SELECT * FROM salons WHERE slug = $1 LIMIT 1`,
       [slug],
@@ -119,6 +225,17 @@ export const salonRepository = {
   },
 
   async findAll(filter: FindSalonsFilter = {}, client?: PoolClient): Promise<DbSalon[]> {
+    if (!isDatabaseConfigured()) {
+      let list = Array.from(inMemorySalons.values());
+      if (filter.status) list = list.filter((s) => s.status === filter.status);
+      if (filter.city && filter.city !== 'همه شهرها') list = list.filter((s) => s.city.includes(filter.city!));
+      if (filter.search) {
+        const q = filter.search.toLowerCase();
+        list = list.filter((s) => s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q));
+      }
+      return list;
+    }
+
     const conditions: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -167,6 +284,10 @@ export const salonRepository = {
   },
 
   async count(filter: FindSalonsFilter = {}, client?: PoolClient): Promise<number> {
+    if (!isDatabaseConfigured()) {
+      return inMemorySalons.size;
+    }
+
     const conditions: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -195,6 +316,36 @@ export const salonRepository = {
   },
 
   async create(dto: CreateSalonDto, client?: PoolClient): Promise<DbSalon> {
+    if (!isDatabaseConfigured()) {
+      const created: DbSalon = {
+        id: dto.id,
+        slug: dto.slug,
+        name: dto.name,
+        category: dto.category || 'زیبایی و سلامت',
+        tagline: dto.tagline || null,
+        owner_name: dto.ownerName,
+        phone: dto.phone,
+        email: dto.email || null,
+        province: dto.province,
+        city: dto.city,
+        address: dto.address,
+        status: dto.status || 'pending',
+        plan: dto.plan || 'bronze',
+        plan_expiry: dto.planExpiry,
+        verified_badge: dto.verifiedBadge || false,
+        timezone: dto.timezone || 'Asia/Tehran',
+        banner_image: dto.bannerImage || null,
+        gallery_images: dto.galleryImages || [],
+        features: dto.features || [],
+        rating: dto.rating || 5.0,
+        reviews_count: dto.reviewsCount || 0,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+      inMemorySalons.set(dto.id, created);
+      return created;
+    }
+
     const res = await query<DbSalon>(
       `INSERT INTO salons (
         id, slug, name, category, tagline, owner_name, phone, email,
@@ -235,6 +386,32 @@ export const salonRepository = {
   },
 
   async update(id: string, dto: UpdateSalonDto, client?: PoolClient): Promise<DbSalon | null> {
+    if (!isDatabaseConfigured()) {
+      const existing = inMemorySalons.get(id);
+      if (!existing) return null;
+      if (dto.name !== undefined) existing.name = dto.name;
+      if (dto.category !== undefined) existing.category = dto.category;
+      if (dto.tagline !== undefined) existing.tagline = dto.tagline;
+      if (dto.ownerName !== undefined) existing.owner_name = dto.ownerName;
+      if (dto.phone !== undefined) existing.phone = dto.phone;
+      if (dto.email !== undefined) existing.email = dto.email;
+      if (dto.province !== undefined) existing.province = dto.province;
+      if (dto.city !== undefined) existing.city = dto.city;
+      if (dto.address !== undefined) existing.address = dto.address;
+      if (dto.status !== undefined) existing.status = dto.status;
+      if (dto.plan !== undefined) existing.plan = dto.plan;
+      if (dto.planExpiry !== undefined) existing.plan_expiry = dto.planExpiry;
+      if (dto.verifiedBadge !== undefined) existing.verified_badge = dto.verifiedBadge;
+      if (dto.timezone !== undefined) existing.timezone = dto.timezone;
+      if (dto.bannerImage !== undefined) existing.banner_image = dto.bannerImage;
+      if (dto.galleryImages !== undefined) existing.gallery_images = dto.galleryImages;
+      if (dto.features !== undefined) existing.features = dto.features;
+      if (dto.rating !== undefined) existing.rating = dto.rating;
+      if (dto.reviewsCount !== undefined) existing.reviews_count = dto.reviewsCount;
+      existing.updated_at = new Date();
+      return existing;
+    }
+
     const fields: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -337,6 +514,15 @@ export const salonRepository = {
     planExpiry: Date,
     client?: PoolClient
   ): Promise<DbSalon | null> {
+    if (!isDatabaseConfigured()) {
+      const s = inMemorySalons.get(id);
+      if (!s) return null;
+      s.plan = plan;
+      s.plan_expiry = planExpiry;
+      s.updated_at = new Date();
+      return s;
+    }
+
     const res = await query<DbSalon>(
       `UPDATE salons SET plan = $1, plan_expiry = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
       [plan, planExpiry, id],
@@ -346,6 +532,14 @@ export const salonRepository = {
   },
 
   async updateStatus(id: string, status: SalonStatus, client?: PoolClient): Promise<DbSalon | null> {
+    if (!isDatabaseConfigured()) {
+      const s = inMemorySalons.get(id);
+      if (!s) return null;
+      s.status = status;
+      s.updated_at = new Date();
+      return s;
+    }
+
     const res = await query<DbSalon>(
       `UPDATE salons SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
       [status, id],
@@ -355,6 +549,10 @@ export const salonRepository = {
   },
 
   async getWorkingHours(salonId: string, client?: PoolClient): Promise<DbWorkingHour[]> {
+    if (!isDatabaseConfigured()) {
+      return inMemoryWorkingHours.get(salonId) || [];
+    }
+
     const res = await query<DbWorkingHour>(
       `SELECT * FROM working_hours WHERE salon_id = $1 AND staff_id IS NULL ORDER BY day_of_week ASC`,
       [salonId],
@@ -368,6 +566,22 @@ export const salonRepository = {
     hours: Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>,
     client?: PoolClient
   ): Promise<void> {
+    if (!isDatabaseConfigured()) {
+      const list: DbWorkingHour[] = hours.map((h, i) => ({
+        id: `wh-${salonId}-${i}`,
+        salon_id: salonId,
+        staff_id: null,
+        day_of_week: h.dayOfWeek,
+        start_time: h.startTime,
+        end_time: h.endTime,
+        is_closed: h.isClosed,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }));
+      inMemoryWorkingHours.set(salonId, list);
+      return;
+    }
+
     for (const h of hours) {
       await query(
         `INSERT INTO working_hours (salon_id, staff_id, day_of_week, start_time, end_time, is_closed)
@@ -377,5 +591,145 @@ export const salonRepository = {
         client
       );
     }
+  },
+
+  async getAvailabilityExceptions(
+    salonId: string,
+    dateStr: string,
+    staffId?: string,
+    client?: PoolClient
+  ): Promise<DbAvailabilityException[]> {
+    if (!isDatabaseConfigured()) {
+      return inMemoryExceptions.filter(
+        (e) =>
+          e.salon_id === salonId &&
+          (!staffId || !e.staff_id || e.staff_id === staffId) &&
+          dateStr >= e.start_date &&
+          dateStr <= e.end_date
+      );
+    }
+
+    const conditions = ['salon_id = $1', 'start_date <= $2::date', 'end_date >= $2::date'];
+    const values: any[] = [salonId, dateStr];
+
+    if (staffId) {
+      conditions.push('(staff_id IS NULL OR staff_id = $3)');
+      values.push(staffId);
+    } else {
+      conditions.push('staff_id IS NULL');
+    }
+
+    const res = await query<DbAvailabilityException>(
+      `SELECT * FROM availability_exceptions WHERE ${conditions.join(' AND ')}`,
+      values,
+      client
+    );
+    return res.rows;
+  },
+
+  async getAllAvailabilityExceptions(
+    salonId: string,
+    client?: PoolClient
+  ): Promise<DbAvailabilityException[]> {
+    if (!isDatabaseConfigured()) {
+      return inMemoryExceptions.filter((e) => e.salon_id === salonId);
+    }
+
+    const res = await query<DbAvailabilityException>(
+      `SELECT * FROM availability_exceptions WHERE salon_id = $1 ORDER BY start_date ASC`,
+      [salonId],
+      client
+    );
+    return res.rows;
+  },
+
+  async addAvailabilityException(
+    dto: {
+      salonId: string;
+      staffId?: string | null;
+      startDate: string;
+      endDate: string;
+      startTime?: string | null;
+      endTime?: string | null;
+      reason: string;
+      exceptionType?: string;
+      isAvailable?: boolean;
+    },
+    client?: PoolClient
+  ): Promise<DbAvailabilityException> {
+    const id = `exc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const created: DbAvailabilityException = {
+      id,
+      salon_id: dto.salonId,
+      staff_id: dto.staffId || null,
+      start_date: dto.startDate,
+      end_date: dto.endDate,
+      start_time: dto.startTime || null,
+      end_time: dto.endTime || null,
+      reason: dto.reason,
+      exception_type: dto.exceptionType || 'holiday',
+      is_available: dto.isAvailable ?? false,
+      created_at: new Date(),
+    };
+
+    if (!isDatabaseConfigured()) {
+      inMemoryExceptions.push(created);
+      return created;
+    }
+
+    const res = await query<DbAvailabilityException>(
+      `INSERT INTO availability_exceptions (
+        salon_id, staff_id, start_date, end_date, start_time, end_time, reason, exception_type, is_available
+      ) VALUES ($1, $2, $3::date, $4::date, $5, $6, $7, $8, $9)
+      RETURNING *`,
+      [
+        dto.salonId,
+        dto.staffId || null,
+        dto.startDate,
+        dto.endDate,
+        dto.startTime || null,
+        dto.endTime || null,
+        dto.reason,
+        dto.exceptionType || 'holiday',
+        dto.isAvailable ?? false,
+      ],
+      client
+    );
+    return res.rows[0];
+  },
+
+  async deleteAvailabilityException(
+    salonId: string,
+    exceptionId: string,
+    client?: PoolClient
+  ): Promise<boolean> {
+    if (!isDatabaseConfigured()) {
+      const idx = inMemoryExceptions.findIndex(
+        (e) => e.id === exceptionId && e.salon_id === salonId
+      );
+      if (idx >= 0) {
+        inMemoryExceptions.splice(idx, 1);
+        return true;
+      }
+      return false;
+    }
+
+    const res = await query(
+      `DELETE FROM availability_exceptions WHERE id = $1 AND salon_id = $2`,
+      [exceptionId, salonId],
+      client
+    );
+    return (res.rowCount ?? 0) > 0;
+  },
+
+  /**
+   * Helper for tests: add temporary availability exception in memory
+   */
+  _addInMemoryException(exception: DbAvailabilityException) {
+    inMemoryExceptions.push(exception);
+  },
+
+  _clearInMemoryExceptions() {
+    inMemoryExceptions.length = 0;
   },
 };
