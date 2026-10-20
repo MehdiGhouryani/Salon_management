@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   UserCheck,
@@ -25,15 +25,22 @@ import { User, UserRole } from '../../types/admin';
 import { toPersianDigits, getRoleBadge, maskPhone } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { StatusReasonModal } from '../common/StatusReasonModal';
+import { Pagination } from '../common/Pagination';
+import { EmptyState } from '../ui/EmptyState';
+import { Select } from '../ui/Select';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const UsersView: React.FC = () => {
   const { users, banUser, unbanUser, updateUserRole, toggleUser2FA, saveUser, salons, addToast } = useAdmin();
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   // Role edit modal
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -82,17 +89,26 @@ export const UsersView: React.FC = () => {
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchSearch =
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase()) ||
-        u.phone.includes(search) ||
-        (u.salonName && u.salonName.toLowerCase().includes(search.toLowerCase()));
+        u.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        u.phone.includes(debouncedSearch) ||
+        (u.salonName && u.salonName.toLowerCase().includes(debouncedSearch.toLowerCase()));
 
       const matchRole = roleFilter === 'all' || u.role === roleFilter;
       const matchStatus = statusFilter === 'all' || u.status === statusFilter;
 
       return matchSearch && matchRole && matchStatus;
     });
-  }, [users, search, roleFilter, statusFilter]);
+  }, [users, debouncedSearch, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, roleFilter, statusFilter]);
+
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const paginatedUsers = useMemo(() => {
+    return filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [filteredUsers, page]);
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,124 +271,148 @@ export const UsersView: React.FC = () => {
 
       {/* VIEW 1: UNCLUTTERED MODERN CARD GRID (PRIMARY) */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredUsers.map((user) => {
-            const roleBadge = getRoleBadge(user.role);
-            const isBanned = user.status === 'banned';
+        <div className="space-y-4">
+          {filteredUsers.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedUsers.map((user) => {
+                  const roleBadge = getRoleBadge(user.role);
+                  const isBanned = user.status === 'banned';
 
-            return (
-              <div
-                key={user.id}
-                className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs hover:border-indigo-400/50 dark:hover:border-indigo-500/30 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  {/* Top: Avatar, Name & Role Badge */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-[#344258]/80 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
-                        {user.name.slice(0, 1)}
+                  return (
+                    <div
+                      key={user.id}
+                      className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs hover:border-indigo-400/50 dark:hover:border-indigo-500/30 transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* Top: Avatar, Name & Role Badge */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-[#344258]/80 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                              {user.name.slice(0, 1)}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-zinc-900 dark:text-[#E7ECF5] text-sm truncate">
+                                {user.name}
+                              </h3>
+                              <p className="text-[11px] text-zinc-500 dark:text-[#9AAAC2] truncate mt-0.5">
+                                {user.salonName || 'پرسنل ستادی'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${roleBadge.color}`}>
+                            {roleBadge.label}
+                          </span>
+                        </div>
+
+                        {/* Contact Info */}
+                        <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-[#344258]/80 text-xs">
+                          <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                            <span>ایمیل:</span>
+                            <span className="font-mono text-zinc-700 dark:text-[#9AAAC2] truncate max-w-[170px]" dir="ltr">
+                              {user.email}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                            <span>موبایل:</span>
+                            <span className="font-mono text-zinc-700 dark:text-[#9AAAC2]" dir="ltr">
+                              {maskPhone(user.phone)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                            <span>تایید دو مرحله‌ای:</span>
+                            <button
+                              onClick={() => toggleUser2FA(user.id)}
+                              className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer ${
+                                user.twoFactorEnabled
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : 'text-zinc-400 hover:text-zinc-600'
+                              }`}
+                            >
+                              <Shield className="w-3.5 h-3.5" />
+                              <span>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-zinc-900 dark:text-[#E7ECF5] text-sm truncate">
-                          {user.name}
-                        </h3>
-                        <p className="text-[11px] text-zinc-500 dark:text-[#9AAAC2] truncate mt-0.5">
-                          {user.salonName || 'پرسنل ستادی'}
-                        </p>
+
+                      {/* Footer: Role Change & Status Action */}
+                      <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-[#344258] mt-2">
+                        <button
+                          onClick={() => openRoleModal(user)}
+                          className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Edit2 className="w-3 h-3 text-zinc-400" />
+                          <span>تغییر نقش</span>
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          {isBanned ? (
+                            <button
+                              onClick={() =>
+                                setStatusModal({
+                                  isOpen: true,
+                                  user,
+                                  targetStatus: 'active',
+                                  title: `رفع مسدودیت و فعال‌سازی حساب «${user.name}»`,
+                                  variant: 'success',
+                                })
+                              }
+                              className="px-2.5 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg cursor-pointer"
+                            >
+                              رفع مسدودیت
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                setStatusModal({
+                                  isOpen: true,
+                                  user,
+                                  targetStatus: 'banned',
+                                  title: `مسدودسازی دسترسی و تعلیق حساب «${user.name}»`,
+                                  variant: 'danger',
+                                })
+                              }
+                              className="px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer"
+                            >
+                              مسدودسازی
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                    <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${roleBadge.color}`}>
-                      {roleBadge.label}
-                    </span>
-                  </div>
-
-                  {/* Contact Info */}
-                  <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-[#344258]/80 text-xs">
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
-                      <span>ایمیل:</span>
-                      <span className="font-mono text-zinc-700 dark:text-[#9AAAC2] truncate max-w-[170px]" dir="ltr">
-                        {user.email}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
-                      <span>موبایل:</span>
-                      <span className="font-mono text-zinc-700 dark:text-[#9AAAC2]" dir="ltr">
-                        {maskPhone(user.phone)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
-                      <span>تایید دو مرحله‌ای:</span>
-                      <button
-                        onClick={() => toggleUser2FA(user.id)}
-                        className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer ${
-                          user.twoFactorEnabled
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-zinc-400 hover:text-zinc-600'
-                        }`}
-                      >
-                        <Shield className="w-3.5 h-3.5" />
-                        <span>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer: Role Change & Status Action */}
-                <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-[#344258] mt-2">
-                  <button
-                    onClick={() => openRoleModal(user)}
-                    className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Edit2 className="w-3 h-3 text-zinc-400" />
-                    <span>تغییر نقش</span>
-                  </button>
-
-                  <div className="flex items-center gap-2">
-                    {isBanned ? (
-                      <button
-                        onClick={() =>
-                          setStatusModal({
-                            isOpen: true,
-                            user,
-                            targetStatus: 'active',
-                            title: `رفع مسدودیت و فعال‌سازی حساب «${user.name}»`,
-                            variant: 'success',
-                          })
-                        }
-                        className="px-2.5 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg cursor-pointer"
-                      >
-                        رفع مسدودیت
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          setStatusModal({
-                            isOpen: true,
-                            user,
-                            targetStatus: 'banned',
-                            title: `مسدودسازی دسترسی و تعلیق حساب «${user.name}»`,
-                            variant: 'danger',
-                          })
-                        }
-                        className="px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer"
-                      >
-                        مسدودسازی
-                      </button>
-                    )}
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
 
-          {filteredUsers.length === 0 && (
-            <div className="col-span-full py-12 text-center text-zinc-400 space-y-2">
-              <Users className="w-10 h-10 mx-auto opacity-30" />
-              <p className="text-xs">کاربری با این مشخصات یافت نشد.</p>
-            </div>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredUsers.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+                onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
+                hasMore={page < totalPages}
+                itemLabel="کاربر"
+              />
+            </>
+          ) : (
+            <EmptyState
+              icon={<Users className="w-8 h-8" />}
+              title="کاربری با این مشخصات یافت نشد"
+              description="لطفاً عبارت جستجو را ویرایش کرده یا فیلترهای نقش کاربری را تغییر دهید."
+              action={{
+                label: 'پاک کردن فیلترها',
+                onClick: () => {
+                  setSearch('');
+                  setRoleFilter('all');
+                  setStatusFilter('all');
+                },
+              }}
+            />
           )}
         </div>
       )}
@@ -380,53 +420,82 @@ export const UsersView: React.FC = () => {
       {/* VIEW 2: COMPACT CLEAN TABLE */}
       {viewMode === 'table' && (
         <div className="rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
-                <tr>
-                  <th className="py-3 px-4">نام کاربر</th>
-                  <th className="py-3 px-4">ایمیل و تماس</th>
-                  <th className="py-3 px-4">سالن مربوطه</th>
-                  <th className="py-3 px-4">نقش سیستمی</th>
-                  <th className="py-3 px-4">وضعیت</th>
-                  <th className="py-3 px-4 text-center">عملیات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
-                {filteredUsers.map((user) => {
-                  const roleBadge = getRoleBadge(user.role);
-                  return (
-                    <tr key={user.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
-                      <td className="py-3 px-4 font-bold text-zinc-900 dark:text-[#E7ECF5]">{user.name}</td>
-                      <td className="py-3 px-4">
-                        <span className="font-mono text-zinc-600 dark:text-[#9AAAC2] block" dir="ltr">{user.email}</span>
-                        <span className="font-mono text-[11px] text-zinc-500" dir="ltr">{maskPhone(user.phone)}</span>
-                      </td>
-                      <td className="py-3 px-4 text-zinc-600 dark:text-[#9AAAC2]">{user.salonName || 'دفتر مرکزی'}</td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${roleBadge.color}`}>
-                          {roleBadge.label}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`text-[11px] font-medium ${user.status === 'active' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {user.status === 'active' ? 'فعال' : 'مسدود'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <button
-                          onClick={() => openRoleModal(user)}
-                          className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg"
-                        >
-                          ویرایش
-                        </button>
-                      </td>
+          {filteredUsers.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">نام کاربر</th>
+                      <th className="py-3 px-4 hidden sm:table-cell">ایمیل و تماس</th>
+                      <th className="py-3 px-4 hidden md:table-cell">سالن مربوطه</th>
+                      <th className="py-3 px-4">نقش سیستمی</th>
+                      <th className="py-3 px-4">وضعیت</th>
+                      <th className="py-3 px-4 text-center">عملیات</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
+                    {paginatedUsers.map((user) => {
+                      const roleBadge = getRoleBadge(user.role);
+                      return (
+                        <tr key={user.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
+                          <td className="py-3 px-4 font-bold text-zinc-900 dark:text-[#E7ECF5]">{user.name}</td>
+                          <td className="py-3 px-4 hidden sm:table-cell">
+                            <span className="font-mono text-zinc-600 dark:text-[#9AAAC2] block" dir="ltr">{user.email}</span>
+                            <span className="font-mono text-[11px] text-zinc-500" dir="ltr">{maskPhone(user.phone)}</span>
+                          </td>
+                          <td className="py-3 px-4 text-zinc-600 dark:text-[#9AAAC2] hidden md:table-cell">{user.salonName || 'دفتر مرکزی'}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${roleBadge.color}`}>
+                              {roleBadge.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`text-[11px] font-medium ${user.status === 'active' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {user.status === 'active' ? 'فعال' : 'مسدود'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              onClick={() => openRoleModal(user)}
+                              className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg cursor-pointer"
+                            >
+                              ویرایش
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredUsers.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+                onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
+                hasMore={page < totalPages}
+                itemLabel="کاربر"
+              />
+            </>
+          ) : (
+            <EmptyState
+              icon={<Users className="w-8 h-8" />}
+              title="کاربری با این مشخصات یافت نشد"
+              description="لطفاً عبارت جستجو را ویرایش کرده یا فیلترهای نقش کاربری را تغییر دهید."
+              action={{
+                label: 'پاک کردن فیلترها',
+                onClick: () => {
+                  setSearch('');
+                  setRoleFilter('all');
+                  setStatusFilter('all');
+                },
+              }}
+            />
+          )}
         </div>
       )}
 

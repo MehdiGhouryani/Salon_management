@@ -13,20 +13,20 @@ export const ToastContainer: React.FC = () => {
         return (
           <div
             key={toast.id}
-            className="pointer-events-auto flex items-start gap-3 p-3.5 bg-slate-900/95 border border-slate-700/80 rounded-xl shadow-2xl backdrop-blur-md text-right text-xs animate-in slide-in-from-bottom-3 duration-200"
+            className="pointer-events-auto flex items-start gap-3 p-3.5 bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-xl shadow-2xl backdrop-blur-md text-right text-xs animate-in slide-in-from-bottom-3 duration-200 text-[var(--text-primary)]"
           >
             {/* Icon */}
             <div className="shrink-0 mt-0.5">
-              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-              {toast.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-400" />}
-              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-400" />}
-              {toast.type === 'info' && <Info className="w-4 h-4 text-sky-400" />}
+              {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-[var(--status-success)]" />}
+              {toast.type === 'error' && <AlertCircle className="w-4 h-4 text-[var(--status-error)]" />}
+              {toast.type === 'warning' && <AlertTriangle className="w-4 h-4 text-[var(--status-warning)]" />}
+              {toast.type === 'info' && <Info className="w-4 h-4 text-[var(--status-info)]" />}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-slate-100">{toast.title}</p>
-              {toast.message && <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{toast.message}</p>}
+              <p className="font-semibold text-[var(--text-primary)]">{toast.title}</p>
+              {toast.message && <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">{toast.message}</p>}
             </div>
 
             {/* Undo button if available */}
@@ -36,7 +36,7 @@ export const ToastContainer: React.FC = () => {
                   toast.undoAction?.();
                   removeToast(toast.id);
                 }}
-                className="flex items-center gap-1 text-[11px] font-semibold text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 transition-colors shrink-0 cursor-pointer"
+                className="flex items-center gap-1 text-[11px] font-semibold text-[var(--brand-primary)] hover:underline px-2 py-1 rounded bg-[var(--brand-subdued)] transition-colors shrink-0 cursor-pointer"
               >
                 <Undo2 className="w-3 h-3" />
                 <span>بازگردانی</span>
@@ -46,7 +46,7 @@ export const ToastContainer: React.FC = () => {
             {/* Close button */}
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-slate-400 hover:text-white p-0.5 rounded transition-colors shrink-0"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded transition-colors shrink-0 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>

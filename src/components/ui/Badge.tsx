@@ -1,14 +1,25 @@
 import React from 'react';
 
-export type BadgeVariant = 'neutral' | 'brand' | 'success' | 'warning' | 'error' | 'info';
+export type BadgeVariant =
+  | 'neutral'
+  | 'brand'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'purple';
+
+export type BadgeSize = 'sm' | 'md';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
+  size?: BadgeSize;
   dot?: boolean;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
   variant = 'neutral',
+  size = 'md',
   dot = false,
   className = '',
   children,
@@ -16,31 +27,39 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variantStyles: Record<BadgeVariant, string> = {
     neutral:
-      'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#18243A] dark:text-[#9AAAC2] dark:border-[#344258]',
+      'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)]',
     brand:
-      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-[#F43F7A]/15 dark:text-[#FB7185] dark:border-[#F43F7A]/30',
+      'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border-[var(--brand-border)]',
     success:
-      'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-[#34D399] dark:border-emerald-800/40',
+      'bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]',
     warning:
-      'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-[#FBBF24] dark:border-amber-800/40',
+      'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]',
     error:
-      'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-[#FB7185] dark:border-rose-800/40',
+      'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]',
     info:
-      'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-[#38BDF8] dark:border-sky-800/40',
+      'bg-[var(--status-info-bg)] text-[var(--status-info)] border-[var(--status-info-border)]',
+    purple:
+      'bg-[var(--status-purple-bg)] text-[var(--status-purple)] border-[var(--status-purple-border)]',
   };
 
   const dotColors: Record<BadgeVariant, string> = {
-    neutral: 'bg-slate-400 dark:bg-slate-500',
-    brand: 'bg-[#F43F7A]',
-    success: 'bg-emerald-500 dark:bg-[#34D399]',
-    warning: 'bg-amber-500 dark:bg-[#FBBF24]',
-    error: 'bg-rose-500 dark:bg-[#FB7185]',
-    info: 'bg-sky-500 dark:bg-[#38BDF8]',
+    neutral: 'bg-[var(--text-muted)]',
+    brand: 'bg-[var(--brand-primary)]',
+    success: 'bg-[var(--status-success)]',
+    warning: 'bg-[var(--status-warning)]',
+    error: 'bg-[var(--status-error)]',
+    info: 'bg-[var(--status-info)]',
+    purple: 'bg-[var(--status-purple)]',
+  };
+
+  const sizeClasses: Record<BadgeSize, string> = {
+    sm: 'px-2 py-0.2 text-[10px] rounded-md',
+    md: 'px-2.5 py-0.5 text-xs rounded-lg',
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold border select-none tabular-nums whitespace-nowrap transition-colors ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 font-semibold border select-none tabular-nums whitespace-nowrap transition-colors ${variantStyles[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {dot && (

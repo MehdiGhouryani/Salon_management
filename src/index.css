@@ -68,6 +68,12 @@
     --status-info-bg: rgba(2, 132, 199, 0.08);
     --status-info-border: rgba(2, 132, 199, 0.25);
 
+    --status-purple: #8B5CF6;
+    --status-purple-bg: rgba(139, 92, 246, 0.08);
+    --status-purple-border: rgba(139, 92, 246, 0.25);
+
+    --bg-overlay: rgba(15, 23, 42, 0.6);
+
     color-scheme: light;
   }
 
@@ -82,7 +88,7 @@
     --border-strong: #4A5D7C;
     --text-primary: #E7ECF5;
     --text-secondary: #9AAAC2;
-    --text-muted: #6B7D99;
+    --text-muted: #7E8DA6;
 
     --brand-primary: #F43F7A;
     --brand-accent: #FB7185;
@@ -104,6 +110,12 @@
     --status-info: #38BDF8;
     --status-info-bg: rgba(56, 189, 248, 0.12);
     --status-info-border: rgba(56, 189, 248, 0.3);
+
+    --status-purple: #A78BFA;
+    --status-purple-bg: rgba(167, 139, 250, 0.12);
+    --status-purple-border: rgba(167, 139, 250, 0.3);
+
+    --bg-overlay: rgba(3, 7, 18, 0.75);
 
     color-scheme: dark;
   }
@@ -152,6 +164,29 @@
 .nobat-input:focus {
   outline: none;
   border-color: var(--brand-primary);
+}
+
+.nobat-table-container {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+}
+
+.nobat-table-header {
+  background-color: var(--bg-subsurface);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.nobat-table-row {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.15s ease;
+}
+.nobat-table-row:hover {
+  background-color: var(--bg-elevated);
 }
 
 /* Touch targets: 44x44px minimum touch target ergonomics */

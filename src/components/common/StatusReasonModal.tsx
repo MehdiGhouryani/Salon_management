@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { AlertTriangle, AlertCircle, CheckCircle2, X, Loader2, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Modal } from '../ui/Modal';
 
 export interface StatusReasonModalProps {
   isOpen: boolean;
@@ -35,8 +37,6 @@ export const StatusReasonModal: React.FC<StatusReasonModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isOpen) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanReason = reason.trim();
@@ -58,115 +58,85 @@ export const StatusReasonModal: React.FC<StatusReasonModalProps> = ({
     }
   };
 
-  const getBadgeStyle = () => {
-    switch (actionVariant) {
-      case 'success':
-        return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-500/20';
-      case 'danger':
-        return 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-500/20';
-      default:
-        return 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-500/20';
-    }
-  };
+  const badgeVariant =
+    actionVariant === 'success' ? 'success' : actionVariant === 'danger' ? 'error' : 'warning';
+
+  const modalIcon = (
+    <Badge variant={badgeVariant} size="md">
+      {actionVariant === 'success' ? (
+        <CheckCircle2 className="w-4 h-4" />
+      ) : actionVariant === 'danger' ? (
+        <AlertCircle className="w-4 h-4" />
+      ) : (
+        <AlertTriangle className="w-4 h-4" />
+      )}
+    </Badge>
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="fixed inset-0" onClick={onClose} />
-
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-[#23324B]">
-          <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl shrink-0 border ${getBadgeStyle()}`}>
-              {actionVariant === 'success' ? (
-                <CheckCircle2 className="w-5 h-5" />
-              ) : actionVariant === 'danger' ? (
-                <AlertCircle className="w-5 h-5" />
-              ) : (
-                <AlertTriangle className="w-5 h-5" />
-              )}
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-[#E7ECF5]">{title}</h3>
-              <p className="text-xs text-slate-500 dark:text-[#9AAAC2] mt-0.5">
-                {subtitle || `هدف: تغییر وضعیت «${entityName}» به «${targetStatusLabel}»`}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      description={subtitle || `هدف: تغییر وضعیت «${entityName}» به «${targetStatusLabel}»`}
+      icon={modalIcon}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-[var(--text-primary)] mb-1.5">
+            علت و توضیحات تغییر وضعیت <span className="text-[var(--status-error)]">* (اجباری)</span>
+          </label>
+          <textarea
+            rows={3}
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder={placeholder}
+            className="w-full px-3.5 py-2.5 bg-[var(--bg-subsurface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15 transition-all leading-relaxed"
+            required
+          />
+          <p className="text-[11px] text-[var(--text-muted)] mt-1">
+            این علت همراه با هویت اپراتور جاری در لاگ ممیزی پلتفرم (Audit Trail) به صورت دائمی ثبت می‌گردد.
+          </p>
         </div>
 
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-[#E7ECF5] mb-1.5">
-              علت و توضیحات تغییر وضعیت <span className="text-rose-500">* (اجباری)</span>
-            </label>
-            <textarea
-              rows={3}
-              value={reason}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder={placeholder}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#0D1527] border border-slate-200 dark:border-[#344258] rounded-xl text-xs text-slate-900 dark:text-[#E7ECF5] placeholder-slate-400 focus:outline-none focus:border-[#F43F7A] transition-colors leading-relaxed"
-              required
-            />
-            <p className="text-[11px] text-slate-400 dark:text-[#9AAAC2] mt-1">
-              این علت همراه با هویت اپراتور جاری در لاگ ممیزی پلتفرم (Audit Trail) به صورت دائمی ثبت می‌گردد.
-            </p>
+        {error && (
+          <div className="p-3 bg-[var(--status-error-bg)] border border-[var(--status-error-border)] text-[var(--status-error)] text-xs rounded-xl flex items-center gap-2 font-medium">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
+        )}
 
-          {error && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] mt-2">
+          <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-[var(--status-success)]" />
+            <span>ثبت امن با شناسه اپراتور</span>
+          </span>
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#23324B]">
-            <span className="text-[10px] text-slate-400 dark:text-[#9AAAC2] flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>ثبت امن با شناسه اپراتور</span>
-            </span>
-
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                {cancelLabel}
-              </Button>
-              <Button
-                type="submit"
-                variant={actionVariant === 'danger' ? 'danger' : 'primary'}
-                size="sm"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin ml-1.5" />
-                    <span>در حال ثبت...</span>
-                  </>
-                ) : (
-                  confirmLabel
-                )}
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onClose}
+              disabled={isSubmitting}
+            >
+              {cancelLabel}
+            </Button>
+            <Button
+              type="submit"
+              variant={actionVariant}
+              size="sm"
+              isLoading={isSubmitting}
+            >
+              {confirmLabel}
+            </Button>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </Modal>
   );
 };

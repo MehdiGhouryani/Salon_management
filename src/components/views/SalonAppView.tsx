@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Smartphone,
   Calendar,
@@ -80,7 +80,7 @@ export const SalonAppView: React.FC = () => {
   });
 
   // Keep detailed salon synchronized if current salon changes
-  useMemo(() => {
+  useEffect(() => {
     setSalonDetailed(getSalonBySlug(currentSalon.slug || 'gisara', salons));
   }, [currentSalon, salons]);
 

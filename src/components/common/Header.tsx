@@ -30,7 +30,7 @@ const tabTitles: Record<AdminTab, { title: string; subtitle: string }> = {
   simulator: { title: 'شبیه‌ساز سالن', subtitle: 'پیش‌نمایش تعاملی اپلیکیشن مدیر سالن' },
 };
 
-export const Header: React.FC = () => {
+export const Header: React.FC = React.memo(() => {
   const {
     activeTab,
     setActiveTab,
@@ -53,12 +53,12 @@ export const Header: React.FC = () => {
   const currentInfo = tabTitles[activeTab] || tabTitles.overview;
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-2.5 sm:py-3 bg-white dark:bg-[#111B2E] backdrop-blur-md border-b border-slate-200 dark:border-[#344258] text-slate-900 dark:text-[#E7ECF5] transition-colors shadow-xs">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-2.5 sm:py-3 bg-[var(--bg-surface)] backdrop-blur-md border-b border-[var(--border-subtle)] text-[var(--text-primary)] transition-colors shadow-xs">
       {/* Zone 1: Contextual Breadcrumb & Title */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={() => setMobileSidebarOpen(true)}
-          className="md:hidden p-2 rounded-xl border border-slate-200 dark:border-[#344258] bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+          className="md:hidden p-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subsurface)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer shrink-0"
           aria-label="باز کردن منوی مدیریت"
           title="منوی ناوبری پنل"
         >
@@ -66,11 +66,11 @@ export const Header: React.FC = () => {
         </button>
         <div className="flex flex-col text-right truncate">
           <div className="flex items-center gap-1.5 sm:gap-2 text-xs">
-            <span className="font-bold text-slate-500 dark:text-[#9AAAC2]">پنل کل</span>
-            <span aria-hidden="true" className="text-slate-300 dark:text-slate-600">/</span>
-            <span className="text-[#E11D48] dark:text-[#FB7185] font-bold truncate">{currentInfo.title}</span>
+            <span className="font-bold text-[var(--text-secondary)]">پنل کل</span>
+            <span aria-hidden="true" className="text-[var(--text-muted)]">/</span>
+            <span className="text-[var(--brand-primary)] font-bold truncate">{currentInfo.title}</span>
           </div>
-          <span className="hidden md:inline text-[11px] text-slate-500 dark:text-[#9AAAC2] mt-0.5 truncate">
+          <span className="hidden md:inline text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
             {currentInfo.subtitle}
           </span>
         </div>
@@ -80,14 +80,14 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-2.5 max-w-md w-full justify-center">
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="w-full max-w-sm flex items-center justify-between gap-2 px-2.5 sm:px-3 py-1.5 text-xs text-slate-500 dark:text-[#9AAAC2] bg-slate-100 dark:bg-[#0D1527] hover:bg-slate-200/80 dark:hover:bg-[#18243A] hover:text-slate-800 dark:hover:text-[#E7ECF5] border border-slate-200 dark:border-[#344258] rounded-xl transition-all cursor-pointer shadow-xs group"
+          className="w-full max-w-sm flex items-center justify-between gap-2 px-2.5 sm:px-3 py-1.5 text-xs text-[var(--text-secondary)] bg-[var(--bg-subsurface)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-xl transition-all cursor-pointer shadow-xs group"
           title="جستجو در بخش‌ها (Ctrl+K)"
         >
           <div className="flex items-center gap-2 truncate">
-            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#F43F7A] transition-colors shrink-0" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--brand-primary)] transition-colors shrink-0" />
             <span className="truncate">جستجوی سالن، کاربر...</span>
           </div>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-white dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-md text-slate-500 dark:text-[#9AAAC2] font-mono shadow-inner">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md text-[var(--text-muted)] font-mono shadow-inner">
             <Command className="w-2.5 h-2.5" /> K
           </kbd>
         </button>
@@ -102,7 +102,7 @@ export const Header: React.FC = () => {
         {/* Keyboard Shortcuts Trigger Button */}
         <button
           onClick={() => setShortcutsModalOpen(true)}
-          className="p-2 text-slate-500 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] bg-slate-100 dark:bg-[#18243A] hover:bg-slate-200/80 dark:hover:bg-[#20304C] border border-slate-200 dark:border-[#344258] rounded-xl transition-colors cursor-pointer hidden lg:flex items-center justify-center"
+          className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-subsurface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl transition-colors cursor-pointer hidden lg:flex items-center justify-center"
           title="کلیدهای میانبر (?)"
         >
           <Keyboard className="w-4 h-4" />
@@ -111,7 +111,7 @@ export const Header: React.FC = () => {
         {/* Switch to Salon Customer Website (Desktop only) */}
         <button
           onClick={() => setPersona('salon_website')}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-rose-300 dark:border-[#F43F7A]/30 bg-rose-50 dark:bg-[#F43F7A]/15 hover:bg-[#E11D48] hover:text-white dark:hover:bg-[#F43F7A] text-[#E11D48] dark:text-[#FB7185] transition-all cursor-pointer shadow-xs"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-[var(--brand-border)] bg-[var(--brand-subdued)] hover:bg-[var(--brand-primary)] hover:text-white text-[var(--brand-primary)] transition-all cursor-pointer shadow-xs"
           title="مشاهده وب‌سایت اختصاصی رزرو سالن"
         >
           <Globe className="w-3.5 h-3.5" />
@@ -121,7 +121,7 @@ export const Header: React.FC = () => {
         {/* Switch to Salon Android App (Desktop only) */}
         <button
           onClick={() => setPersona('salon_app')}
-          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-[#344258] bg-slate-100 dark:bg-[#18243A] hover:bg-slate-200 dark:hover:bg-[#20304C] text-slate-700 dark:text-[#E7ECF5] transition-all cursor-pointer shadow-xs"
+          className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subsurface)] hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition-all cursor-pointer shadow-xs"
           title="مشاهده اپلیکیشن مدیر سالن"
         >
           <Smartphone className="w-3.5 h-3.5" />
@@ -132,12 +132,12 @@ export const Header: React.FC = () => {
         <div className="relative">
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative p-2 text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-[#18243A] hover:bg-slate-200/80 dark:hover:bg-[#20304C] border border-slate-200 dark:border-[#344258] rounded-xl transition-colors cursor-pointer"
+            className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-subsurface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-xl transition-colors cursor-pointer"
             aria-label="اعلان‌ها"
           >
             <Bell className="w-4 h-4" />
             {totalAlerts > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#E11D48] dark:bg-[#F43F7A] text-[10px] font-bold text-white shadow-xs tabular-nums">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[10px] font-bold text-white shadow-xs tabular-nums">
                 {toPersianDigits(totalAlerts)}
               </span>
             )}
@@ -150,13 +150,13 @@ export const Header: React.FC = () => {
                 className="fixed inset-0 z-40"
                 onClick={() => setNotificationsOpen(false)}
               ></div>
-              <div className="absolute left-0 mt-2 w-80 max-w-[92vw] z-50 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-2xl shadow-xl p-4 divide-y divide-slate-100 dark:divide-[#344258] animate-in fade-in zoom-in-95 duration-150 text-right">
+              <div className="absolute left-0 mt-2 w-80 max-w-[92vw] z-50 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xl p-4 divide-y divide-[var(--border-subtle)] animate-in fade-in zoom-in-95 duration-150 text-right">
                 <div className="flex items-center justify-between pb-3">
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-[#E7ECF5] flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#E11D48] dark:text-[#F43F7A]" />
+                  <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--brand-primary)]" />
                     رویدادهای نیازمند بررسی
                   </h4>
-                  <span className="text-[11px] text-[#E11D48] dark:text-[#FB7185] font-semibold tabular-nums">
+                  <span className="text-[11px] text-[var(--brand-primary)] font-semibold tabular-nums">
                     {toPersianDigits(totalAlerts)} مورد فعال
                   </span>
                 </div>
@@ -168,14 +168,14 @@ export const Header: React.FC = () => {
                         setActiveTab('businesses');
                         setNotificationsOpen(false);
                       }}
-                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/15 cursor-pointer transition-colors"
+                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] hover:opacity-90 cursor-pointer transition-colors"
                     >
-                      <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-[#FBBF24] shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-4 h-4 text-[var(--status-warning)] shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-bold text-amber-900 dark:text-[#FBBF24]">
+                        <p className="font-bold text-[var(--status-warning)]">
                           {toPersianDigits(pendingSalons.length)} سالن در انتظار بررسی
                         </p>
-                        <p className="text-[11px] text-amber-700 dark:text-amber-200/70 mt-0.5">
+                        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                           مدارک ارسال شده نیازمند بازبینی است.
                         </p>
                       </div>
@@ -188,14 +188,14 @@ export const Header: React.FC = () => {
                         setActiveTab('messages');
                         setNotificationsOpen(false);
                       }}
-                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/25 hover:bg-rose-500/15 cursor-pointer transition-colors"
+                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[var(--status-error-bg)] border border-[var(--status-error-border)] hover:opacity-90 cursor-pointer transition-colors"
                     >
-                      <RotateCcw className="w-4 h-4 text-rose-500 dark:text-[#FB7185] shrink-0 mt-0.5" />
+                      <RotateCcw className="w-4 h-4 text-[var(--status-error)] shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-bold text-rose-900 dark:text-[#FB7185]">
+                        <p className="font-bold text-[var(--status-error)]">
                           {toPersianDigits(failedMessages.length)} پیامک ناموفق
                         </p>
-                        <p className="text-[11px] text-rose-700 dark:text-rose-200/70 mt-0.5">
+                        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                           آماده تلاش مجدد ارسال در صف مخابراتی.
                         </p>
                       </div>
@@ -208,14 +208,14 @@ export const Header: React.FC = () => {
                         setActiveTab('support');
                         setNotificationsOpen(false);
                       }}
-                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/25 hover:bg-sky-500/15 cursor-pointer transition-colors"
+                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[var(--status-info-bg)] border border-[var(--status-info-border)] hover:opacity-90 cursor-pointer transition-colors"
                     >
-                      <Sparkles className="w-4 h-4 text-sky-600 dark:text-[#38BDF8] shrink-0 mt-0.5" />
+                      <Sparkles className="w-4 h-4 text-[var(--status-info)] shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-bold text-sky-900 dark:text-[#38BDF8]">
+                        <p className="font-bold text-[var(--status-info)]">
                           {toPersianDigits(openTickets.length)} تیکت بدون پاسخ
                         </p>
-                        <p className="text-[11px] text-sky-700 dark:text-sky-200/70 mt-0.5">
+                        <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
                           درخواست‌های پشتیبانی سالن‌داران.
                         </p>
                       </div>
@@ -223,8 +223,8 @@ export const Header: React.FC = () => {
                   )}
 
                   {totalAlerts === 0 && (
-                    <div className="text-center py-5 text-slate-500 dark:text-[#9AAAC2] flex flex-col items-center gap-1.5">
-                      <CheckCircle2 className="w-6 h-6 text-[#34D399]" />
+                    <div className="text-center py-5 text-[var(--text-muted)] flex flex-col items-center gap-1.5">
+                      <CheckCircle2 className="w-6 h-6 text-[var(--status-success)]" />
                       <p className="text-xs">سیستم در وضعیت مطلوب، بدون هشدار فعال</p>
                     </div>
                   )}
@@ -236,7 +236,7 @@ export const Header: React.FC = () => {
                       setActiveTab('operations');
                       setNotificationsOpen(false);
                     }}
-                    className="text-[11px] text-slate-500 dark:text-[#9AAAC2] hover:text-slate-800 dark:hover:text-[#E7ECF5] transition-colors w-full py-1 cursor-pointer"
+                    className="text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors w-full py-1 cursor-pointer"
                   >
                     مشاهده کنسول سلامت و لاگ‌های سرور
                   </button>
@@ -247,21 +247,21 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Super Admin Identity Badge */}
-        <div className="flex items-center gap-2.5 pr-2.5 border-r border-slate-200 dark:border-[#344258]">
+        <div className="flex items-center gap-2.5 pr-2.5 border-r border-[var(--border-subtle)]">
           <div className="relative">
-            <div className="w-8 h-8 rounded-full bg-[#E11D48] dark:bg-[#F43F7A] flex items-center justify-center font-bold text-xs text-white shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-[var(--brand-primary)] flex items-center justify-center font-bold text-xs text-white shadow-xs">
               م‌غ
             </div>
             <span
-              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#34D399] border-2 border-white dark:border-[#111B2E]"
+              className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--status-success)] border-2 border-[var(--bg-surface)]"
               title="احراز هویت دومرحله‌ای فعال"
             ></span>
           </div>
           <div className="hidden xl:flex flex-col text-right">
-            <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] leading-tight">
+            <span className="text-xs font-bold text-[var(--text-primary)] leading-tight">
               مهدی غوریانی
             </span>
-            <span className="text-[10px] text-emerald-600 dark:text-[#34D399] flex items-center gap-1 font-medium">
+            <span className="text-[10px] text-[var(--status-success)] flex items-center gap-1 font-medium">
               <ShieldCheck className="w-2.5 h-2.5" /> ادمین اصلی
             </span>
           </div>
@@ -269,4 +269,4 @@ export const Header: React.FC = () => {
       </div>
     </header>
   );
-};
+});

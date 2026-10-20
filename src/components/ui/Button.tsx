@@ -1,8 +1,16 @@
 import React, { forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  | 'danger'
+  | 'success'
+  | 'warning';
+
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'icon';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -10,6 +18,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -20,6 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       isLoading = false,
       leftIcon,
       rightIcon,
+      fullWidth = false,
       className = '',
       children,
       disabled,
@@ -28,31 +38,38 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    // Base styles: Single-line, font-semibold, focus-visible outline, transition
+    // Base classes adhering to ergonomic design system touch targets and focus states
     const baseClasses =
-      'inline-flex items-center justify-center font-medium select-none whitespace-nowrap transition-all duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#F43F7A] dark:focus-visible:ring-offset-[#0B1120] active:scale-[0.98]';
+      'inline-flex items-center justify-center font-medium select-none whitespace-nowrap transition-all duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98]';
 
-    // Variant classes
+    // Variant classes using semantic token variables
     const variantClasses: Record<ButtonVariant, string> = {
       primary:
-        'bg-[#E11D48] hover:bg-[#BE123C] dark:bg-[#F43F7A] dark:hover:bg-[#E11D48] text-white shadow-xs font-semibold',
+        'bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white shadow-xs font-semibold focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
       secondary:
-        'bg-slate-100 hover:bg-slate-200/80 dark:bg-[#18243A] dark:hover:bg-[#20304C] text-slate-800 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]',
+        'bg-[var(--bg-elevated)] hover:bg-[var(--bg-subsurface)] text-[var(--text-primary)] border border-[var(--border-subtle)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
       outline:
-        'bg-transparent hover:bg-slate-100/70 dark:hover:bg-[#18243A]/80 text-slate-700 dark:text-[#E7ECF5] border border-slate-300 dark:border-[#344258]',
+        'bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-strong)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
       ghost:
-        'bg-transparent hover:bg-slate-100 dark:hover:bg-[#18243A] text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]',
+        'bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
       danger:
-        'bg-rose-600 hover:bg-rose-700 text-white shadow-xs font-semibold dark:bg-rose-700 dark:hover:bg-rose-800',
+        'bg-[var(--status-error)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-error)] dark:focus-visible:ring-offset-[#0B1120]',
+      success:
+        'bg-[var(--status-success)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-success)] dark:focus-visible:ring-offset-[#0B1120]',
+      warning:
+        'bg-[var(--status-warning)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-warning)] dark:focus-visible:ring-offset-[#0B1120]',
     };
 
-    // Sizing: Ensures minimum 44px touch targets on mobile for standard sizes
+    // Sizing
     const sizeClasses: Record<ButtonSize, string> = {
+      xs: 'h-7 px-2.5 text-[11px] rounded-lg gap-1 min-h-[28px]',
       sm: 'h-9 px-3 text-xs rounded-xl gap-1.5 min-h-[36px]',
       md: 'h-11 px-4 text-xs sm:text-sm rounded-xl gap-2 min-h-[44px]',
       lg: 'h-12 px-5 text-sm sm:text-base rounded-2xl gap-2.5 min-h-[48px]',
       icon: 'h-11 w-11 p-0 rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center',
     };
+
+    const widthClass = fullWidth ? 'w-full' : '';
 
     return (
       <button
@@ -60,7 +77,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || isLoading}
         aria-busy={isLoading}
-        className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+        className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${className}`}
         {...props}
       >
         {isLoading ? (

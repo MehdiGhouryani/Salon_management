@@ -1,6 +1,8 @@
 import React from 'react';
-import { AlertTriangle, AlertCircle, X } from 'lucide-react';
+import { AlertTriangle, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Modal } from '../ui/Modal';
 
 export interface ConfirmModalProps {
   isOpen: boolean;
@@ -25,54 +27,34 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
   onClose,
 }) => {
-  if (!isOpen) return null;
-
   const handleClose = () => {
     if (onCancel) onCancel();
     if (onClose) onClose();
   };
 
-  const isDanger = variant === 'danger';
+  const badgeVariant = variant === 'danger' ? 'error' : variant === 'info' ? 'info' : 'warning';
+
+  const modalIcon = (
+    <Badge variant={badgeVariant} size="md">
+      {variant === 'danger' ? <AlertCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+    </Badge>
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="fixed inset-0" onClick={handleClose}></div>
-
-      <div className="relative w-full max-w-md bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl shadow-xl p-5 z-10 text-right space-y-4">
-        {/* Header */}
-        <div className="flex items-start gap-3">
-          <div
-            className={`p-2.5 rounded-lg shrink-0 ${
-              isDanger
-                ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-            }`}
-          >
-            {isDanger ? <AlertCircle className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-[#E7ECF5]">{title}</h3>
-            <p className="text-xs text-slate-500 dark:text-[#9AAAC2] mt-1 leading-relaxed">{message}</p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-[#23324B]">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleClose}
-          >
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={title}
+      description={message}
+      icon={modalIcon}
+      size="sm"
+      footer={
+        <>
+          <Button variant="secondary" size="sm" onClick={handleClose}>
             {cancelLabel}
           </Button>
           <Button
-            variant={isDanger ? 'danger' : 'primary'}
+            variant={variant === 'danger' ? 'danger' : 'primary'}
             size="sm"
             onClick={() => {
               onConfirm();
@@ -81,8 +63,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           >
             {confirmLabel}
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <div className="sr-only">{message}</div>
+    </Modal>
   );
 };

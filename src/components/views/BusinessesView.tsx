@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Store,
   Plus,
@@ -35,6 +35,10 @@ import {
 } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { StatusReasonModal } from '../common/StatusReasonModal';
+import { Pagination } from '../common/Pagination';
+import { EmptyState } from '../ui/EmptyState';
+import { Select } from '../ui/Select';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const BusinessesView: React.FC = () => {
   const {
@@ -51,11 +55,14 @@ export const BusinessesView: React.FC = () => {
   } = useAdmin();
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [cityFilter, setCityFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'revenue' | 'appointments' | 'date'>('revenue');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -144,10 +151,10 @@ export const BusinessesView: React.FC = () => {
     return salons
       .filter((s) => {
         const matchesSearch =
-          s.name.toLowerCase().includes(search.toLowerCase()) ||
-          s.ownerName.toLowerCase().includes(search.toLowerCase()) ||
-          s.city.toLowerCase().includes(search.toLowerCase()) ||
-          s.phone.includes(search);
+          s.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          s.ownerName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          s.city.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          s.phone.includes(debouncedSearch);
 
         const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
         const matchesCity = cityFilter === 'all' || s.province === cityFilter;
@@ -160,7 +167,17 @@ export const BusinessesView: React.FC = () => {
         if (sortBy === 'appointments') return b.totalAppointments - a.totalAppointments;
         return b.id.localeCompare(a.id);
       });
-  }, [salons, search, statusFilter, cityFilter, planFilter, sortBy]);
+  }, [salons, debouncedSearch, statusFilter, cityFilter, planFilter, sortBy]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, cityFilter, planFilter]);
+
+  const totalPages = Math.ceil(filteredSalons.length / PAGE_SIZE);
+  const paginatedSalons = useMemo(() => {
+    return filteredSalons.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [filteredSalons, page]);
 
   const handleExport = () => {
     const exportRows = filteredSalons.map((s) => ({
@@ -368,30 +385,30 @@ export const BusinessesView: React.FC = () => {
 
           {/* Province Filter */}
           <div>
-            <select
+            <Select
+              size="sm"
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#0D1527] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-800 dark:text-[#E7ECF5] focus:outline-none focus:border-[#F43F7A] cursor-pointer"
-            >
-              <option value="all">تمام استان‌ها</option>
-              {uniqueCities.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+              options={[
+                { value: 'all', label: 'تمام استان‌ها' },
+                ...uniqueCities.map((c) => ({ value: c, label: c })),
+              ]}
+            />
           </div>
 
           {/* Plan Filter */}
           <div>
-            <select
+            <Select
+              size="sm"
               value={planFilter}
               onChange={(e) => setPlanFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#0D1527] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-800 dark:text-[#E7ECF5] focus:outline-none focus:border-[#F43F7A] cursor-pointer"
-            >
-              <option value="all">تمام بسته‌ها</option>
-              <option value="bronze">پایه (برنزی)</option>
-              <option value="silver">حرفه‌ای (نقره‌ای)</option>
-              <option value="gold_vip">ویژه (VIP)</option>
-            </select>
+              options={[
+                { value: 'all', label: 'تمام بسته‌ها' },
+                { value: 'bronze', label: 'پایه (برنزی)' },
+                { value: 'silver', label: 'حرفه‌ای (نقره‌ای)' },
+                { value: 'gold_vip', label: 'ویژه (VIP)' },
+              ]}
+            />
           </div>
         </div>
 
@@ -426,150 +443,172 @@ export const BusinessesView: React.FC = () => {
 
       {/* VIEW 1: UNCLUTTERED MODERN CARD GRID (PRIMARY) */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSalons.map((salon) => {
-            const badge = getStatusBadge(salon.status);
+        <div className="space-y-4">
+          {filteredSalons.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedSalons.map((salon) => {
+                  const badge = getStatusBadge(salon.status);
 
-            return (
-              <div
-                key={salon.id}
-                className="p-5 rounded-2xl bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] shadow-xs hover:border-slate-300 dark:hover:border-slate-500 transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  {/* Card Header: Icon, Name, Category & Status Badge */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] flex items-center justify-center font-bold text-[#E11D48] dark:text-[#F43F7A] shrink-0">
-                        {salon.name.slice(0, 1)}
+                  return (
+                    <div
+                      key={salon.id}
+                      className="p-5 rounded-2xl bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] shadow-xs hover:border-slate-300 dark:hover:border-slate-500 transition-all flex flex-col justify-between group"
+                    >
+                      <div>
+                        {/* Card Header: Icon, Name, Category & Status Badge */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] flex items-center justify-center font-bold text-[#E11D48] dark:text-[#F43F7A] shrink-0">
+                              {salon.name.slice(0, 1)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="font-bold text-slate-900 dark:text-[#E7ECF5] text-sm truncate">
+                                  {salon.name}
+                                </h3>
+                                {salon.verifiedBadge && (
+                                  <span className="text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 dark:text-[#9AAAC2] truncate mt-0.5">
+                                {salon.category}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
+                            {badge.label}
+                          </span>
+                        </div>
+
+                        {/* Owner, City & Contact */}
+                        <div className="space-y-1.5 py-2.5 border-y border-slate-100 dark:border-[#344258] text-xs">
+                          <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
+                            <span>مدیر سالن:</span>
+                            <span className="font-semibold text-slate-800 dark:text-[#E7ECF5]">{salon.ownerName}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
+                            <span>موقعیت:</span>
+                            <span className="text-slate-700 dark:text-[#E7ECF5]">{salon.city} ({salon.province})</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
+                            <span>شماره تماس:</span>
+                            <span className="font-mono text-slate-700 dark:text-[#E7ECF5]" dir="ltr">
+                              {maskPhone(salon.phone)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Clean Metrics Row */}
+                        <div className="grid grid-cols-3 gap-2 my-3 text-center">
+                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
+                            <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">گردش ماه</span>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-[#34D399] tabular-nums">
+                              {formatCurrency(salon.monthlyRevenue, 'toman')}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
+                            <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">نوبت‌ها</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] tabular-nums">
+                              {toPersianDigits(salon.totalAppointments)}
+                            </span>
+                          </div>
+
+                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
+                            <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">پرسنل</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] tabular-nums">
+                              {toPersianDigits(salon.activeStaffCount)} نفر
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="min-w-0">
+
+                      {/* Footer: Plan Badge & Action Buttons */}
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#344258]">
+                        <button
+                          onClick={() => openPlanModal(salon)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 bg-slate-100 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-700 dark:text-[#E7ECF5]"
+                        >
+                          <span>{salon.plan === 'gold_vip' ? 'بسته VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}</span>
+                          <Edit2 className="w-2.5 h-2.5 opacity-60" />
+                        </button>
+
                         <div className="flex items-center gap-1.5">
-                          <h3 className="font-bold text-slate-900 dark:text-[#E7ECF5] text-sm truncate">
-                            {salon.name}
-                          </h3>
-                          {salon.verifiedBadge && (
-                            <span className="text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
+                          <button
+                            onClick={() => setInspectedSalon(salon)}
+                            className="p-1.5 text-slate-500 hover:text-slate-800 dark:text-[#9AAAC2] dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A] rounded-lg transition-colors cursor-pointer"
+                            title="مشاهده جزئیات کامل"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          {salon.status === 'pending' && (
+                            <button
+                              onClick={() => openStatusChangeModal(salon, 'active')}
+                              className="px-2.5 py-1 text-xs font-semibold bg-[#059669] hover:bg-[#047857] dark:bg-[#34D399] dark:hover:bg-[#10B981] text-white dark:text-[#0B1120] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                              title="تایید سالن"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>تایید</span>
+                            </button>
+                          )}
+
+                          {salon.status === 'active' && (
+                            <button
+                              onClick={() => openStatusChangeModal(salon, 'suspended')}
+                              className="p-1.5 text-amber-600 dark:text-[#FBBF24] hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors cursor-pointer"
+                              title="تعلیق فعالیت"
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {salon.status === 'suspended' && (
+                            <button
+                              onClick={() => openStatusChangeModal(salon, 'active')}
+                              className="p-1.5 text-emerald-600 dark:text-[#34D399] hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
+                              title="فعال‌سازی مجدد"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-[#9AAAC2] truncate mt-0.5">
-                          {salon.category}
-                        </p>
                       </div>
                     </div>
-
-                    <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
-                      {badge.label}
-                    </span>
-                  </div>
-
-                  {/* Owner, City & Contact */}
-                  <div className="space-y-1.5 py-2.5 border-y border-slate-100 dark:border-[#344258] text-xs">
-                    <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
-                      <span>مدیر سالن:</span>
-                      <span className="font-semibold text-slate-800 dark:text-[#E7ECF5]">{salon.ownerName}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
-                      <span>موقعیت:</span>
-                      <span className="text-slate-700 dark:text-[#E7ECF5]">{salon.city} ({salon.province})</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
-                      <span>شماره تماس:</span>
-                      <span className="font-mono text-slate-700 dark:text-[#E7ECF5]" dir="ltr">
-                        {maskPhone(salon.phone)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Clean Metrics Row */}
-                  <div className="grid grid-cols-3 gap-2 my-3 text-center">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
-                      <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">گردش ماه</span>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-[#34D399] tabular-nums">
-                        {formatCurrency(salon.monthlyRevenue, 'toman')}
-                      </span>
-                    </div>
-
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
-                      <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">نوبت‌ها</span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] tabular-nums">
-                        {toPersianDigits(salon.totalAppointments)}
-                      </span>
-                    </div>
-
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
-                      <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">پرسنل</span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] tabular-nums">
-                        {toPersianDigits(salon.activeStaffCount)} نفر
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer: Plan Badge & Action Buttons */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#344258]">
-                  <button
-                    onClick={() => openPlanModal(salon)}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 bg-slate-100 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-700 dark:text-[#E7ECF5]"
-                  >
-                    <span>{salon.plan === 'gold_vip' ? 'بسته VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}</span>
-                    <Edit2 className="w-2.5 h-2.5 opacity-60" />
-                  </button>
-
-                  <div className="flex items-center gap-1.5">
-                    {/* Inspect Drawer */}
-                    <button
-                      onClick={() => setInspectedSalon(salon)}
-                      className="p-1.5 text-slate-500 hover:text-slate-800 dark:text-[#9AAAC2] dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A] rounded-lg transition-colors cursor-pointer"
-                      title="مشاهده جزئیات کامل"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-
-                    {/* Approve (if pending) */}
-                    {salon.status === 'pending' && (
-                      <button
-                        onClick={() => openStatusChangeModal(salon, 'active')}
-                        className="px-2.5 py-1 text-xs font-semibold bg-[#059669] hover:bg-[#047857] dark:bg-[#34D399] dark:hover:bg-[#10B981] text-white dark:text-[#0B1120] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-                        title="تایید سالن"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>تایید</span>
-                      </button>
-                    )}
-
-                    {/* Suspend / Activate */}
-                    {salon.status === 'active' && (
-                      <button
-                        onClick={() => openStatusChangeModal(salon, 'suspended')}
-                        className="p-1.5 text-amber-600 dark:text-[#FBBF24] hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors cursor-pointer"
-                        title="تعلیق فعالیت"
-                      >
-                        <AlertTriangle className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    {salon.status === 'suspended' && (
-                      <button
-                        onClick={() => openStatusChangeModal(salon, 'active')}
-                        className="p-1.5 text-emerald-600 dark:text-[#34D399] hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
-                        title="فعال‌سازی مجدد"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
 
-          {filteredSalons.length === 0 && (
-            <div className="col-span-full py-12 text-center text-slate-400 dark:text-[#9AAAC2] space-y-2">
-              <Store className="w-10 h-10 mx-auto opacity-30" />
-              <p className="text-xs">هیچ سالنی با این مشخصات یافت نشد.</p>
-            </div>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredSalons.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+                onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
+                hasMore={page < totalPages}
+                itemLabel="سالن"
+              />
+            </>
+          ) : (
+            <EmptyState
+              icon={<Store className="w-8 h-8" />}
+              title="هیچ سالنی با این مشخصات یافت نشد"
+              description="لطفاً عبارت جستجو را تغییر دهید یا فیلترهای وضعیت، استان و بسته را بازنشانی فرمایید."
+              action={{
+                label: 'پاک کردن فیلترها',
+                onClick: () => {
+                  setSearch('');
+                  setStatusFilter('all');
+                  setCityFilter('all');
+                  setPlanFilter('all');
+                },
+              }}
+            />
           )}
         </div>
       )}
@@ -577,84 +616,114 @@ export const BusinessesView: React.FC = () => {
       {/* VIEW 2: COMPACT CLEAN TABLE (ALTERNATIVE) */}
       {viewMode === 'table' && (
         <div className="rounded-2xl bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 dark:bg-[#0D1527] border-b border-slate-200 dark:border-[#344258] text-slate-500 dark:text-[#9AAAC2] font-semibold">
-                <tr>
-                  <th className="py-3 px-4">نام سالن و دسته‌بندی</th>
-                  <th className="py-3 px-4">مدیر و تماس</th>
-                  <th className="py-3 px-4">شهر</th>
-                  <th className="py-3 px-4">پلن</th>
-                  <th className="py-3 px-4">گردش ماه</th>
-                  <th className="py-3 px-4">پرسنل</th>
-                  <th className="py-3 px-4">وضعیت</th>
-                  <th className="py-3 px-4 text-center">عملیات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-[#344258] text-slate-700 dark:text-[#E7ECF5]">
-                {filteredSalons.map((salon) => {
-                  const badge = getStatusBadge(salon.status);
-
-                  return (
-                    <tr key={salon.id} className="hover:bg-slate-50/60 dark:hover:bg-[#18243A]/50 transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#18243A] flex items-center justify-center font-bold text-[#E11D48] dark:text-[#F43F7A] shrink-0 border border-slate-200 dark:border-[#344258]">
-                            {salon.name.slice(0, 1)}
-                          </div>
-                          <div>
-                            <span className="font-bold text-slate-900 dark:text-[#E7ECF5] block">{salon.name}</span>
-                            <span className="text-[11px] text-slate-500 dark:text-[#9AAAC2]">{salon.category}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="block font-medium">{salon.ownerName}</span>
-                        <span className="font-mono text-[11px] text-slate-500 dark:text-[#9AAAC2]" dir="ltr">{maskPhone(salon.phone)}</span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 dark:text-[#9AAAC2]">{salon.city}</td>
-                      <td className="py-3 px-4">
-                        <span className="text-[11px] font-semibold text-slate-700 dark:text-[#E7ECF5]">
-                          {salon.plan === 'gold_vip' ? 'VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-bold text-emerald-600 dark:text-[#34D399] tabular-nums">
-                        {formatCurrency(salon.monthlyRevenue, 'toman')}
-                      </td>
-                      <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-[#9AAAC2]">
-                        {toPersianDigits(salon.activeStaffCount)} نفر
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => setInspectedSalon(salon)}
-                            className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-[#E7ECF5] rounded-lg"
-                            title="جزئیات"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {salon.status === 'pending' && (
-                            <button
-                              onClick={() => openStatusChangeModal(salon, 'active')}
-                              className="p-1.5 text-emerald-600 dark:text-[#34D399] rounded-lg hover:bg-emerald-50 dark:hover:bg-[#34D399]/15"
-                              title="تایید"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
+          {filteredSalons.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead className="bg-slate-50 dark:bg-[#0D1527] border-b border-slate-200 dark:border-[#344258] text-slate-500 dark:text-[#9AAAC2] font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">نام سالن و دسته‌بندی</th>
+                      <th className="py-3 px-4">مدیر و تماس</th>
+                      <th className="py-3 px-4 hidden md:table-cell">شهر</th>
+                      <th className="py-3 px-4 hidden sm:table-cell">پلن</th>
+                      <th className="py-3 px-4 hidden lg:table-cell">گردش ماه</th>
+                      <th className="py-3 px-4 hidden xl:table-cell">پرسنل</th>
+                      <th className="py-3 px-4">وضعیت</th>
+                      <th className="py-3 px-4 text-center">عملیات</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#344258] text-slate-700 dark:text-[#E7ECF5]">
+                    {paginatedSalons.map((salon) => {
+                      const badge = getStatusBadge(salon.status);
+
+                      return (
+                        <tr key={salon.id} className="hover:bg-slate-50/60 dark:hover:bg-[#18243A]/50 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#18243A] flex items-center justify-center font-bold text-[#E11D48] dark:text-[#F43F7A] shrink-0 border border-slate-200 dark:border-[#344258]">
+                                {salon.name.slice(0, 1)}
+                              </div>
+                              <div>
+                                <span className="font-bold text-slate-900 dark:text-[#E7ECF5] block">{salon.name}</span>
+                                <span className="text-[11px] text-slate-500 dark:text-[#9AAAC2]">{salon.category}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="block font-medium">{salon.ownerName}</span>
+                            <span className="font-mono text-[11px] text-slate-500 dark:text-[#9AAAC2]" dir="ltr">{maskPhone(salon.phone)}</span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-[#9AAAC2] hidden md:table-cell">{salon.city}</td>
+                          <td className="py-3 px-4 hidden sm:table-cell">
+                            <span className="text-[11px] font-semibold text-slate-700 dark:text-[#E7ECF5]">
+                              {salon.plan === 'gold_vip' ? 'VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-bold text-emerald-600 dark:text-[#34D399] tabular-nums hidden lg:table-cell">
+                            {formatCurrency(salon.monthlyRevenue, 'toman')}
+                          </td>
+                          <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-[#9AAAC2] hidden xl:table-cell">
+                            {toPersianDigits(salon.activeStaffCount)} نفر
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
+                              {badge.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                onClick={() => setInspectedSalon(salon)}
+                                className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-[#E7ECF5] rounded-lg"
+                                title="جزئیات"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              {salon.status === 'pending' && (
+                                <button
+                                  onClick={() => openStatusChangeModal(salon, 'active')}
+                                  className="p-1.5 text-emerald-600 dark:text-[#34D399] rounded-lg hover:bg-emerald-50 dark:hover:bg-[#34D399]/15"
+                                  title="تایید"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={filteredSalons.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+                onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
+                hasMore={page < totalPages}
+                itemLabel="سالن"
+              />
+            </>
+          ) : (
+            <EmptyState
+              icon={<Store className="w-8 h-8" />}
+              title="هیچ سالنی با این مشخصات یافت نشد"
+              description="لطفاً عبارت جستجو را تغییر دهید یا فیلترهای وضعیت، استان و بسته را بازنشانی فرمایید."
+              action={{
+                label: 'پاک کردن فیلترها',
+                onClick: () => {
+                  setSearch('');
+                  setStatusFilter('all');
+                  setCityFilter('all');
+                  setPlanFilter('all');
+                },
+              }}
+            />
+          )}
         </div>
       )}
 

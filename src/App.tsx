@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { AdminProvider, useAdmin, AdminTab } from './context/AdminContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/common/Header';
@@ -12,20 +12,22 @@ import { CommandPalette } from './components/common/CommandPalette';
 import { ToastContainer } from './components/common/ToastContainer';
 import { ShortcutsModal } from './components/common/ShortcutsModal';
 import { ThemeToggle } from './components/common/ThemeToggle';
+import { LoadingFallback } from './components/common/LoadingFallback';
 
-import { OverviewView } from './components/views/OverviewView';
-import { BusinessesView } from './components/views/BusinessesView';
-import { UsersView } from './components/views/UsersView';
-import { SubscriptionsView } from './components/views/SubscriptionsView';
-import { MessagesView } from './components/views/MessagesView';
-import { SupportView } from './components/views/SupportView';
-import { OperationsView } from './components/views/OperationsView';
-import { SecurityView } from './components/views/SecurityView';
-import { SettingsView } from './components/views/SettingsView';
-import { SalonSimulatorView } from './components/views/SalonSimulatorView';
+// Lazy-loaded views for code splitting & performance core
+const OverviewView = lazy(() => import('./components/views/OverviewView').then((m) => ({ default: m.OverviewView })));
+const BusinessesView = lazy(() => import('./components/views/BusinessesView').then((m) => ({ default: m.BusinessesView })));
+const UsersView = lazy(() => import('./components/views/UsersView').then((m) => ({ default: m.UsersView })));
+const SubscriptionsView = lazy(() => import('./components/views/SubscriptionsView').then((m) => ({ default: m.SubscriptionsView })));
+const MessagesView = lazy(() => import('./components/views/MessagesView').then((m) => ({ default: m.MessagesView })));
+const SupportView = lazy(() => import('./components/views/SupportView').then((m) => ({ default: m.SupportView })));
+const OperationsView = lazy(() => import('./components/views/OperationsView').then((m) => ({ default: m.OperationsView })));
+const SecurityView = lazy(() => import('./components/views/SecurityView').then((m) => ({ default: m.SecurityView })));
+const SettingsView = lazy(() => import('./components/views/SettingsView').then((m) => ({ default: m.SettingsView })));
+const SalonSimulatorView = lazy(() => import('./components/views/SalonSimulatorView').then((m) => ({ default: m.SalonSimulatorView })));
 
-import { SalonWebsiteView } from './components/customer/SalonWebsiteView';
-import { SalonAppView } from './components/views/SalonAppView';
+const SalonWebsiteView = lazy(() => import('./components/customer/SalonWebsiteView').then((m) => ({ default: m.SalonWebsiteView })));
+const SalonAppView = lazy(() => import('./components/views/SalonAppView').then((m) => ({ default: m.SalonAppView })));
 import {
   Globe,
   Smartphone,
@@ -155,7 +157,7 @@ const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-[#E7ECF5] overflow-hidden font-sans antialiased transition-colors duration-200" dir="rtl">
+    <div className="flex h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] overflow-hidden font-sans antialiased transition-colors duration-200" dir="rtl">
       {/* Sidebar Navigation */}
       <Sidebar />
 
@@ -165,10 +167,10 @@ const AdminLayout: React.FC = () => {
         <Header />
 
         {/* Scrollable Content Body */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-slate-50 dark:bg-[#0B1120]">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-[var(--bg-canvas)]">
           <div className="max-w-7xl mx-auto space-y-5">
             {/* 1. Primary Clean Category Tabs Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] rounded-2xl shadow-xs">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xs">
               <div className="flex items-center gap-1.5 overflow-x-auto p-0.5 select-none scrollbar-none">
                 {categories.map((cat) => {
                   const isSelected = currentCategory === cat.id;
@@ -180,20 +182,20 @@ const AdminLayout: React.FC = () => {
                       onClick={() => handleCategorySelect(cat)}
                       className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-rose-50 dark:bg-[#F43F7A]/15 text-[#E11D48] dark:text-[#FB7185] font-bold border border-rose-300 dark:border-[#F43F7A]/30 shadow-xs'
-                          : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A] border border-transparent'
+                          ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] font-bold border border-[var(--brand-border)] shadow-xs'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-[#E11D48] dark:text-[#F43F7A]' : 'text-slate-400 dark:text-[#9AAAC2]'}`} />
+                      <Icon className={`w-4 h-4 ${isSelected ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'}`} />
                       <span>{cat.label}</span>
                       {cat.badge !== undefined && (
                         <span
                           className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums ${
                             cat.badgeType === 'error'
-                              ? 'bg-rose-500/10 text-rose-600 dark:text-[#FB7185] border-rose-500/20'
+                              ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]'
                               : cat.badgeType === 'warning'
-                              ? 'bg-amber-500/10 text-amber-700 dark:text-[#FBBF24] border-amber-500/20'
-                              : 'bg-sky-500/10 text-sky-700 dark:text-[#38BDF8] border-sky-500/20'
+                              ? 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]'
+                              : 'bg-[var(--status-info-bg)] text-[var(--status-info)] border-[var(--status-info-border)]'
                           }`}
                         >
                           {cat.badge}
@@ -205,16 +207,16 @@ const AdminLayout: React.FC = () => {
               </div>
 
               {/* Quick Persona / Auth Indicators */}
-              <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 dark:text-[#9AAAC2] pl-2">
+              <div className="hidden lg:flex items-center gap-2 text-xs text-[var(--text-secondary)] pl-2">
                 {serverAuth.authenticated && !isDemoMode ? (
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--status-success-bg)] border border-[var(--status-success-border)] text-[11px] font-bold text-[var(--status-success)]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]"></span>
                       مدیر کل: {serverAuth.user?.fullName} ({serverAuth.user?.phone})
                     </span>
                     <button
                       onClick={() => serverLogout()}
-                      className="px-2 py-1 text-[11px] rounded-lg bg-slate-100 dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-[#334155] transition-colors flex items-center gap-1 cursor-pointer"
+                      className="px-2 py-1 text-[11px] rounded-lg bg-[var(--bg-subsurface)] hover:bg-[var(--status-error-bg)] text-[var(--text-secondary)] hover:text-[var(--status-error)] border border-[var(--border-subtle)] transition-colors flex items-center gap-1 cursor-pointer"
                       title="خروج از حساب مدیر"
                     >
                       <LogOut className="w-3 h-3" />
@@ -222,8 +224,8 @@ const AdminLayout: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 text-[11px] font-bold text-amber-700 dark:text-amber-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] text-[11px] font-bold text-[var(--status-warning)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-warning)] animate-pulse"></span>
                     پیش‌نمایش آزمایشی (داده‌های سنتتیک دمو)
                   </span>
                 )}
@@ -232,13 +234,13 @@ const AdminLayout: React.FC = () => {
 
             {/* 2. Sub-Category Selector for Multi-tool groups */}
             {currentCategory === 'finance' && (
-              <div className="flex items-center gap-2 p-1 bg-white/80 dark:bg-[#111B2E]/90 backdrop-blur-xs border border-slate-200 dark:border-[#344258] rounded-xl w-fit text-xs">
+              <div className="flex items-center gap-2 p-1 bg-[var(--bg-surface)] backdrop-blur-xs border border-[var(--border-subtle)] rounded-xl w-fit text-xs">
                 <button
                   onClick={() => setActiveTab('subscriptions')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'subscriptions'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <CreditCard className="w-3.5 h-3.5" />
@@ -248,14 +250,14 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setActiveTab('messages')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'messages'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span>مرکز پیامک و دیسپچ نوبت‌ها</span>
                   {failedMessages > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-600 dark:text-[#FB7185] text-[10px] font-bold tabular-nums">
+                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] text-[10px] font-bold tabular-nums">
                       {failedMessages}
                     </span>
                   )}
@@ -264,13 +266,13 @@ const AdminLayout: React.FC = () => {
             )}
 
             {currentCategory === 'system' && (
-              <div className="flex items-center gap-1.5 p-1 bg-white/80 dark:bg-[#111B2E]/90 backdrop-blur-xs border border-slate-200 dark:border-[#344258] rounded-xl w-fit overflow-x-auto text-xs">
+              <div className="flex items-center gap-1.5 p-1 bg-[var(--bg-surface)] backdrop-blur-xs border border-[var(--border-subtle)] rounded-xl w-fit overflow-x-auto text-xs">
                 <button
                   onClick={() => setActiveTab('operations')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'operations'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <Activity className="w-3.5 h-3.5" />
@@ -280,8 +282,8 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setActiveTab('security')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'security'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <ShieldAlert className="w-3.5 h-3.5" />
@@ -291,14 +293,14 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setActiveTab('support')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'support'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
                   <span>مرکز پشتیبانی و تیکت‌ها</span>
                   {openTickets > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-700 dark:text-[#38BDF8] text-[10px] font-bold tabular-nums">
+                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-info-bg)] text-[var(--status-info)] border border-[var(--status-info-border)] text-[10px] font-bold tabular-nums">
                       {openTickets}
                     </span>
                   )}
@@ -307,8 +309,8 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setActiveTab('settings')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'settings'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <SettingsIcon className="w-3.5 h-3.5" />
@@ -318,8 +320,8 @@ const AdminLayout: React.FC = () => {
                   onClick={() => setActiveTab('simulator')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                     activeTab === 'simulator'
-                      ? 'bg-slate-900 text-white dark:bg-[#18243A] dark:text-[#E7ECF5] border border-slate-900 dark:border-[#344258] shadow-xs font-bold'
-                      : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                   }`}
                 >
                   <Smartphone className="w-3.5 h-3.5" />
@@ -329,7 +331,9 @@ const AdminLayout: React.FC = () => {
             )}
 
             {/* 3. The Active Decluttered View */}
-            {renderActiveView()}
+            <Suspense fallback={<LoadingFallback message="در حال بارگذاری بخش مدیریتی..." />}>
+              {renderActiveView()}
+            </Suspense>
           </div>
         </main>
       </div>
@@ -533,7 +537,9 @@ const MainSwitcher: React.FC = () => {
         </div>
       </div>
 
-      {renderContent()}
+      <Suspense fallback={<LoadingFallback message="در حال دریافت اطلاعات صفحه..." />}>
+        {renderContent()}
+      </Suspense>
 
       {/* MOBILE COLLAPSIBLE FLOATING BUTTON */}
       <div className="sm:hidden fixed bottom-16 left-3.5 z-40">
@@ -665,14 +671,14 @@ const MainSwitcher: React.FC = () => {
 
       {/* DESKTOP FLOATING THREE-PILLAR SWITCHER (Hidden on mobile screens) */}
       <div className="hidden sm:block fixed bottom-4 left-4 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-        <div className="bg-white/95 dark:bg-[#111B2E]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#344258] shadow-xl rounded-2xl p-1.5 flex items-center gap-1.5 text-xs ring-1 ring-black/5 dark:ring-white/5">
+        <div className="bg-[var(--bg-surface)] backdrop-blur-md border border-[var(--border-subtle)] shadow-xl rounded-2xl p-1.5 flex items-center gap-1.5 text-xs">
           {/* Pillar 1: Salon Website for Clients */}
           <button
             onClick={() => setPersona('salon_website')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
               persona === 'salon_website'
-                ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A]'
+                ? 'bg-[var(--brand-primary)] text-white shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
             }`}
             title="وب‌سایت اختصاصی رزرو سالن برای مشتریان"
           >
@@ -685,8 +691,8 @@ const MainSwitcher: React.FC = () => {
             onClick={() => setPersona('salon_app')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
               persona === 'salon_app'
-                ? 'bg-slate-900 dark:bg-[#18243A] text-white dark:text-[#E7ECF5] border border-slate-800 dark:border-[#344258] shadow-xs'
-                : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A]'
+                ? 'bg-[var(--brand-primary)] text-white shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
             }`}
             title="اپلیکیشن نوبت‌دهی مدیر سالن"
           >
@@ -699,21 +705,21 @@ const MainSwitcher: React.FC = () => {
             onClick={() => setPersona('super_admin')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
               persona === 'super_admin'
-                ? 'bg-rose-50 dark:bg-[#F43F7A]/20 text-[#E11D48] dark:text-[#FB7185] border border-rose-200 dark:border-[#F43F7A]/40 shadow-xs'
-                : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A]'
+                ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)] shadow-xs'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
             }`}
             title={!isDemoMode ? 'پنل مدیریت کل (مسدود در محیط بدون سرور)' : 'پنل مدیریت کل پلتفرم (پیش‌نمایش آزمایشی)'}
           >
             <Shield className="w-3.5 h-3.5" />
             <span>پنل مدیریت کل</span>
             {!isDemoMode && (
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold">
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] font-bold">
                 مسدود
               </span>
             )}
           </button>
 
-          <div className="w-px h-5 bg-slate-200 dark:border-[#344258] mx-1" />
+          <div className="w-px h-5 bg-[var(--border-subtle)] mx-1" />
 
           {/* Fast Theme Toggle Icon */}
           <ThemeToggle variant="icon" />

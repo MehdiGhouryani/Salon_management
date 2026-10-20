@@ -4,12 +4,14 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'rectangular' | 'circular' | 'text';
   width?: string | number;
   height?: string | number;
+  animate?: boolean;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({
   variant = 'rectangular',
   width,
   height,
+  animate = true,
   className = '',
   style,
   ...props
@@ -20,10 +22,12 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     text: 'rounded-md h-4 my-1',
   };
 
+  const animationClass = animate ? 'animate-pulse' : '';
+
   return (
     <div
       aria-hidden="true"
-      className={`animate-pulse bg-slate-200/80 dark:bg-[#18243A] ${variantClasses[variant]} ${className}`}
+      className={`bg-[var(--bg-elevated)] border border-[var(--border-subtle)] ${variantClasses[variant]} ${animationClass} ${className}`}
       style={{
         width,
         height,
