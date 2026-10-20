@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import { query } from '../db/pool.ts';
+import { query, isDatabaseConfigured } from '../db/pool.ts';
 
 export type AuditSeverity = 'info' | 'warning' | 'critical';
 export type AuditCategory = 'auth' | 'privilege' | 'business' | 'financial' | 'system';
@@ -43,8 +43,29 @@ export interface FindAuditLogsFilter {
   offset?: number;
 }
 
+const inMemoryAuditLogs: DbAuditLog[] = [];
+
 export const auditLogRepository = {
   async create(dto: CreateAuditLogDto, client?: PoolClient): Promise<DbAuditLog> {
+    if (!isDatabaseConfigured()) {
+      const newLog: DbAuditLog = {
+        id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        actor: dto.actor,
+        actor_role: dto.actorRole,
+        action: dto.action,
+        target: dto.target,
+        ip_address: dto.ipAddress,
+        user_agent: dto.userAgent,
+        severity: dto.severity || 'info',
+        category: dto.category || 'business',
+        details: dto.details || null,
+        is_demo: dto.isDemo || false,
+        created_at: new Date(),
+      };
+      inMemoryAuditLogs.unshift(newLog);
+      return newLog;
+    }
+
     const res = await query<DbAuditLog>(
       `INSERT INTO audit_logs (
         actor, actor_role, action, target, ip_address, user_agent, severity, category, details, is_demo
@@ -68,6 +89,23 @@ export const auditLogRepository = {
   },
 
   async findAll(filter: FindAuditLogsFilter = {}, client?: PoolClient): Promise<DbAuditLog[]> {
+    if (!isDatabaseConfigured()) {
+      let list = [...inMemoryAuditLogs];
+      if (filter.severity) list = list.filter((l) => l.severity === filter.severity);
+      if (filter.category) list = list.filter((l) => l.category === filter.category);
+      if (filter.actor) list = list.filter((l) => l.actor.toLowerCase().includes(filter.actor!.toLowerCase()));
+      if (filter.search) {
+        const q = filter.search.toLowerCase();
+        list = list.filter(
+          (l) =>
+            l.action.toLowerCase().includes(q) ||
+            l.target.toLowerCase().includes(q) ||
+            l.actor.toLowerCase().includes(q)
+        );
+      }
+      return list;
+    }
+
     const conditions: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -116,6 +154,11 @@ export const auditLogRepository = {
   },
 
   async count(filter: FindAuditLogsFilter = {}, client?: PoolClient): Promise<number> {
+    if (!isDatabaseConfigured()) {
+      const list = await this.findAll(filter);
+      return list.length;
+    }
+
     const conditions: string[] = [];
     const values: any[] = [];
     let idx = 1;

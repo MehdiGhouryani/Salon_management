@@ -36,6 +36,8 @@ export const SecurityView: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'audit' | 'sessions' | 'firewall'>('audit');
   const [logSearch, setLogSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [inspectedLog, setInspectedLog] = useState<any | null>(null);
   const [newBlacklistIp, setNewBlacklistIp] = useState('');
 
   const [confirmData, setConfirmData] = useState<{
@@ -54,12 +56,13 @@ export const SecurityView: React.FC = () => {
 
   const filteredLogs = auditLogs.filter((log) => {
     const matchSeverity = severityFilter === 'all' || log.severity === severityFilter;
+    const matchCategory = categoryFilter === 'all' || log.category === categoryFilter;
     const matchSearch =
       log.actor.toLowerCase().includes(logSearch.toLowerCase()) ||
       log.action.toLowerCase().includes(logSearch.toLowerCase()) ||
       log.target.toLowerCase().includes(logSearch.toLowerCase()) ||
       log.ipAddress.includes(logSearch);
-    return matchSeverity && matchSearch;
+    return matchSeverity && matchCategory && matchSearch;
   });
 
   const handleAddIp = (e: React.FormEvent) => {
@@ -78,6 +81,21 @@ export const SecurityView: React.FC = () => {
         return { label: 'هشدار', class: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-500/20' };
       case 'info':
         return { label: 'عادی', class: 'bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2] border-stone-200' };
+    }
+  };
+
+  const getCategoryBadge = (cat: string) => {
+    switch (cat) {
+      case 'auth':
+        return { label: 'احراز هویت', class: 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' };
+      case 'privilege':
+        return { label: 'دسترسی و نقش', class: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' };
+      case 'business':
+        return { label: 'عملیات کسب‌وکار', class: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' };
+      case 'financial':
+        return { label: 'تراکنش مالی', class: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' };
+      default:
+        return { label: 'سیستم', class: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' };
     }
   };
 
@@ -157,11 +175,24 @@ export const SecurityView: React.FC = () => {
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="px-3 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 cursor-pointer"
+              >
+                <option value="all">تمام دسته‌ها</option>
+                <option value="business">عملیات کسب‌وکار</option>
+                <option value="privilege">دسترسی و نقش</option>
+                <option value="auth">احراز هویت</option>
+                <option value="financial">تراکنش مالی</option>
+                <option value="system">سیستم</option>
+              </select>
+
+              <select
                 value={severityFilter}
                 onChange={(e) => setSeverityFilter(e.target.value)}
                 className="px-3 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 cursor-pointer"
               >
-                <option value="all">تمام سطوح</option>
+                <option value="all">تمام سطوح اهمیت</option>
                 <option value="critical">بحرانی</option>
                 <option value="warning">هشدار</option>
                 <option value="info">عادی</option>
@@ -175,16 +206,19 @@ export const SecurityView: React.FC = () => {
                 <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
                   <tr>
                     <th className="py-3 px-4">زمان ثبت</th>
-                    <th className="py-3 px-4">کاربر / اقدام‌کننده</th>
+                    <th className="py-3 px-4">اقدام‌کننده</th>
                     <th className="py-3 px-4">عملیات</th>
+                    <th className="py-3 px-4">دسته‌بندی</th>
                     <th className="py-3 px-4">هدف</th>
                     <th className="py-3 px-4">آدرس IP</th>
-                    <th className="py-3 px-4">سطح اهمیت</th>
+                    <th className="py-3 px-4">شدت</th>
+                    <th className="py-3 px-4 text-center">جزئیات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
                   {filteredLogs.map((log) => {
                     const badge = getSeverityBadge(log.severity);
+                    const catBadge = getCategoryBadge(log.category);
                     return (
                       <tr key={log.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
                         <td className="py-3 px-4 font-mono text-[11px] text-zinc-500">{log.timestamp}</td>
@@ -198,13 +232,26 @@ export const SecurityView: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4">{log.action}</td>
+                        <td className="py-3 px-4 font-medium">{log.action}</td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-semibold ${catBadge.class}`}>
+                            {catBadge.label}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-zinc-500">{log.target}</td>
                         <td className="py-3 px-4 font-mono text-[11px]" dir="ltr">{log.ipAddress}</td>
                         <td className="py-3 px-4">
                           <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.class}`}>
                             {badge.label}
                           </span>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => setInspectedLog(log)}
+                            className="px-2 py-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                          >
+                            مشاهده
+                          </button>
                         </td>
                       </tr>
                     );
@@ -324,6 +371,70 @@ export const SecurityView: React.FC = () => {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audit Log Detail Modal */}
+      {inspectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="fixed inset-0" onClick={() => setInspectedLog(null)} />
+
+          <div className="relative w-full max-w-lg bg-white dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-[#E7ECF5]">جزئیات لاگ ممیزی (Audit Entry)</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">شناسه: {inspectedLog.id}</p>
+              </div>
+              <button
+                onClick={() => setInspectedLog(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
+                <span className="text-slate-500">اقدام‌کننده:</span>
+                <span className="font-bold text-slate-900 dark:text-[#E7ECF5]">{inspectedLog.actor} ({inspectedLog.actorRole || 'نقش نامشخص'})</span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
+                <span className="text-slate-500">عنوان عملیات:</span>
+                <span className="font-bold text-slate-900 dark:text-[#E7ECF5]">{inspectedLog.action}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
+                <span className="text-slate-500">موجودیت هدف:</span>
+                <span className="font-medium text-slate-800 dark:text-[#E7ECF5]">{inspectedLog.target}</span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
+                <span className="text-slate-500">آدرس IP:</span>
+                <span className="font-mono text-slate-800 dark:text-[#E7ECF5]" dir="ltr">{inspectedLog.ipAddress}</span>
+              </div>
+
+              {inspectedLog.details && (
+                <div>
+                  <label className="block text-slate-700 dark:text-[#E7ECF5] font-bold mb-1">جزئیات و توضیحات (Details):</label>
+                  <pre className="p-3 bg-slate-900 text-slate-100 dark:bg-[#0D1527] dark:text-[#38BDF8] rounded-xl overflow-x-auto font-mono text-[11px] dir-ltr text-left leading-relaxed">
+                    {typeof inspectedLog.details === 'object'
+                      ? JSON.stringify(inspectedLog.details, null, 2)
+                      : inspectedLog.details}
+                  </pre>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-[#344258] text-left">
+              <button
+                onClick={() => setInspectedLog(null)}
+                className="px-4 py-1.5 bg-slate-100 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] font-semibold rounded-xl"
+              >
+                بستن
+              </button>
             </div>
           </div>
         </div>

@@ -34,6 +34,7 @@ import {
   exportToCsv,
 } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { StatusReasonModal } from '../common/StatusReasonModal';
 
 export const BusinessesView: React.FC = () => {
   const {
@@ -61,6 +62,45 @@ export const BusinessesView: React.FC = () => {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [targetSalonForPlan, setTargetSalonForPlan] = useState<Salon | null>(null);
   const [selectedPlanOption, setSelectedPlanOption] = useState<PlanType>('silver');
+
+  // Mandatory Reason Modal state for Status Changes
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    salon: Salon | null;
+    targetStatus: SalonStatus;
+    title: string;
+    variant: 'success' | 'warning' | 'danger';
+  }>({
+    isOpen: false,
+    salon: null,
+    targetStatus: 'active',
+    title: '',
+    variant: 'warning',
+  });
+
+  const openStatusChangeModal = (salon: Salon, targetStatus: SalonStatus) => {
+    let title = `تغییر وضعیت سالن «${salon.name}»`;
+    let variant: 'success' | 'warning' | 'danger' = 'warning';
+
+    if (targetStatus === 'active') {
+      title = `تأیید و فعال‌سازی سالن «${salon.name}»`;
+      variant = 'success';
+    } else if (targetStatus === 'suspended') {
+      title = `تعلیق موقت فعالیت سالن «${salon.name}»`;
+      variant = 'danger';
+    } else if (targetStatus === 'rejected') {
+      title = `رد درخواست ثبت سالن «${salon.name}»`;
+      variant = 'danger';
+    }
+
+    setStatusModal({
+      isOpen: true,
+      salon,
+      targetStatus,
+      title,
+      variant,
+    });
+  };
 
   const [confirmModalData, setConfirmModalData] = useState<{
     isOpen: boolean;
@@ -490,7 +530,7 @@ export const BusinessesView: React.FC = () => {
                     {/* Approve (if pending) */}
                     {salon.status === 'pending' && (
                       <button
-                        onClick={() => approveSalon(salon.id)}
+                        onClick={() => openStatusChangeModal(salon, 'active')}
                         className="px-2.5 py-1 text-xs font-semibold bg-[#059669] hover:bg-[#047857] dark:bg-[#34D399] dark:hover:bg-[#10B981] text-white dark:text-[#0B1120] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                         title="تایید سالن"
                       >
@@ -502,15 +542,7 @@ export const BusinessesView: React.FC = () => {
                     {/* Suspend / Activate */}
                     {salon.status === 'active' && (
                       <button
-                        onClick={() => {
-                          setConfirmModalData({
-                            isOpen: true,
-                            title: `تعلیق موقت سالن ${salon.name}`,
-                            message: `با تعلیق سالن، نوبت‌دهی آنلاین برای مشتریان متوقف خواهد شد.`,
-                            variant: 'warning',
-                            onConfirm: () => suspendSalon(salon.id),
-                          });
-                        }}
+                        onClick={() => openStatusChangeModal(salon, 'suspended')}
                         className="p-1.5 text-amber-600 dark:text-[#FBBF24] hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors cursor-pointer"
                         title="تعلیق فعالیت"
                       >
@@ -520,7 +552,7 @@ export const BusinessesView: React.FC = () => {
 
                     {salon.status === 'suspended' && (
                       <button
-                        onClick={() => activateSalon(salon.id)}
+                        onClick={() => openStatusChangeModal(salon, 'active')}
                         className="p-1.5 text-emerald-600 dark:text-[#34D399] hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                         title="فعال‌سازی مجدد"
                       >
@@ -608,7 +640,7 @@ export const BusinessesView: React.FC = () => {
                           </button>
                           {salon.status === 'pending' && (
                             <button
-                              onClick={() => approveSalon(salon.id)}
+                              onClick={() => openStatusChangeModal(salon, 'active')}
                               className="p-1.5 text-emerald-600 dark:text-[#34D399] rounded-lg hover:bg-emerald-50 dark:hover:bg-[#34D399]/15"
                               title="تایید"
                             >
@@ -656,10 +688,7 @@ export const BusinessesView: React.FC = () => {
             <div className="flex items-center gap-2">
               {inspectedSalon.status === 'pending' && (
                 <button
-                  onClick={() => {
-                    approveSalon(inspectedSalon.id);
-                    setInspectedSalon({ ...inspectedSalon, status: 'active', verifiedBadge: true });
-                  }}
+                  onClick={() => openStatusChangeModal(inspectedSalon, 'active')}
                   className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <Check className="w-4 h-4" />
@@ -669,10 +698,7 @@ export const BusinessesView: React.FC = () => {
 
               {inspectedSalon.status === 'active' && (
                 <button
-                  onClick={() => {
-                    suspendSalon(inspectedSalon.id);
-                    setInspectedSalon({ ...inspectedSalon, status: 'suspended' });
-                  }}
+                  onClick={() => openStatusChangeModal(inspectedSalon, 'suspended')}
                   className="flex-1 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <AlertTriangle className="w-4 h-4" />
@@ -682,10 +708,7 @@ export const BusinessesView: React.FC = () => {
 
               {inspectedSalon.status === 'suspended' && (
                 <button
-                  onClick={() => {
-                    activateSalon(inspectedSalon.id);
-                    setInspectedSalon({ ...inspectedSalon, status: 'active' });
-                  }}
+                  onClick={() => openStatusChangeModal(inspectedSalon, 'active')}
                   className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                 >
                   <CheckCircle className="w-4 h-4" />
@@ -997,6 +1020,33 @@ export const BusinessesView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Mandatory Reason Modal for Salon Status Change */}
+      <StatusReasonModal
+        isOpen={statusModal.isOpen}
+        title={statusModal.title}
+        entityName={statusModal.salon?.name || 'سالن'}
+        targetStatusLabel={
+          statusModal.targetStatus === 'active'
+            ? 'فعال'
+            : statusModal.targetStatus === 'suspended'
+            ? 'معلق'
+            : 'رد شده'
+        }
+        actionVariant={statusModal.variant}
+        onConfirm={async (reason) => {
+          if (!statusModal.salon) return;
+          if (statusModal.targetStatus === 'active') {
+            await approveSalon(statusModal.salon.id, reason);
+          } else if (statusModal.targetStatus === 'suspended') {
+            await suspendSalon(statusModal.salon.id, reason);
+          }
+          if (inspectedSalon && inspectedSalon.id === statusModal.salon.id) {
+            setInspectedSalon({ ...inspectedSalon, status: statusModal.targetStatus });
+          }
+        }}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
 
       {/* Confirmation Modal */}
       <ConfirmModal

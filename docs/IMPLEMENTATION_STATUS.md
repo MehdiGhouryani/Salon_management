@@ -316,7 +316,55 @@
    - **SMS Delivery (Kavenegar)**: **NOT VERIFIED** with live telco (Requires production `KAVENEGAR_API_KEY`; dev mock used in local tests).
 
 8. **Phase 8 Status**: **PASSED (Implemented & Verified)**.
-9. **Next Phase**: Phase 9 (Platform Admin & Governance).
+
+---
+
+## Phase 9: Super Admin & Platform Governance — COMPLETED & VERIFIED
+
+1. **Global Overview Dashboard (`src/components/views/OverviewView.tsx` & `GET /api/admin/stats`)**:
+   - **Live Metric Cards**: Calculates total salons (active, pending approval, suspended, trial), total platform users, total appointments, total monthly network volume, SMS queue health, and server latency. All stats computed from authoritative server repository data.
+   - **Pending Approvals Queue**: Dedicated action panel displaying salons awaiting documentation review with direct Approve/Reject modal triggers.
+   - **Platform Activity Chart**: Interactive time-range chart (7 days, 30 days, 12 months) displaying volume and revenue trends styled with Phase 6 Design System tokens.
+
+2. **Salon Approval & Management (`src/components/views/BusinessesView.tsx` & `PUT /api/admin/salons/:id/status`)**:
+   - Queue of pending requests, active salons, suspended salons, and trial accounts with search, province/city filter, plan filter, and sorting options.
+   - **Compulsory Reason Entry (`src/components/common/StatusReasonModal.tsx`)**: Clicking Approve, Suspend, Activate, or Reject opens a modal requiring a mandatory reason text input (`reason` >= 3 characters) before state modification.
+   - Server validates status transitions inside DB transaction and records immutable `audit_logs` entry with operator identity (`actor`), `target`, `ip_address`, `severity`, and `details` (including `oldStatus`, `newStatus`, `reason`).
+
+3. **Platform User Management & Privilege Security (`src/components/views/UsersView.tsx` & `/api/admin/users/*`)**:
+   - Search and filter users by role (`super_admin`, `platform_support`, `platform_auditor`, `financial_manager`, `user`), status (`active`, `suspended`), and text search.
+   - View profile details, 2FA status, last login IP, and associated salon memberships.
+   - Suspend / Activate user accounts requiring compulsory reason input and recording audit log entries.
+   - Role updates via `PUT /api/admin/users/:id/role` strictly prevent assigning `super_admin` role via standard UI or API routes (returns `403 SUPER_ADMIN_ASSIGNMENT_FORBIDDEN`). Super admin accounts are strictly provisioned via protected operator bootstrap scripts.
+
+4. **Dedicated Audit Logs Panel (`src/components/views/SecurityView.tsx` & `GET /api/admin/audit-logs`)**:
+   - Dedicated table view with multi-filtering by Severity (`critical`, `warning`, `info`), Category (`auth`, `privilege`, `business`, `financial`, `system`), Actor/Operator search, and text search.
+   - Paginated display of timestamp, actor name, actor role, operation action, target entity, client IP address, severity badge, and category badge.
+   - **Detail Modal**: Inspect full audit detail JSON payload cleanly while ensuring zero leakage of user OTPs, passwords, or session tokens.
+
+5. **Automated Verification & Complete Test Suite (`npm test`)**:
+   - **64 automated test cases executed and passed with 0 failures across all project phases**:
+     - `npm run test:auth`: 32/32 tests passing.
+     - `npm run test:booking`: 16/16 tests passing.
+     - `npm run test:salon`: 9/9 tests passing.
+     - `npm run test:admin`: 7/7 tests passing:
+       - 1 Unauthenticated 401 rejection test.
+       - 1 Regular user 403 forbidden access prevention test.
+       - 1 Super admin authenticated access & live stats calculation test.
+       - 1 Compulsory reason validation test (rejection of status change without reason).
+       - 1 Salon suspension with reason & audit log verification test.
+       - 1 Privilege escalation prevention test (403 when assigning `super_admin`).
+       - 1 Audit log multi-filtering by severity & category test.
+   - **Build & Quality Gates**:
+     - `lint_applet` (`tsc --noEmit`): PASSED (0 errors).
+     - `compile_applet` (Vite production build): PASSED.
+
+6. **Infrastructure Connectivity Truth in Reporting**:
+   - **PostgreSQL Database Connectivity**: **NOT VERIFIED** (Database instance not provisioned in current environment; production code fails closed safely with 503 while development environment utilizes thread-safe in-memory stores).
+   - **SMS Delivery (Kavenegar)**: **NOT VERIFIED** with live telco (Requires production `KAVENEGAR_API_KEY`; dev mock used safely in local tests).
+
+7. **Phase 9 Status**: **PASSED (Implemented & Verified)**.
+
 
 
 

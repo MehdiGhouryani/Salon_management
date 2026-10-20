@@ -24,6 +24,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { User, UserRole } from '../../types/admin';
 import { toPersianDigits, getRoleBadge, maskPhone } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { StatusReasonModal } from '../common/StatusReasonModal';
 
 export const UsersView: React.FC = () => {
   const { users, banUser, unbanUser, updateUserRole, toggleUser2FA, saveUser, salons, addToast } = useAdmin();
@@ -37,6 +38,21 @@ export const UsersView: React.FC = () => {
   // Role edit modal
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole>('staff');
+
+  // Mandatory Reason Modal state for User Suspension/Activation
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    user: User | null;
+    targetStatus: 'active' | 'banned';
+    title: string;
+    variant: 'success' | 'warning' | 'danger';
+  }>({
+    isOpen: false,
+    user: null,
+    targetStatus: 'banned',
+    title: '',
+    variant: 'danger',
+  });
 
   // Confirmation modal
   const [confirmData, setConfirmData] = useState<{
@@ -317,22 +333,30 @@ export const UsersView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     {isBanned ? (
                       <button
-                        onClick={() => unbanUser(user.id)}
+                        onClick={() =>
+                          setStatusModal({
+                            isOpen: true,
+                            user,
+                            targetStatus: 'active',
+                            title: `رفع مسدودیت و فعال‌سازی حساب «${user.name}»`,
+                            variant: 'success',
+                          })
+                        }
                         className="px-2.5 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg cursor-pointer"
                       >
                         رفع مسدودیت
                       </button>
                     ) : (
                       <button
-                        onClick={() => {
-                          setConfirmData({
+                        onClick={() =>
+                          setStatusModal({
                             isOpen: true,
-                            title: `مسدودسازی دسترسی ${user.name}`,
-                            message: `با مسدودسازی، کاربر از سامانه خارج شده و امکان ورود نخواهد داشت.`,
+                            user,
+                            targetStatus: 'banned',
+                            title: `مسدودسازی دسترسی و تعلیق حساب «${user.name}»`,
                             variant: 'danger',
-                            onConfirm: () => banUser(user.id),
-                          });
-                        }}
+                          })
+                        }
                         className="px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer"
                       >
                         مسدودسازی
@@ -559,6 +583,24 @@ export const UsersView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Mandatory Reason Modal for User Status Change */}
+      <StatusReasonModal
+        isOpen={statusModal.isOpen}
+        title={statusModal.title}
+        entityName={statusModal.user?.name || 'کاربر'}
+        targetStatusLabel={statusModal.targetStatus === 'active' ? 'فعال' : 'مسدود'}
+        actionVariant={statusModal.variant}
+        onConfirm={async (reason) => {
+          if (!statusModal.user) return;
+          if (statusModal.targetStatus === 'active') {
+            await unbanUser(statusModal.user.id, reason);
+          } else {
+            await banUser(statusModal.user.id, reason);
+          }
+        }}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
 
       {/* Confirmation Modal */}
       <ConfirmModal

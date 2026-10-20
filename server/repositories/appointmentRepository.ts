@@ -496,6 +496,18 @@ export const appointmentRepository = {
     return res.rows[0] || null;
   },
 
+  async countAll(client?: PoolClient): Promise<number> {
+    if (!isDatabaseConfigured()) {
+      return inMemoryAppointments.size;
+    }
+    const res = await query<{ count: string }>(
+      `SELECT COUNT(*) as count FROM appointments`,
+      [],
+      client
+    );
+    return parseInt(res.rows[0]?.count || '0', 10);
+  },
+
   /**
    * Testing helper: clears in-memory appointments
    */

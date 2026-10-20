@@ -18,7 +18,8 @@
     "test:auth": "tsx tests/auth.test.ts",
     "test:booking": "tsx tests/booking.test.ts",
     "test:salon": "tsx tests/salon_manager.test.ts",
-    "test": "npm run test:auth && npm run test:booking && npm run test:salon"
+    "test:admin": "tsx tests/super_admin.test.ts",
+    "test": "npm run test:auth && npm run test:booking && npm run test:salon && npm run test:admin"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

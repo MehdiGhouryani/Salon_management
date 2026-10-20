@@ -1,4 +1,4 @@
-export type SalonStatus = 'active' | 'pending' | 'suspended' | 'trial';
+export type SalonStatus = 'active' | 'pending' | 'suspended' | 'trial' | 'rejected';
 export type PlanType = 'bronze' | 'silver' | 'gold_vip';
 export type UserRole = 'super_admin' | 'salon_admin' | 'staff' | 'support_auditor' | 'financial_manager';
 export type TicketPriority = 'low' | 'medium' | 'high' | 'critical';

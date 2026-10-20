@@ -169,19 +169,22 @@ export const sessionService = {
         memberships = await userRepository.getMemberships(user.id);
       }
     } else {
-      // In-memory dev user lookup
-      user = {
-        id: session.user_id,
-        phone: '09121111111',
-        full_name: 'کاربر سیستم',
-        email: null,
-        platform_role: 'user',
-        status: 'active',
-        two_factor_enabled: false,
-        avatar_url: null,
-        created_at: session.created_at,
-        updated_at: session.created_at,
-      };
+      // In-memory dev user lookup via repository
+      user = await userRepository.findById(session.user_id);
+      if (!user) {
+        user = {
+          id: session.user_id,
+          phone: '09121111111',
+          full_name: 'کاربر سیستم',
+          email: null,
+          platform_role: 'user',
+          status: 'active',
+          two_factor_enabled: false,
+          avatar_url: null,
+          created_at: session.created_at,
+          updated_at: session.created_at,
+        };
+      }
     }
 
     if (!user) {

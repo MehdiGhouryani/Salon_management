@@ -541,19 +541,69 @@ Weekly operating schedule and holiday/leave calendar exceptions (`manage_setting
 
 ---
 
-## 4. Super Admin Endpoints
+## 4. Super Admin Platform Governance Endpoints (`/api/admin/*`)
 
-### `GET /api/v1/admin/overview`
-Platform health, registered salons, subscriber count, and SMS queue status.
+*All administrative routes require `requireAuth` and `requirePlatformRole('super_admin')` on the server.*
 
-### `PATCH /api/v1/admin/salons/:id/status`
-Approve or suspend a salon account.
+### `GET /api/admin/stats`
+Returns aggregated live platform metrics computed from authoritative database records (total salons, active, pending, suspended, total users, total appointments).
+
+**Response `200 OK`**:
+```json
+{
+  "success": true,
+  "platform": {
+    "totalSalons": 12,
+    "activeSalons": 9,
+    "pendingSalons": 2,
+    "suspendedSalons": 1,
+    "totalUsers": 154,
+    "totalAppointments": 1280
+  }
+}
+```
+
+---
+
+### `GET /api/admin/salons`
+Returns paginated list of salons with status filter and search term.
+
+**Parameters**: `status` (`all`|`active`|`pending`|`suspended`|`rejected`), `search`, `limit`, `offset`.
+
+---
+
+### `PUT /api/admin/salons/:id/status`
+Approves, suspends, or rejects a salon account with compulsory reason validation (`reason` >= 3 chars). Executes inside DB transaction and records immutable `audit_logs` record.
 
 **Request Payload**:
 ```json
 {
   "status": "active",
-  "verifiedBadge": true,
-  "reason": "مدارک جواز کسب و کارت بهداشت احراز شد"
+  "reason": "تکمیل پرونده مالیاتی و تایید مدارک پروانه کسب"
 }
 ```
+
+**Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "وضعیت سالن با موفقیت به active تغییر یافت.",
+  "salon": { "id": "sal-101", "status": "active" }
+}
+```
+
+---
+
+### `GET /api/admin/users` & `PUT /api/admin/users/:id/status`
+User search, status management (active/suspended) with compulsory reason entry.
+
+---
+
+### `PUT /api/admin/users/:id/role`
+Updates platform role for support or financial staff. Strictly prevents assigning `super_admin` role via standard API route (returns `403 SUPER_ADMIN_ASSIGNMENT_FORBIDDEN`).
+
+---
+
+### `GET /api/admin/audit-logs`
+Retrieves paginated audit logs with multi-filtering by `severity` (`info`|`warning`|`critical`), `category` (`auth`|`privilege`|`business`|`financial`|`system`), and text `search`.
+

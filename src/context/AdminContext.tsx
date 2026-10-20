@@ -64,17 +64,17 @@ export interface AdminContextType {
   // Salons CRUD
   salons: Salon[];
   setSalons: React.Dispatch<React.SetStateAction<Salon[]>>;
-  approveSalon: (id: string) => void;
-  suspendSalon: (id: string) => void;
-  activateSalon: (id: string) => void;
+  approveSalon: (id: string, reason?: string) => Promise<void> | void;
+  suspendSalon: (id: string, reason?: string) => Promise<void> | void;
+  activateSalon: (id: string, reason?: string) => Promise<void> | void;
   updateSalonPlan: (id: string, plan: PlanType) => void;
   saveSalon: (salon: Salon) => void;
   deleteSalon: (id: string) => void;
   // Users CRUD & RBAC
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-  banUser: (id: string) => void;
-  unbanUser: (id: string) => void;
+  banUser: (id: string, reason?: string) => Promise<void> | void;
+  unbanUser: (id: string, reason?: string) => Promise<void> | void;
   updateUserRole: (id: string, role: UserRole) => void;
   toggleUser2FA: (id: string) => void;
   saveUser: (user: User) => void;
@@ -451,27 +451,75 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Salon handlers
-  const approveSalon = (id: string) => {
+  const approveSalon = async (id: string, reason = 'تایید مدارک صنفی و احراز صلاحیت سالن') => {
     const prevSalons = [...salons];
     const target = salons.find((s) => s.id === id);
     if (!target) return;
+
+    if (serverAuth.authenticated) {
+      try {
+        const res = await fetch(`/api/admin/salons/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-NobatAra-Client': 'web',
+          },
+          body: JSON.stringify({ status: 'active', reason }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'خطا در تایید سالن روی سرور');
+        }
+      } catch (err: any) {
+        addToast({
+          type: 'error',
+          title: 'خطا در برقراری ارتباط با سرور',
+          message: err.message,
+        });
+        throw err;
+      }
+    }
 
     setSalons((prev) =>
       prev.map((s) => (s.id === id ? { ...s, status: 'active' as SalonStatus, verifiedBadge: true } : s))
     );
-    logAction('تایید و فعال‌سازی سالن', target.name, `وضعیت به فعال و دارای نشان تایید تغییر یافت`, 'info', 'business');
+    logAction('تایید و فعال‌سازی سالن', target.name, `علت: ${reason}`, 'info', 'business');
     addToast({
       type: 'success',
       title: 'سالن با موفقیت تایید و فعال شد',
-      message: `سالن «${target.name}» به حالت فعال و دارای نشان رسمی تغییر یافت.`,
+      message: `سالن «${target.name}» به حالت فعال تغییر یافت.`,
       undoAction: () => setSalons(prevSalons),
     });
   };
 
-  const suspendSalon = (id: string, reason = 'نقض قوانین سرویس') => {
+  const suspendSalon = async (id: string, reason = 'نقض قوانین سرویس یا عدم تکمیل مدارک') => {
     const prevSalons = [...salons];
     const target = salons.find((s) => s.id === id);
     if (!target) return;
+
+    if (serverAuth.authenticated) {
+      try {
+        const res = await fetch(`/api/admin/salons/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-NobatAra-Client': 'web',
+          },
+          body: JSON.stringify({ status: 'suspended', reason }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'خطا در تعلیق سالن روی سرور');
+        }
+      } catch (err: any) {
+        addToast({
+          type: 'error',
+          title: 'خطا در تعلیق سالن',
+          message: err.message,
+        });
+        throw err;
+      }
+    }
 
     setSalons((prev) => prev.map((s) => (s.id === id ? { ...s, status: 'suspended' as SalonStatus } : s)));
     logAction('تعلیق سالن', target.name, `علت: ${reason}`, 'warning', 'business');
@@ -483,11 +531,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const activateSalon = (id: string) => {
+  const activateSalon = async (id: string, reason = 'رفع تعلیق و تایید مجدد سالن') => {
     const target = salons.find((s) => s.id === id);
     if (!target) return;
+
+    if (serverAuth.authenticated) {
+      try {
+        const res = await fetch(`/api/admin/salons/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-NobatAra-Client': 'web',
+          },
+          body: JSON.stringify({ status: 'active', reason }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'خطا در فعال‌سازی سالن روی سرور');
+        }
+      } catch (err: any) {
+        addToast({
+          type: 'error',
+          title: 'خطا در فعال‌سازی سالن',
+          message: err.message,
+        });
+        throw err;
+      }
+    }
+
     setSalons((prev) => prev.map((s) => (s.id === id ? { ...s, status: 'active' as SalonStatus } : s)));
-    logAction('رفع تعلیق سالن', target.name, 'حساب سالن مجدداً فعال گردید', 'info', 'business');
+    logAction('رفع تعلیق سالن', target.name, `علت: ${reason}`, 'info', 'business');
     addToast({
       type: 'success',
       title: 'سالن مجدداً فعال شد',
@@ -541,11 +614,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // User handlers
-  const banUser = (id: string) => {
+  const banUser = async (id: string, reason = 'مسدودسازی حساب به دلیل تخلف') => {
     const target = users.find((u) => u.id === id);
     if (!target) return;
+
+    if (serverAuth.authenticated) {
+      try {
+        const res = await fetch(`/api/admin/users/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-NobatAra-Client': 'web',
+          },
+          body: JSON.stringify({ status: 'suspended', reason }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'خطا در تعلیق حساب کاربر در سرور');
+        }
+      } catch (err: any) {
+        addToast({
+          type: 'error',
+          title: 'خطا در تعلیق حساب کاربر',
+          message: err.message,
+        });
+        throw err;
+      }
+    }
+
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: 'banned' } : u)));
-    logAction('مسدودسازی کاربر', target.name, `کاربر ${target.email} مسدود شد`, 'warning', 'privilege');
+    logAction('مسدودسازی کاربر', target.name, `علت: ${reason}`, 'warning', 'privilege');
     addToast({
       type: 'warning',
       title: 'کاربر مسدود شد',
@@ -553,11 +651,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const unbanUser = (id: string) => {
+  const unbanUser = async (id: string, reason = 'رفع مسدودیت و فعال‌سازی مجدد حساب کاربر') => {
     const target = users.find((u) => u.id === id);
     if (!target) return;
+
+    if (serverAuth.authenticated) {
+      try {
+        const res = await fetch(`/api/admin/users/${id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-NobatAra-Client': 'web',
+          },
+          body: JSON.stringify({ status: 'active', reason }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'خطا در فعال‌سازی حساب کاربر در سرور');
+        }
+      } catch (err: any) {
+        addToast({
+          type: 'error',
+          title: 'خطا در فعال‌سازی حساب کاربر',
+          message: err.message,
+        });
+        throw err;
+      }
+    }
+
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status: 'active' } : u)));
-    logAction('رفع مسدودیت کاربر', target.name, `کاربر ${target.email} فعال شد`, 'info', 'privilege');
+    logAction('رفع مسدودیت کاربر', target.name, `علت: ${reason}`, 'info', 'privilege');
     addToast({
       type: 'success',
       title: 'کاربر رفع مسدودیت شد',
@@ -565,9 +688,43 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
-  const updateUserRole = (id: string, role: UserRole) => {
+  const updateUserRole = async (id: string, role: UserRole) => {
     const target = users.find((u) => u.id === id);
     if (!target) return;
+
+    if (role === 'super_admin' as any) {
+      addToast({
+        type: 'error',
+        title: 'اعطای نقش مدیریت ارشد غیرمجاز است',
+        message: 'نقش Super Admin فقط از طریق اسکریپت ایمن بپوت‌استرپ قابل اعطاست.',
+      });
+      return;
+    }
+
+    if (serverAuth.authenticated) {
+      try {
+        const res = await fetch(`/api/admin/users/${id}/role`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-NobatAra-Client': 'web',
+          },
+          body: JSON.stringify({ role }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'خطا در تغییر نقش کاربر در سرور');
+        }
+      } catch (err: any) {
+        addToast({
+          type: 'error',
+          title: 'خطا در تغییر نقش کاربر',
+          message: err.message,
+        });
+        return;
+      }
+    }
+
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
     logAction('تغییر سطح دسترسی کاربر', target.name, `نقش جدید: ${role}`, 'warning', 'privilege');
     addToast({
