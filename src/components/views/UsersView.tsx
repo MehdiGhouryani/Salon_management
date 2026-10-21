@@ -1,15 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
-  UserCheck,
-  ShieldAlert,
   Search,
-  Filter,
   Plus,
   Shield,
   Smartphone,
   Mail,
-  KeyRound,
   Lock,
   Unlock,
   CheckCircle2,
@@ -19,6 +15,8 @@ import {
   LayoutGrid,
   List,
   Store,
+  MoreVertical,
+  Filter,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { User, UserRole } from '../../types/admin';
@@ -28,6 +26,10 @@ import { StatusReasonModal } from '../common/StatusReasonModal';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../ui/EmptyState';
 import { Select } from '../ui/Select';
+import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
+import { Badge } from '../ui/Badge';
+import { Input } from '../ui/Input';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export const UsersView: React.FC = () => {
@@ -41,6 +43,9 @@ export const UsersView: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 12;
+
+  // Mobile Action Sheet
+  const [activeUserMenu, setActiveUserMenu] = useState<User | null>(null);
 
   // Role edit modal
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -148,11 +153,16 @@ export const UsersView: React.FC = () => {
       salonId: salons[0]?.id || '',
       twoFactorEnabled: false,
     });
+    addToast({
+      type: 'success',
+      title: 'کاربر جدید با موفقیت ایجاد شد',
+    });
   };
 
   const openRoleModal = (user: User) => {
     setEditingUser(user);
     setSelectedRole(user.role);
+    setActiveUserMenu(null);
   };
 
   const handleSaveRole = () => {
@@ -161,41 +171,63 @@ export const UsersView: React.FC = () => {
     setEditingUser(null);
   };
 
+  const openStatusChangeModal = (user: User, targetStatus: 'active' | 'banned') => {
+    setActiveUserMenu(null);
+    setStatusModal({
+      isOpen: true,
+      user,
+      targetStatus,
+      title: targetStatus === 'active' ? `فعال‌سازی کاربر «${user.name}»` : `مسدودسازی حساب کاربر «${user.name}»`,
+      variant: targetStatus === 'active' ? 'success' : 'danger',
+    });
+  };
+
+  const handleToggle2FA = (user: User) => {
+    setActiveUserMenu(null);
+    setConfirmData({
+      isOpen: true,
+      title: user.twoFactorEnabled ? 'غیرفعال‌سازی ۲FA' : 'فعال‌سازی ۲FA',
+      message: `آیا از تغییر وضعیت احراز هویت دومرحله‌ای برای «${user.name}» اطمینان دارید؟`,
+      variant: 'warning',
+      onConfirm: () => toggleUser2FA(user.id),
+    });
+  };
+
   return (
-    <div className="space-y-6">
-      {/* View Header */}
+    <div className="space-y-5" dir="rtl">
+      {/* Header & View Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            کاربران و پرسنل پلتفرم ({toPersianDigits(users.length)})
+          <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <Users className="w-5 h-5 text-[var(--brand-primary)]" />
+            مدیریت کاربران، مدیران و پرسنل
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
-            سطوح دسترسی، امنیت احراز هویت دومرحله‌ای و پرسنل متصل به سالن‌ها
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+            کنترل سطح دسترسی، امنیت ۲FA و وضعیت فعالیت اعضای شبکه
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* View Mode Toggle: Cards vs Table */}
-          <div className="flex items-center p-1 bg-slate-100 dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-lg text-xs">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          {/* View Mode Toggle */}
+          <div className="flex items-center p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xs">
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-[#18243A] text-slate-900 dark:text-[#E7ECF5] font-bold shadow-xs'
-                  : 'text-slate-500 dark:text-[#9AAAC2] hover:text-slate-700'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
-              title="نمایش کارت‌های خلوت"
+              title="نمایش کارتی شبکه‌ای"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>کارت‌ها</span>
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-[#18243A] text-slate-900 dark:text-[#E7ECF5] font-bold shadow-xs'
-                  : 'text-slate-500 dark:text-[#9AAAC2] hover:text-slate-700'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] shadow-xs'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش جدول فشرده"
             >
@@ -204,69 +236,95 @@ export const UsersView: React.FC = () => {
             </button>
           </div>
 
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-lg shadow-xs transition-all cursor-pointer"
+            leftIcon={<UserPlus className="w-4 h-4" />}
           >
-            <UserPlus className="w-4 h-4" />
-            <span>افزودن کاربر</span>
-          </button>
+            افزودن کاربر
+          </Button>
         </div>
       </div>
 
-      {/* Role Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl text-xs shadow-xs">
-        {[
-          { id: 'all', label: 'همه کاربران', count: users.length },
-          { id: 'super_admin', label: 'ادمین کل', count: users.filter((u) => u.role === 'super_admin').length },
-          { id: 'salon_admin', label: 'مدیران سالن', count: users.filter((u) => u.role === 'salon_admin').length },
-          { id: 'staff', label: 'پرسنل سالن', count: users.filter((u) => u.role === 'staff').length },
-          { id: 'support_auditor', label: 'پشتیبان و بازرس', count: users.filter((u) => u.role === 'support_auditor').length },
-        ].map((tab) => {
-          const isSelected = roleFilter === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setRoleFilter(tab.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium ${
-                isSelected
-                  ? 'bg-rose-600 text-white font-bold shadow-xs'
-                  : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-[#18243A]/60'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-[#18243A] text-slate-500 dark:text-[#9AAAC2]'
+      {/* Role Filter Tabs & Result Count */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs shadow-xs">
+        <div className="flex flex-wrap items-center gap-1">
+          {[
+            { id: 'all', label: 'همه کاربران', count: users.length },
+            { id: 'super_admin', label: 'ادمین کل', count: users.filter((u) => u.role === 'super_admin').length },
+            { id: 'salon_admin', label: 'مدیران سالن', count: users.filter((u) => u.role === 'salon_admin').length },
+            { id: 'staff', label: 'پرسنل سالن', count: users.filter((u) => u.role === 'staff').length },
+            { id: 'support_auditor', label: 'پشتیبان و بازرس', count: users.filter((u) => u.role === 'support_auditor').length },
+          ].map((tab) => {
+            const isSelected = roleFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setRoleFilter(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-medium ${
+                  isSelected
+                    ? 'bg-[var(--brand-primary)] text-white font-bold shadow-xs'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                 }`}
               >
-                {toPersianDigits(tab.count)}
-              </span>
-            </button>
-          );
-        })}
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {toPersianDigits(tab.count)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Status Filter & Counter */}
+        <div className="flex items-center gap-2 pr-1 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="w-36">
+            <Select
+              size="sm"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'همه وضعیت‌ها' },
+                { value: 'active', label: 'کاربران فعال' },
+                { value: 'banned', label: 'کاربران مسدود' },
+              ]}
+            />
+          </div>
+
+          <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
+            <span>نمایش </span>
+            <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredUsers.length)}</strong>
+            <span> از {toPersianDigits(users.length)}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="p-3.5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] shadow-xs">
-        <div className="relative">
-          <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="جستجوی نام، ایمیل، شماره تماس یا نام سالن..."
-            className="w-full pl-8 pr-9 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-xs text-zinc-900 dark:text-[#E7ECF5] placeholder-zinc-400 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute left-2.5 top-2.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+      {/* Debounced Search Bar */}
+      <div className="p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+        <Input
+          size="sm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="جستجوی نام، ایمیل، شماره تماس یا نام سالن (با اعمال خودکار ۳۰۰ms)..."
+          leadingIcon={<Search className="w-4 h-4 text-[var(--text-muted)]" />}
+          trailingIcon={
+            search ? (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="pointer-events-auto p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+                aria-label="پاک کردن جستجو"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            ) : undefined
+          }
+        />
       </div>
 
       {/* VIEW 1: UNCLUTTERED MODERN CARD GRID (PRIMARY) */}
@@ -282,20 +340,20 @@ export const UsersView: React.FC = () => {
                   return (
                     <div
                       key={user.id}
-                      className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs hover:border-indigo-400/50 dark:hover:border-indigo-500/30 transition-all flex flex-col justify-between"
+                      className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs hover:border-[var(--brand-border)] transition-all flex flex-col justify-between"
                     >
                       <div>
                         {/* Top: Avatar, Name & Role Badge */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-[#344258]/80 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[var(--brand-primary)] shrink-0">
                               {user.name.slice(0, 1)}
                             </div>
                             <div className="min-w-0">
-                              <h3 className="font-bold text-zinc-900 dark:text-[#E7ECF5] text-sm truncate">
+                              <h3 className="font-bold text-[var(--text-primary)] text-sm truncate">
                                 {user.name}
                               </h3>
-                              <p className="text-[11px] text-zinc-500 dark:text-[#9AAAC2] truncate mt-0.5">
+                              <p className="text-[11px] text-[var(--text-secondary)] truncate mt-0.5">
                                 {user.salonName || 'پرسنل ستادی'}
                               </p>
                             </div>
@@ -307,79 +365,74 @@ export const UsersView: React.FC = () => {
                         </div>
 
                         {/* Contact Info */}
-                        <div className="space-y-1.5 py-2.5 border-y border-stone-100 dark:border-[#344258]/80 text-xs">
-                          <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                        <div className="space-y-1.5 py-2.5 border-y border-[var(--border-subtle)] text-xs">
+                          <div className="flex items-center justify-between text-[var(--text-secondary)]">
                             <span>ایمیل:</span>
-                            <span className="font-mono text-zinc-700 dark:text-[#9AAAC2] truncate max-w-[170px]" dir="ltr">
+                            <span className="font-mono text-[var(--text-primary)] truncate max-w-[170px]" dir="ltr">
                               {user.email}
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+                          <div className="flex items-center justify-between text-[var(--text-secondary)]">
                             <span>موبایل:</span>
-                            <span className="font-mono text-zinc-700 dark:text-[#9AAAC2]" dir="ltr">
+                            <span className="font-mono text-[var(--text-primary)]" dir="ltr">
                               {maskPhone(user.phone)}
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
-                            <span>تایید دو مرحله‌ای:</span>
-                            <button
-                              onClick={() => toggleUser2FA(user.id)}
-                              className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer ${
-                                user.twoFactorEnabled
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : 'text-zinc-400 hover:text-zinc-600'
-                              }`}
-                            >
-                              <Shield className="w-3.5 h-3.5" />
+                          <div className="flex items-center justify-between text-[var(--text-secondary)]">
+                            <span>امنیت ۲FA:</span>
+                            <span className={`flex items-center gap-1 font-semibold ${user.twoFactorEnabled ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
+                              {user.twoFactorEnabled ? <CheckCircle2 className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
                               <span>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
-                            </button>
+                            </span>
                           </div>
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] pt-2.5">
+                          <span>آخرین ورود: {user.lastLogin}</span>
+                          <span className="font-mono" dir="ltr">{user.lastIp}</span>
                         </div>
                       </div>
 
-                      {/* Footer: Role Change & Status Action */}
-                      <div className="flex items-center justify-between pt-3 border-t border-stone-100 dark:border-[#344258] mt-2">
-                        <button
+                      {/* Footer Actions */}
+                      <div className="flex items-center justify-between pt-3 mt-3 border-t border-[var(--border-subtle)]">
+                        <Button
+                          variant="ghost"
+                          size="xs"
                           onClick={() => openRoleModal(user)}
-                          className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                          leftIcon={<Edit2 className="w-3 h-3" />}
                         >
-                          <Edit2 className="w-3 h-3 text-zinc-400" />
-                          <span>تغییر نقش</span>
-                        </button>
+                          تغییر نقش
+                        </Button>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="secondary"
+                            size="xs"
+                            onClick={() => handleToggle2FA(user)}
+                            title={user.twoFactorEnabled ? 'غیرفعال‌سازی تایید دومرحله‌ای' : 'فعال‌سازی تایید دومرحله‌ای'}
+                          >
+                            {user.twoFactorEnabled ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                          </Button>
+
                           {isBanned ? (
-                            <button
-                              onClick={() =>
-                                setStatusModal({
-                                  isOpen: true,
-                                  user,
-                                  targetStatus: 'active',
-                                  title: `رفع مسدودیت و فعال‌سازی حساب «${user.name}»`,
-                                  variant: 'success',
-                                })
-                              }
-                              className="px-2.5 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg cursor-pointer"
+                            <Button
+                              variant="success"
+                              size="xs"
+                              onClick={() => openStatusChangeModal(user, 'active')}
                             >
-                              رفع مسدودیت
-                            </button>
+                              رفع مسدودی
+                            </Button>
                           ) : (
-                            <button
-                              onClick={() =>
-                                setStatusModal({
-                                  isOpen: true,
-                                  user,
-                                  targetStatus: 'banned',
-                                  title: `مسدودسازی دسترسی و تعلیق حساب «${user.name}»`,
-                                  variant: 'danger',
-                                })
-                              }
-                              className="px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer"
+                            <Button
+                              variant="danger"
+                              size="xs"
+                              onClick={() => openStatusChangeModal(user, 'banned')}
                             >
                               مسدودسازی
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -401,9 +454,9 @@ export const UsersView: React.FC = () => {
             </>
           ) : (
             <EmptyState
-              icon={<Users className="w-8 h-8" />}
+              icon={<Users className="w-8 h-8 text-[var(--text-muted)]" />}
               title="کاربری با این مشخصات یافت نشد"
-              description="لطفاً عبارت جستجو را ویرایش کرده یا فیلترهای نقش کاربری را تغییر دهید."
+              description="لطفاً عبارت جستجو را ویرایش کرده یا فیلترهای نقش کاربری و وضعیت را پاک نمایید."
               action={{
                 label: 'پاک کردن فیلترها',
                 onClick: () => {
@@ -419,49 +472,95 @@ export const UsersView: React.FC = () => {
 
       {/* VIEW 2: COMPACT CLEAN TABLE */}
       {viewMode === 'table' && (
-        <div className="rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] overflow-hidden shadow-xs">
+        <div className="nobat-table-container">
           {filteredUsers.length > 0 ? (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full text-right text-xs">
-                  <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
+                  <thead className="nobat-table-header">
                     <tr>
                       <th className="py-3 px-4">نام کاربر</th>
                       <th className="py-3 px-4 hidden sm:table-cell">ایمیل و تماس</th>
                       <th className="py-3 px-4 hidden md:table-cell">سالن مربوطه</th>
                       <th className="py-3 px-4">نقش سیستمی</th>
+                      <th className="py-3 px-4 hidden lg:table-cell">امنیت ۲FA</th>
                       <th className="py-3 px-4">وضعیت</th>
                       <th className="py-3 px-4 text-center">عملیات</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
+                  <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
                     {paginatedUsers.map((user) => {
                       const roleBadge = getRoleBadge(user.role);
                       return (
-                        <tr key={user.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
-                          <td className="py-3 px-4 font-bold text-zinc-900 dark:text-[#E7ECF5]">{user.name}</td>
-                          <td className="py-3 px-4 hidden sm:table-cell">
-                            <span className="font-mono text-zinc-600 dark:text-[#9AAAC2] block" dir="ltr">{user.email}</span>
-                            <span className="font-mono text-[11px] text-zinc-500" dir="ltr">{maskPhone(user.phone)}</span>
+                        <tr key={user.id} className="nobat-table-row">
+                          <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-lg bg-[var(--bg-elevated)] text-[var(--brand-primary)] flex items-center justify-center font-bold text-xs shrink-0">
+                                {user.name.slice(0, 1)}
+                              </div>
+                              <span>{user.name}</span>
+                            </div>
                           </td>
-                          <td className="py-3 px-4 text-zinc-600 dark:text-[#9AAAC2] hidden md:table-cell">{user.salonName || 'دفتر مرکزی'}</td>
+                          <td className="py-3 px-4 hidden sm:table-cell">
+                            <span className="font-mono text-[var(--text-secondary)] block text-[11px]" dir="ltr">{user.email}</span>
+                            <span className="font-mono text-[11px] text-[var(--text-muted)]" dir="ltr">{maskPhone(user.phone)}</span>
+                          </td>
+                          <td className="py-3 px-4 text-[var(--text-secondary)] hidden md:table-cell">{user.salonName || 'دفتر مرکزی'}</td>
                           <td className="py-3 px-4">
                             <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${roleBadge.color}`}>
                               {roleBadge.label}
                             </span>
                           </td>
+                          <td className="py-3 px-4 hidden lg:table-cell">
+                            <Badge variant={user.twoFactorEnabled ? 'success' : 'neutral'} size="sm">
+                              {user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}
+                            </Badge>
+                          </td>
                           <td className="py-3 px-4">
-                            <span className={`text-[11px] font-medium ${user.status === 'active' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            <Badge variant={user.status === 'active' ? 'success' : 'error'} size="sm">
                               {user.status === 'active' ? 'فعال' : 'مسدود'}
-                            </span>
+                            </Badge>
                           </td>
                           <td className="py-3 px-4 text-center">
-                            <button
-                              onClick={() => openRoleModal(user)}
-                              className="px-2.5 py-1 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-lg cursor-pointer"
-                            >
-                              ویرایش
-                            </button>
+                            {/* Desktop row action buttons */}
+                            <div className="hidden sm:flex items-center justify-center gap-1.5">
+                              <Button
+                                variant="outline"
+                                size="xs"
+                                onClick={() => openRoleModal(user)}
+                              >
+                                نقش
+                              </Button>
+                              {user.status === 'active' ? (
+                                <Button
+                                  variant="danger"
+                                  size="xs"
+                                  onClick={() => openStatusChangeModal(user, 'banned')}
+                                >
+                                  مسدود
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="success"
+                                  size="xs"
+                                  onClick={() => openStatusChangeModal(user, 'active')}
+                                >
+                                  رفع مسدود
+                                </Button>
+                              )}
+                            </div>
+
+                            {/* Mobile action button (opens action sheet) */}
+                            <div className="sm:hidden flex justify-center">
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                onClick={() => setActiveUserMenu(user)}
+                                aria-label="عملیات کاربر"
+                              >
+                                <MoreVertical className="w-4 h-4 text-[var(--text-secondary)]" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -482,175 +581,195 @@ export const UsersView: React.FC = () => {
               />
             </>
           ) : (
-            <EmptyState
-              icon={<Users className="w-8 h-8" />}
-              title="کاربری با این مشخصات یافت نشد"
-              description="لطفاً عبارت جستجو را ویرایش کرده یا فیلترهای نقش کاربری را تغییر دهید."
-              action={{
-                label: 'پاک کردن فیلترها',
-                onClick: () => {
-                  setSearch('');
-                  setRoleFilter('all');
-                  setStatusFilter('all');
-                },
-              }}
-            />
+            <div className="p-6">
+              <EmptyState
+                icon={<Users className="w-8 h-8 text-[var(--text-muted)]" />}
+                title="کاربری با این مشخصات یافت نشد"
+                description="لطفاً فیلترهای اعمال‌شده را بازنشانی کرده یا عبارت جستجو را تغییر دهید."
+                action={{
+                  label: 'پاک کردن فیلترها',
+                  onClick: () => {
+                    setSearch('');
+                    setRoleFilter('all');
+                    setStatusFilter('all');
+                  },
+                }}
+              />
+            </div>
           )}
         </div>
       )}
 
-      {/* Role Edit Modal */}
-      {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="fixed inset-0" onClick={() => setEditingUser(null)}></div>
+      {/* Mobile Row Action Sheet Modal */}
+      {activeUserMenu && (
+        <Modal
+          isOpen={!!activeUserMenu}
+          onClose={() => setActiveUserMenu(null)}
+          title={`مدیریت دسترسی «${activeUserMenu.name}»`}
+          description={`${activeUserMenu.email} · ${maskPhone(activeUserMenu.phone)}`}
+          size="sm"
+        >
+          <div className="space-y-2 py-1 text-xs">
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              onClick={() => openRoleModal(activeUserMenu)}
+              leftIcon={<Edit2 className="w-4 h-4" />}
+            >
+              تغییر نقش کاربری ({getRoleBadge(activeUserMenu.role).label})
+            </Button>
 
-          <div className="relative w-full max-w-sm bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">تغییر سطح دسترسی</h3>
-              <button onClick={() => setEditingUser(null)} className="p-1 text-zinc-400 hover:text-zinc-700">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              onClick={() => handleToggle2FA(activeUserMenu)}
+              leftIcon={activeUserMenu.twoFactorEnabled ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+            >
+              {activeUserMenu.twoFactorEnabled ? 'غیرفعال‌سازی ۲FA' : 'فعال‌سازی احراز هویت دومرحله‌ای'}
+            </Button>
 
-            <div className="space-y-2 text-xs">
-              {[
-                { id: 'super_admin' as UserRole, title: 'ادمین کل سامانه' },
-                { id: 'salon_admin' as UserRole, title: 'مدیر سالن' },
-                { id: 'staff' as UserRole, title: 'پرسنل / متخصص سالن' },
-                { id: 'support_auditor' as UserRole, title: 'پشتیبان و بازرس' },
-                { id: 'financial_manager' as UserRole, title: 'مدیر مالی' },
-              ].map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => setSelectedRole(r.id)}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                    selectedRole === r.id
-                      ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 font-bold text-indigo-700 dark:text-indigo-300'
-                      : 'border-stone-200 dark:border-[#344258] text-zinc-700 dark:text-[#9AAAC2] hover:border-stone-300'
-                  }`}
-                >
-                  {r.title}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200 dark:border-[#344258]">
-              <button
-                onClick={() => setEditingUser(null)}
-                className="px-3.5 py-1.5 text-xs text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
+            {activeUserMenu.status === 'active' ? (
+              <Button
+                variant="danger"
+                size="md"
+                fullWidth
+                onClick={() => openStatusChangeModal(activeUserMenu, 'banned')}
               >
-                انصراف
-              </button>
-              <button
-                onClick={handleSaveRole}
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl"
+                مسدودسازی حساب کاربر
+              </Button>
+            ) : (
+              <Button
+                variant="success"
+                size="md"
+                fullWidth
+                onClick={() => openStatusChangeModal(activeUserMenu, 'active')}
               >
-                ذخیره نقش
-              </button>
-            </div>
+                رفع مسدودسازی و فعال‌سازی مجدد
+              </Button>
+            )}
           </div>
-        </div>
+        </Modal>
+      )}
+
+      {/* Role Editing Modal */}
+      {editingUser && (
+        <Modal
+          isOpen={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          title="تغییر نقش و سطح دسترسی کاربر"
+          description={`تغییر سطح دسترسی کاربر «${editingUser.name}» در پلتفرم نوبت‌آرا`}
+          size="sm"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button variant="secondary" size="sm" onClick={() => setEditingUser(null)}>
+                انصراف
+              </Button>
+              <Button variant="primary" size="sm" onClick={handleSaveRole}>
+                ذخیره تغییرات
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-3 py-1 text-xs">
+            <Select
+              label="سطح دسترسی جدید"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value as UserRole)}
+              options={[
+                { value: 'staff', label: 'پرسنل سالن (مشاهده نوبت‌ها و ثبت مشتری)' },
+                { value: 'salon_admin', label: 'مدیر سالن (مدیریت صندوق، پرسنل و تعرفه‌ها)' },
+                { value: 'support_auditor', label: 'پشتیبان و بازرس (مشاهده مدارک و پاسخگویی تیکت)' },
+                { value: 'super_admin', label: 'ادمین کل (دسترسی نامحدود به تمام بخش‌های شبکه)' },
+              ]}
+            />
+            <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
+              تغییر سطح دسترسی بلافاصله در نشست‌های فعال کاربر اعمال می‌گردد.
+            </p>
+          </div>
+        </Modal>
       )}
 
       {/* Add User Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="fixed inset-0" onClick={() => setIsAddModalOpen(false)}></div>
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          title="افزودن کاربر جدید به شبکه نوبت‌آرا"
+          description="ایجاد حساب برای مدیران، پرسنل یا ادمین‌های سامانه"
+          size="md"
+        >
+          <form onSubmit={handleCreateUser} className="space-y-3.5 text-xs">
+            <Input
+              label="نام و نام خانوادگی *"
+              required
+              value={formData.name || ''}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="مثال: نرگس رضایی"
+            />
 
-          <div className="relative w-full max-w-md bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">افزودن کاربر جدید</h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-700">
-                <X className="w-4 h-4" />
-              </button>
+            <Input
+              label="ایمیل *"
+              type="email"
+              required
+              dir="ltr"
+              value={formData.email || ''}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="name@example.com"
+              tabularNums
+            />
+
+            <Input
+              label="شماره تماس *"
+              type="tel"
+              required
+              dir="ltr"
+              value={formData.phone || ''}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="09121234567"
+              tabularNums
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Select
+                label="نقش کاربری"
+                value={formData.role || 'staff'}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                options={[
+                  { value: 'staff', label: 'پرسنل سالن' },
+                  { value: 'salon_admin', label: 'مدیر سالن' },
+                  { value: 'support_auditor', label: 'پشتیبان' },
+                  { value: 'super_admin', label: 'ادمین کل' },
+                ]}
+              />
+
+              <Select
+                label="سالن مربوطه"
+                value={formData.salonId || salons[0]?.id}
+                onChange={(e) => setFormData({ ...formData, salonId: e.target.value })}
+                options={salons.map((s) => ({ value: s.id, label: s.name }))}
+              />
             </div>
 
-            <form onSubmit={handleCreateUser} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نام و نام خانوادگی *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="مثال: نرگس رضایی"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">ایمیل *</label>
-                <input
-                  type="email"
-                  required
-                  dir="ltr"
-                  value={formData.email || ''}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="name@example.com"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-indigo-500 text-left font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">شماره تماس *</label>
-                <input
-                  type="tel"
-                  required
-                  dir="ltr"
-                  value={formData.phone || ''}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="09121234567"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-indigo-500 text-left font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نقش کاربری</label>
-                  <select
-                    value={formData.role || 'staff'}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="staff">پرسنل سالن</option>
-                    <option value="salon_admin">مدیر سالن</option>
-                    <option value="support_auditor">پشتیبان</option>
-                    <option value="super_admin">ادمین کل</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">سالن مربوطه</label>
-                  <select
-                    value={formData.salonId || salons[0]?.id}
-                    onChange={(e) => setFormData({ ...formData, salonId: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-indigo-500"
-                  >
-                    {salons.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-200 dark:border-[#344258]">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs text-zinc-600 dark:text-[#9AAAC2] bg-stone-100 dark:bg-zinc-800 rounded-xl"
-                >
-                  انصراف
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-xs"
-                >
-                  افزودن کاربر
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                انصراف
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+              >
+                افزودن کاربر
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* Mandatory Reason Modal for User Status Change */}

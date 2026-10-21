@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -19,6 +19,14 @@ import { useAdmin } from '../../context/AdminContext';
 import { AuditSeverity } from '../../types/admin';
 import { toPersianDigits } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { Pagination } from '../common/Pagination';
+import { EmptyState } from '../ui/EmptyState';
+import { Select } from '../ui/Select';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { Modal } from '../ui/Modal';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const SecurityView: React.FC = () => {
   const {
@@ -35,10 +43,13 @@ export const SecurityView: React.FC = () => {
 
   const [activeSubTab, setActiveSubTab] = useState<'audit' | 'sessions' | 'firewall'>('audit');
   const [logSearch, setLogSearch] = useState('');
+  const debouncedSearch = useDebounce(logSearch, 300);
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [inspectedLog, setInspectedLog] = useState<any | null>(null);
   const [newBlacklistIp, setNewBlacklistIp] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   const [confirmData, setConfirmData] = useState<{
     isOpen: boolean;
@@ -54,16 +65,27 @@ export const SecurityView: React.FC = () => {
     onConfirm: () => {},
   });
 
-  const filteredLogs = auditLogs.filter((log) => {
-    const matchSeverity = severityFilter === 'all' || log.severity === severityFilter;
-    const matchCategory = categoryFilter === 'all' || log.category === categoryFilter;
-    const matchSearch =
-      log.actor.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.action.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.target.toLowerCase().includes(logSearch.toLowerCase()) ||
-      log.ipAddress.includes(logSearch);
-    return matchSeverity && matchCategory && matchSearch;
-  });
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      const matchSeverity = severityFilter === 'all' || log.severity === severityFilter;
+      const matchCategory = categoryFilter === 'all' || log.category === categoryFilter;
+      const matchSearch =
+        log.actor.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        log.action.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        log.target.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        log.ipAddress.includes(debouncedSearch);
+      return matchSeverity && matchCategory && matchSearch;
+    });
+  }, [auditLogs, debouncedSearch, severityFilter, categoryFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, severityFilter, categoryFilter]);
+
+  const totalPages = Math.ceil(filteredLogs.length / PAGE_SIZE);
+  const paginatedLogs = useMemo(() => {
+    return filteredLogs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [filteredLogs, page]);
 
   const handleAddIp = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,57 +98,57 @@ export const SecurityView: React.FC = () => {
   const getSeverityBadge = (sev: AuditSeverity) => {
     switch (sev) {
       case 'critical':
-        return { label: 'بحرانی', class: 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-500/20' };
+        return { label: 'بحرانی', variant: 'error' as const };
       case 'warning':
-        return { label: 'هشدار', class: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-500/20' };
+        return { label: 'هشدار', variant: 'warning' as const };
       case 'info':
-        return { label: 'عادی', class: 'bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2] border-stone-200' };
+        return { label: 'عادی', variant: 'neutral' as const };
     }
   };
 
   const getCategoryBadge = (cat: string) => {
     switch (cat) {
       case 'auth':
-        return { label: 'احراز هویت', class: 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' };
+        return { label: 'احراز هویت', variant: 'info' as const };
       case 'privilege':
-        return { label: 'دسترسی و نقش', class: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' };
+        return { label: 'دسترسی و نقش', variant: 'purple' as const };
       case 'business':
-        return { label: 'عملیات کسب‌وکار', class: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' };
+        return { label: 'عملیات کسب‌وکار', variant: 'success' as const };
       case 'financial':
-        return { label: 'تراکنش مالی', class: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' };
+        return { label: 'تراکنش مالی', variant: 'brand' as const };
       default:
-        return { label: 'سیستم', class: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' };
+        return { label: 'سیستم', variant: 'neutral' as const };
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5" dir="rtl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+          <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-[var(--brand-primary)]" />
             مرکز امنیت، لاگ‌ها و نشست‌های فعال
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             پایش دسترسی‌ها، رویدادهای مشکوک، فایروال و ابطال نشست‌های همزمان
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500/20 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 font-semibold">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-xl text-xs text-[var(--status-success)] font-semibold">
+          <ShieldCheck className="w-4 h-4 text-[var(--status-success)]" />
           <span>امنیت هسته: فعال و پایدار</span>
         </div>
       </div>
 
       {/* Subtab Navigation */}
-      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-[#344258] pb-2 text-xs">
+      <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] pb-2 text-xs">
         <button
           onClick={() => setActiveSubTab('audit')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'audit'
-              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-              : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
           <Lock className="w-3.5 h-3.5" />
@@ -137,8 +159,8 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('sessions')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'sessions'
-              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-              : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
           <Laptop className="w-3.5 h-3.5" />
@@ -149,116 +171,171 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('firewall')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'firewall'
-              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-              : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
           <Globe className="w-3.5 h-3.5" />
-          <span>فایروال و مسدودی IP</span>
+          <span>فایروال و لیست سیاه IP</span>
         </button>
       </div>
 
       {/* Tab 1: Audit Logs */}
       {activeSubTab === 'audit' && (
         <div className="space-y-4">
-          <div className="p-3 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
-            <div className="w-full sm:w-80 relative">
-              <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-2.5" />
-              <input
-                type="text"
+          {/* Advanced Filter Bar with Debounce & Select Components */}
+          <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs shadow-xs">
+            <div className="w-full md:w-80">
+              <Input
+                size="sm"
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
                 placeholder="جستجوی اقدام‌کننده، IP یا رویداد..."
-                className="w-full pl-3 pr-9 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] placeholder-zinc-400 focus:outline-none focus:border-rose-500"
+                leadingIcon={<Search className="w-4 h-4 text-[var(--text-muted)]" />}
+                trailingIcon={
+                  logSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => setLogSearch('')}
+                      className="pointer-events-auto p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  ) : undefined
+                }
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-3 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 cursor-pointer"
-              >
-                <option value="all">تمام دسته‌ها</option>
-                <option value="business">عملیات کسب‌وکار</option>
-                <option value="privilege">دسترسی و نقش</option>
-                <option value="auth">احراز هویت</option>
-                <option value="financial">تراکنش مالی</option>
-                <option value="system">سیستم</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-2 justify-between md:justify-end">
+              <div className="w-36">
+                <Select
+                  size="sm"
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'تمام دسته‌ها' },
+                    { value: 'business', label: 'عملیات کسب‌وکار' },
+                    { value: 'privilege', label: 'دسترسی و نقش' },
+                    { value: 'auth', label: 'احراز هویت' },
+                    { value: 'financial', label: 'تراکنش مالی' },
+                    { value: 'system', label: 'سیستم' },
+                  ]}
+                />
+              </div>
 
-              <select
-                value={severityFilter}
-                onChange={(e) => setSeverityFilter(e.target.value)}
-                className="px-3 py-1.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 cursor-pointer"
-              >
-                <option value="all">تمام سطوح اهمیت</option>
-                <option value="critical">بحرانی</option>
-                <option value="warning">هشدار</option>
-                <option value="info">عادی</option>
-              </select>
+              <div className="w-36">
+                <Select
+                  size="sm"
+                  value={severityFilter}
+                  onChange={(e) => setSeverityFilter(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'تمام سطوح اهمیت' },
+                    { value: 'critical', label: 'بحرانی' },
+                    { value: 'warning', label: 'هشدار' },
+                    { value: 'info', label: 'عادی' },
+                  ]}
+                />
+              </div>
+
+              <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
+                <span>نمایش </span>
+                <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredLogs.length)}</strong>
+                <span> از {toPersianDigits(auditLogs.length)}</span>
+              </div>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-stone-50 dark:bg-[#111B2E] border-b border-stone-200 dark:border-[#344258] text-zinc-500 font-semibold">
-                  <tr>
-                    <th className="py-3 px-4">زمان ثبت</th>
-                    <th className="py-3 px-4">اقدام‌کننده</th>
-                    <th className="py-3 px-4">عملیات</th>
-                    <th className="py-3 px-4">دسته‌بندی</th>
-                    <th className="py-3 px-4">هدف</th>
-                    <th className="py-3 px-4">آدرس IP</th>
-                    <th className="py-3 px-4">شدت</th>
-                    <th className="py-3 px-4 text-center">جزئیات</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100 dark:divide-zinc-800 text-zinc-700 dark:text-[#9AAAC2]">
-                  {filteredLogs.map((log) => {
-                    const badge = getSeverityBadge(log.severity);
-                    const catBadge = getCategoryBadge(log.category);
-                    return (
-                      <tr key={log.id} className="hover:bg-stone-50/60 dark:hover:bg-[#18243A]/40 transition-colors">
-                        <td className="py-3 px-4 font-mono text-[11px] text-zinc-500">{log.timestamp}</td>
-                        <td className="py-3 px-4 font-semibold text-zinc-900 dark:text-[#E7ECF5]">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span>{log.actor}</span>
-                            {log.isDemo && (
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold">
-                                داده آزمایشی
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 font-medium">{log.action}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-semibold ${catBadge.class}`}>
-                            {catBadge.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-zinc-500">{log.target}</td>
-                        <td className="py-3 px-4 font-mono text-[11px]" dir="ltr">{log.ipAddress}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.class}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            onClick={() => setInspectedLog(log)}
-                            className="px-2 py-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
-                          >
-                            مشاهده
-                          </button>
-                        </td>
+          <div className="nobat-table-container">
+            {filteredLogs.length > 0 ? (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right text-xs">
+                    <thead className="nobat-table-header">
+                      <tr>
+                        <th className="py-3 px-4">زمان ثبت</th>
+                        <th className="py-3 px-4">اقدام‌کننده</th>
+                        <th className="py-3 px-4">عملیات</th>
+                        <th className="py-3 px-4 hidden md:table-cell">دسته‌بندی</th>
+                        <th className="py-3 px-4 hidden lg:table-cell">هدف</th>
+                        <th className="py-3 px-4 hidden sm:table-cell">آدرس IP</th>
+                        <th className="py-3 px-4">شدت</th>
+                        <th className="py-3 px-4 text-center">جزئیات</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
+                      {paginatedLogs.map((log) => {
+                        const badge = getSeverityBadge(log.severity);
+                        const catBadge = getCategoryBadge(log.category);
+                        return (
+                          <tr key={log.id} className="nobat-table-row">
+                            <td className="py-3 px-4 font-mono text-[11px] text-[var(--text-muted)]">{log.timestamp}</td>
+                            <td className="py-3 px-4 font-semibold text-[var(--text-primary)]">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span>{log.actor}</span>
+                                {log.isDemo && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] font-bold">
+                                    داده آزمایشی
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-medium">{log.action}</td>
+                            <td className="py-3 px-4 hidden md:table-cell">
+                              <Badge variant={catBadge.variant} size="sm">
+                                {catBadge.label}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-[var(--text-secondary)] hidden lg:table-cell">{log.target}</td>
+                            <td className="py-3 px-4 font-mono text-[11px] text-[var(--text-muted)] hidden sm:table-cell" dir="ltr">{log.ipAddress}</td>
+                            <td className="py-3 px-4">
+                              <Badge variant={badge.variant} size="sm">
+                                {badge.label}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                onClick={() => setInspectedLog(log)}
+                              >
+                                مشاهده
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={filteredLogs.length}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setPage}
+                  onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
+                  hasMore={page < totalPages}
+                  itemLabel="لاگ"
+                />
+              </>
+            ) : (
+              <div className="p-6">
+                <EmptyState
+                  icon={<Lock className="w-8 h-8 text-[var(--text-muted)]" />}
+                  title="هیچ لاگ امنیتی با این مشخصات یافت نشد"
+                  description="لطفاً عبارت جستجو را ویرایش کرده یا فیلترهای اهمیت و دسته‌بندی را پاک فرمایید."
+                  action={{
+                    label: 'پاک کردن فیلترها',
+                    onClick: () => {
+                      setLogSearch('');
+                      setSeverityFilter('all');
+                      setCategoryFilter('all');
+                    },
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -266,18 +343,19 @@ export const SecurityView: React.FC = () => {
       {/* Tab 2: Sessions */}
       {activeSubTab === 'sessions' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-zinc-500">
+          <div className="flex items-center justify-between p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs">
+            <span className="font-semibold text-[var(--text-secondary)]">
               {toPersianDigits(sessions.length)} نشست فعال در سامانه
             </span>
 
             {sessions.length > 1 && (
-              <button
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={terminateAllOtherSessions}
-                className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-colors cursor-pointer"
               >
                 خروج از تمام نشست‌های دیگر
-              </button>
+              </Button>
             )}
           </div>
 
@@ -285,35 +363,37 @@ export const SecurityView: React.FC = () => {
             {sessions.map((sess) => (
               <div
                 key={sess.id}
-                className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex items-center justify-between"
+                className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2]">
+                  <div className="p-2.5 rounded-xl bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
                     <Laptop className="w-5 h-5" />
                   </div>
                   <div className="text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-zinc-900 dark:text-[#E7ECF5]">{sess.userName}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{sess.userName}</span>
                       {sess.isCurrent && (
-                        <span className="px-1.5 py-0.2 text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-md font-bold">
+                        <Badge variant="success" size="sm">
                           نشست فعلی شما
-                        </span>
+                        </Badge>
                       )}
                     </div>
-                    <span className="text-[11px] text-zinc-500 block mt-0.5">
-                      {sess.device} · IP: {sess.ipAddress}
+                    <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">
+                      {sess.device} · IP: <span className="font-mono">{sess.ipAddress}</span>
                     </span>
                   </div>
                 </div>
 
                 {!sess.isCurrent && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="xs"
                     onClick={() => terminateSession(sess.id)}
-                    className="p-2 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer"
                     title="پایان دادن به این نشست"
+                    className="text-[var(--status-error)] hover:bg-[var(--status-error-bg)]"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -324,120 +404,105 @@ export const SecurityView: React.FC = () => {
       {/* Tab 3: Firewall */}
       {activeSubTab === 'firewall' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] mb-1">
+          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+            <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">
               افزودن IP به لیست سیاه فایروال
             </h3>
-            <p className="text-xs text-zinc-500 mb-4">
+            <p className="text-xs text-[var(--text-secondary)] mb-4">
               مسدودسازی آدرس‌های IP مشکوک با تلاش‌های مکرر ناموفق ورود
             </p>
 
             <form onSubmit={handleAddIp} className="flex gap-2 max-w-md">
-              <input
-                type="text"
+              <Input
+                size="sm"
                 dir="ltr"
                 value={newBlacklistIp}
                 onChange={(e) => setNewBlacklistIp(e.target.value)}
                 placeholder="192.168.1.100"
-                className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-xs text-zinc-900 dark:text-[#E7ECF5] font-mono"
+                tabularNums
               />
-              <button
+              <Button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs cursor-pointer"
+                variant="danger"
+                size="sm"
+                className="shrink-0"
               >
                 مسدودسازی
-              </button>
+              </Button>
             </form>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] mb-3">
-              آدرس‌های مسدودشده فعال ({toPersianDigits(securitySettings.ipBlacklist.length)})
-            </h3>
+          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs space-y-3">
+            <h4 className="text-xs font-bold text-[var(--text-primary)]">
+              IPهای مسدود شده در سامانه ({toPersianDigits(securitySettings.ipBlacklist.length)})
+            </h4>
 
-            <div className="flex flex-wrap gap-2">
-              {securitySettings.ipBlacklist.map((ip) => (
-                <div
-                  key={ip}
-                  className="px-3 py-1.5 rounded-xl bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] text-xs font-mono flex items-center gap-2"
-                >
-                  <span className="text-zinc-800 dark:text-zinc-200" dir="ltr">{ip}</span>
-                  <button
-                    onClick={() => removeIpFromBlacklist(ip)}
-                    className="text-zinc-400 hover:text-rose-600"
-                    title="حذف از لیست سیاه"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            {securitySettings.ipBlacklist.length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] py-4 text-center">
+                هیچ IP در لیست سیاه قرار ندارد.
+              </p>
+            ) : (
+              <div className="divide-y divide-[var(--border-subtle)] text-xs">
+                {securitySettings.ipBlacklist.map((ip) => (
+                  <div key={ip} className="py-2.5 flex items-center justify-between">
+                    <span className="font-mono text-[var(--text-primary)] font-semibold" dir="ltr">{ip}</span>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => removeIpFromBlacklist(ip)}
+                      className="text-[var(--status-error)] hover:bg-[var(--status-error-bg)]"
+                    >
+                      رفع مسدودی
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Audit Log Detail Modal */}
+      {/* Log Details Modal */}
       {inspectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="fixed inset-0" onClick={() => setInspectedLog(null)} />
-
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 text-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+        <Modal
+          isOpen={!!inspectedLog}
+          onClose={() => setInspectedLog(null)}
+          title="جزئیات رویداد امنیتی"
+          description={`شناسه لاگ: ${inspectedLog.id} · زمان: ${inspectedLog.timestamp}`}
+          size="md"
+          footer={
+            <Button variant="secondary" size="sm" onClick={() => setInspectedLog(null)}>
+              بستن پنجره
+            </Button>
+          }
+        >
+          <div className="space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[var(--bg-elevated)]">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-[#E7ECF5]">جزئیات لاگ ممیزی (Audit Entry)</h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">شناسه: {inspectedLog.id}</p>
+                <span className="text-[var(--text-muted)] block mb-0.5">اقدام‌کننده:</span>
+                <span className="font-bold text-[var(--text-primary)]">{inspectedLog.actor}</span>
               </div>
-              <button
-                onClick={() => setInspectedLog(null)}
-                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div>
+                <span className="text-[var(--text-muted)] block mb-0.5">آدرس IP:</span>
+                <span className="font-mono font-bold text-[var(--text-primary)]" dir="ltr">{inspectedLog.ipAddress}</span>
+              </div>
+              <div>
+                <span className="text-[var(--text-muted)] block mb-0.5">دسته‌بندی:</span>
+                <span className="font-bold text-[var(--text-primary)]">{inspectedLog.category}</span>
+              </div>
+              <div>
+                <span className="text-[var(--text-muted)] block mb-0.5">سطح اهمیت:</span>
+                <span className="font-bold text-[var(--text-primary)]">{inspectedLog.severity}</span>
+              </div>
             </div>
 
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
-                <span className="text-slate-500">اقدام‌کننده:</span>
-                <span className="font-bold text-slate-900 dark:text-[#E7ECF5]">{inspectedLog.actor} ({inspectedLog.actorRole || 'نقش نامشخص'})</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
-                <span className="text-slate-500">عنوان عملیات:</span>
-                <span className="font-bold text-slate-900 dark:text-[#E7ECF5]">{inspectedLog.action}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
-                <span className="text-slate-500">موجودیت هدف:</span>
-                <span className="font-medium text-slate-800 dark:text-[#E7ECF5]">{inspectedLog.target}</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-[#0D1527] rounded-xl border border-slate-200/60 dark:border-[#344258]">
-                <span className="text-slate-500">آدرس IP:</span>
-                <span className="font-mono text-slate-800 dark:text-[#E7ECF5]" dir="ltr">{inspectedLog.ipAddress}</span>
-              </div>
-
-              {inspectedLog.details && (
-                <div>
-                  <label className="block text-slate-700 dark:text-[#E7ECF5] font-bold mb-1">جزئیات و توضیحات (Details):</label>
-                  <pre className="p-3 bg-slate-900 text-slate-100 dark:bg-[#0D1527] dark:text-[#38BDF8] rounded-xl overflow-x-auto font-mono text-[11px] dir-ltr text-left leading-relaxed">
-                    {typeof inspectedLog.details === 'object'
-                      ? JSON.stringify(inspectedLog.details, null, 2)
-                      : inspectedLog.details}
-                  </pre>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 dark:border-[#344258] text-left">
-              <button
-                onClick={() => setInspectedLog(null)}
-                className="px-4 py-1.5 bg-slate-100 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] font-semibold rounded-xl"
-              >
-                بستن
-              </button>
+            <div className="p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subsurface)]">
+              <span className="text-[var(--text-muted)] block mb-1">شرح اقدام:</span>
+              <p className="font-semibold text-[var(--text-primary)] leading-relaxed">{inspectedLog.action}</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">هدف: {inspectedLog.target}</p>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Confirmation Modal */}

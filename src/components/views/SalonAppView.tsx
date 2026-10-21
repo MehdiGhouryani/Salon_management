@@ -38,6 +38,9 @@ import {
   Edit3,
   MessageSquare,
   Save,
+  Search,
+  Filter,
+  ChevronDown,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -51,6 +54,8 @@ import {
 import { toPersianDigits, formatCurrency } from '../../utils/formatters';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { SalonQrModal } from '../common/SalonQrModal';
+import { EmptyState } from '../ui/EmptyState';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const SalonAppView: React.FC = () => {
   const {
@@ -125,12 +130,49 @@ export const SalonAppView: React.FC = () => {
   const [onlineBookingEnabled, setOnlineBookingEnabled] = useState(true);
   const [smsNotificationEnabled, setSmsNotificationEnabled] = useState(true);
 
+  // Appointments filtering & pagination UX
+  const [bookingSearch, setBookingSearch] = useState('');
+  const debouncedBookingSearch = useDebounce(bookingSearch, 300);
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<
+    'all' | 'confirmed' | 'completed' | 'cancelled'
+  >('all');
+  const [visibleBookingsCount, setVisibleBookingsCount] = useState(6);
+
+  // Reset pagination when search or status filter changes
+  useEffect(() => {
+    setVisibleBookingsCount(6);
+  }, [debouncedBookingSearch, bookingStatusFilter]);
+
   // Filter bookings for this salon
   const salonBookings = useMemo(() => {
     return customerBookings.filter(
       (b) => b.salonId === currentSalon.id || b.salonName.includes(currentSalon.name)
     );
   }, [customerBookings, currentSalon]);
+
+  // Filtered bookings matching search query & status filter
+  const filteredSalonBookings = useMemo(() => {
+    const q = debouncedBookingSearch.trim().toLowerCase();
+    return salonBookings.filter((b) => {
+      const matchesSearch =
+        q === '' ||
+        b.clientName.toLowerCase().includes(q) ||
+        b.clientPhone.includes(q) ||
+        b.serviceName.toLowerCase().includes(q) ||
+        b.staffName.toLowerCase().includes(q);
+
+      const matchesStatus =
+        bookingStatusFilter === 'all' || b.status === bookingStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [salonBookings, debouncedBookingSearch, bookingStatusFilter]);
+
+  const paginatedSalonBookings = useMemo(() => {
+    return filteredSalonBookings.slice(0, visibleBookingsCount);
+  }, [filteredSalonBookings, visibleBookingsCount]);
+
+  const hasMoreBookings = visibleBookingsCount < filteredSalonBookings.length;
 
   // Daily Settlement Stats (خلاصه صندوق و تسویه روزانه سالن)
   const dailyStats = useMemo(() => {
@@ -484,10 +526,15 @@ export const SalonAppView: React.FC = () => {
 
                 {/* 2. Appointments Header & Bottom Sheet Trigger */}
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                    صف نوبت‌های سالن:
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                      صف نوبت‌های سالن
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold">
+                      {toPersianDigits(filteredSalonBookings.length)}
+                    </span>
+                  </div>
                   <button
                     onClick={() => setNewBookingSheetOpen(true)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold cursor-pointer shadow-xs active:scale-95 transition-all"
@@ -497,27 +544,145 @@ export const SalonAppView: React.FC = () => {
                   </button>
                 </div>
 
-                {/* 3. Appointment Cards List */}
-                {salonBookings.length === 0 ? (
-                  <div className="p-8 text-center bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] rounded-2xl space-y-2.5">
-                    <Calendar className="w-8 h-8 text-slate-400 mx-auto" />
-                    <p className="text-xs text-slate-500 dark:text-[#9AAAC2]">
-                      نوبتی در صف انتظار این سالن نیست.
-                    </p>
+                {/* 2.1 Search and Quick Filter Bar */}
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={bookingSearch}
+                      onChange={(e) => setBookingSearch(e.target.value)}
+                      placeholder="جستجو با نام، شماره، خدمت یا پرسنل..."
+                      className="w-full pr-8 pl-8 py-2 text-xs bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all"
+                    />
+                    {bookingSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setBookingSearch('')}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
+                        title="پاک کردن جستجو"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Status Filter Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[11px]">
                     <button
-                      onClick={() => {
-                        setCurrentSalonSlug(currentSalon.slug || 'gisara');
-                        setPersona('salon_website');
-                      }}
-                      className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold cursor-pointer inline-flex items-center gap-1"
+                      type="button"
+                      onClick={() => setBookingStatusFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
+                        bookingStatusFilter === 'all'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
                     >
-                      <ExternalLink className="w-3 h-3" />
-                      ثبت یک نوبت آزمایشی در وب‌سایت
+                      همه ({toPersianDigits(salonBookings.length)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingStatusFilter('confirmed')}
+                      className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
+                        bookingStatusFilter === 'confirmed'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      در انتظار ({toPersianDigits(salonBookings.filter((b) => b.status === 'confirmed').length)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingStatusFilter('completed')}
+                      className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
+                        bookingStatusFilter === 'completed'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      تسویه شده ({toPersianDigits(salonBookings.filter((b) => b.status === 'completed').length)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingStatusFilter('cancelled')}
+                      className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
+                        bookingStatusFilter === 'cancelled'
+                          ? 'bg-rose-900 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      لغو شده ({toPersianDigits(salonBookings.filter((b) => b.status === 'cancelled').length)})
                     </button>
                   </div>
+
+                  {/* Filter Count and Reset Indicator */}
+                  {(bookingSearch || bookingStatusFilter !== 'all') && (
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 px-1">
+                      <span>
+                        نمایش {toPersianDigits(paginatedSalonBookings.length)} از {toPersianDigits(filteredSalonBookings.length)} نوبت فیلتر شده
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBookingSearch('');
+                          setBookingStatusFilter('all');
+                        }}
+                        className="text-rose-600 dark:text-rose-400 hover:underline font-bold cursor-pointer"
+                      >
+                        پاک کردن همه فیلترها
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Appointment Cards List */}
+                {salonBookings.length === 0 ? (
+                  <EmptyState
+                    icon={<Calendar className="w-8 h-8 text-rose-500" />}
+                    title="نوبتی در صف انتظار این سالن نیست"
+                    description="هنوز هیچ نوبت حضوری یا آنلاین برای این سالن ثبت نشده است. می‌توانید یک نوبت حضوری سریع ثبت نمایید."
+                    action={
+                      <div className="flex flex-col sm:flex-row items-center gap-2 mt-2">
+                        <button
+                          onClick={() => setNewBookingSheetOpen(true)}
+                          className="px-3.5 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-all cursor-pointer shadow-xs"
+                        >
+                          ثبت نوبت حضوری جدید
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentSalonSlug(currentSalon.slug || 'gisara');
+                            setPersona('salon_website');
+                          }}
+                          className="px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          ثبت یک نوبت آزمایشی در وب‌سایت
+                        </button>
+                      </div>
+                    }
+                  />
+                ) : filteredSalonBookings.length === 0 ? (
+                  <EmptyState
+                    icon={<Search className="w-8 h-8 text-amber-500" />}
+                    title="نوبتی با این مشخصات یافت نشد"
+                    description="هیچ نوبتی با عبارت جستجو یا وضعیت انتخابی مطابقت ندارد. لطفاً فیلترها را بررسی یا بازنشانی کنید."
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBookingSearch('');
+                          setBookingStatusFilter('all');
+                        }}
+                        className="px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
+                      >
+                        پاک کردن فیلترها
+                      </button>
+                    }
+                  />
                 ) : (
                   <div className="space-y-2.5">
-                    {salonBookings.map((b) => {
+                    {paginatedSalonBookings.map((b) => {
                       const isCompleted = b.status === 'completed';
                       const isCancelled = b.status === 'cancelled';
                       return (
@@ -605,6 +770,22 @@ export const SalonAppView: React.FC = () => {
                         </div>
                       );
                     })}
+
+                    {/* Load More Button for client-side pagination */}
+                    {hasMoreBookings && (
+                      <div className="pt-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setVisibleBookingsCount((prev) => prev + 6)}
+                          className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 border border-rose-200/60 dark:border-rose-900/30 transition-all cursor-pointer shadow-xs active:scale-98 flex items-center justify-center gap-1.5"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>
+                            بارگذاری نوبت‌های بیشتر ({toPersianDigits(filteredSalonBookings.length - visibleBookingsCount)} نوبت باقیمانده)
+                          </span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
