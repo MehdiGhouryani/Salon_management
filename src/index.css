@@ -4,6 +4,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* One family. Vazirmatn is self-hosted (see main.tsx); the stack is what `font-sans` resolves to. */
+  --font-sans: 'Vazirmatn Variable', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Vazirmatn Variable', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+
   --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
   --color-elevated: var(--bg-elevated);
@@ -121,7 +125,7 @@
   }
 
   body {
-    font-family: 'Vazirmatn', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -195,8 +199,9 @@
   min-width: 44px;
 }
 
-/* Tabular numerals standard */
-.tabular-nums {
+/* Tabular numerals standard (font-mono now only means "figures that line up": one family, no monospace face) */
+.tabular-nums,
+.font-mono {
   font-variant-numeric: tabular-nums;
 }
 
