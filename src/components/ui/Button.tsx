@@ -45,19 +45,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Variant classes using semantic token variables
     const variantClasses: Record<ButtonVariant, string> = {
       primary:
-        'bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white shadow-xs font-semibold focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-[var(--brand-primary)] hover:bg-[var(--brand-accent)] text-white shadow-xs font-semibold focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-canvas',
       secondary:
-        'bg-[var(--bg-elevated)] hover:bg-[var(--bg-subsurface)] text-[var(--text-primary)] border border-[var(--border-subtle)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-[var(--bg-elevated)] hover:bg-[var(--bg-subsurface)] text-[var(--text-primary)] border border-[var(--border-subtle)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-canvas',
       outline:
-        'bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-strong)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-strong)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-canvas',
       ghost:
-        'bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-transparent hover:bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus-visible:ring-[var(--brand-primary)] dark:focus-visible:ring-offset-canvas',
       danger:
-        'bg-[var(--status-error)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-error)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-[var(--status-error)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-error)] dark:focus-visible:ring-offset-canvas',
       success:
-        'bg-[var(--status-success)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-success)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-[var(--status-success)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-success)] dark:focus-visible:ring-offset-canvas',
       warning:
-        'bg-[var(--status-warning)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-warning)] dark:focus-visible:ring-offset-[#0B1120]',
+        'bg-[var(--status-warning)] hover:opacity-90 text-white shadow-xs font-semibold focus-visible:ring-[var(--status-warning)] dark:focus-visible:ring-offset-canvas',
     };
 
     // Sizing

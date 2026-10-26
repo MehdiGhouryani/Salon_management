@@ -12,7 +12,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
 }) => {
   if (type === 'card') {
     return (
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/80 dark:border-[#344258] space-y-4 animate-pulse">
+      <div className="p-6 rounded-2xl bg-white dark:bg-elevated border border-stone-200/80 dark:border-border-default space-y-4 animate-pulse">
         <Skeleton height={24} width="40%" />
         <Skeleton height={16} width="80%" />
         <Skeleton height={100} width="100%" />
@@ -22,8 +22,8 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
 
   if (type === 'table') {
     return (
-      <div className="p-6 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/80 dark:border-[#344258] space-y-3 animate-pulse">
-        <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-[#344258]">
+      <div className="p-6 rounded-2xl bg-white dark:bg-elevated border border-stone-200/80 dark:border-border-default space-y-3 animate-pulse">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-border-default">
           <Skeleton height={20} width="30%" />
           <Skeleton height={32} width={100} />
         </div>
@@ -41,7 +41,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
   return (
     <div className="p-6 md:p-8 space-y-6 w-full max-w-7xl mx-auto animate-pulse dir-rtl">
       {/* Header Skeleton */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/60 dark:border-[#344258]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/60 dark:border-border-default">
         <div className="space-y-2">
           <Skeleton height={28} width={240} className="rounded-lg" />
           <Skeleton height={16} width={320} className="rounded-md" />
@@ -57,7 +57,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/80 dark:border-[#344258] space-y-3"
+            className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/80 dark:border-border-default space-y-3"
           >
             <div className="flex items-center justify-between">
               <Skeleton height={16} width={90} />
@@ -71,7 +71,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
 
       {/* Main Content Area Skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/80 dark:border-[#344258] space-y-4">
+        <div className="lg:col-span-2 p-6 rounded-2xl bg-white dark:bg-elevated border border-stone-200/80 dark:border-border-default space-y-4">
           <Skeleton height={22} width={180} />
           <Skeleton height={180} width="100%" className="rounded-xl" />
           <div className="space-y-2 pt-2">
@@ -79,7 +79,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
             <Skeleton height={14} width="75%" />
           </div>
         </div>
-        <div className="p-6 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/80 dark:border-[#344258] space-y-4">
+        <div className="p-6 rounded-2xl bg-white dark:bg-elevated border border-stone-200/80 dark:border-border-default space-y-4">
           <Skeleton height={22} width={140} />
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3">
@@ -94,7 +94,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
       </div>
 
       {message && (
-        <p className="text-center text-xs text-zinc-400 dark:text-[#9AAAC2] pt-2 font-medium">
+        <p className="text-center text-xs text-zinc-400 dark:text-text-muted pt-2 font-medium">
           {message}
         </p>
       )}

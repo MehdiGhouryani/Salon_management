@@ -124,7 +124,7 @@ export const ProductionAdminLogin: React.FC<ProductionAdminLoginProps> = ({ onCa
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
-      <div className="max-w-md w-full bg-[#111B2E] border border-rose-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
+      <div className="max-w-md w-full bg-dk-surface border border-rose-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
         <div className="text-center space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
             <ShieldCheck className="w-8 h-8" />
@@ -160,7 +160,7 @@ export const ProductionAdminLogin: React.FC<ProductionAdminLoginProps> = ({ onCa
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={isLoading}
                   autoFocus
-                  className="w-full text-left pl-10 pr-3.5 py-2.5 rounded-xl border border-[#344258] bg-[#0B1120] text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
+                  className="w-full text-left pl-10 pr-3.5 py-2.5 rounded-xl border border-dk-border bg-dk-canvas text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
                 />
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
@@ -209,7 +209,7 @@ export const ProductionAdminLogin: React.FC<ProductionAdminLoginProps> = ({ onCa
                   onChange={(e) => setOtpCode(e.target.value)}
                   disabled={isLoading}
                   autoFocus
-                  className="w-full text-center tracking-[0.4em] py-2.5 rounded-xl border border-[#344258] bg-[#0B1120] text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
+                  className="w-full text-center tracking-[0.4em] py-2.5 rounded-xl border border-dk-border bg-dk-canvas text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
                 />
                 <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
@@ -238,7 +238,7 @@ export const ProductionAdminLogin: React.FC<ProductionAdminLoginProps> = ({ onCa
           </form>
         )}
 
-        <div className="pt-2 border-t border-[#344258]/60">
+        <div className="pt-2 border-t border-dk-border/60">
           <button
             onClick={onCancel}
             className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-medium text-slate-300 border border-slate-700/60 transition-colors flex items-center justify-center gap-2 cursor-pointer"

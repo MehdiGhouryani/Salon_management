@@ -372,7 +372,7 @@ const MainSwitcher: React.FC = () => {
       if (serverAuth.user?.platformRole !== 'super_admin') {
         return (
           <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
-            <div className="max-w-md w-full bg-[#111B2E] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="max-w-md w-full bg-dk-surface border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
                 <ShieldAlert className="w-8 h-8" />
               </div>
@@ -427,7 +427,7 @@ const MainSwitcher: React.FC = () => {
       if (!hasSalonAccess) {
         return (
           <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
-            <div className="max-w-md w-full bg-[#111B2E] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="max-w-md w-full bg-dk-surface border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
                 <ShieldAlert className="w-8 h-8" />
               </div>
@@ -496,7 +496,7 @@ const MainSwitcher: React.FC = () => {
   const ActiveIcon = getPersonaIcon();
 
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-[#E7ECF5] transition-colors duration-200">
+    <div className="relative min-h-screen bg-slate-50 dark:bg-canvas text-slate-900 dark:text-text-main transition-colors duration-200">
       {/* Top Governance / Security Environment Mode Indicator */}
       <div
         className={`px-3 py-1.5 text-[11px] flex items-center justify-between border-b transition-colors select-none ${
@@ -546,20 +546,20 @@ const MainSwitcher: React.FC = () => {
         {isPillCollapsed ? (
           <button
             onClick={() => setMobilePersonaOpen(true)}
-            className="w-10 h-10 rounded-full bg-white/95 dark:bg-[#111B2E]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#344258] shadow-lg text-slate-800 dark:text-[#E7ECF5] flex items-center justify-center active:scale-90 transition-all cursor-pointer ring-1 ring-black/5 dark:ring-white/5 relative group"
+            className="w-10 h-10 rounded-full bg-white/95 dark:bg-surface/95 backdrop-blur-md border border-slate-200/90 dark:border-border-default shadow-lg text-slate-800 dark:text-text-main flex items-center justify-center active:scale-90 transition-all cursor-pointer ring-1 ring-black/5 dark:ring-white/5 relative group"
             aria-label="تغییر بخش نوبت‌آرا"
             title={`بخش فعلی: ${getPersonaLabel()} (برای تغییر کلیک کنید)`}
           >
-            <ActiveIcon className="w-4 h-4 text-[#F43F7A]" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#F43F7A] ring-2 ring-white dark:ring-[#111B2E]" />
+            <ActiveIcon className="w-4 h-4 text-brand" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand ring-2 ring-white dark:ring-dk-surface" />
           </button>
         ) : (
-          <div className="flex items-center gap-1 p-1 bg-white/95 dark:bg-[#111B2E]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#344258] shadow-xl rounded-full text-slate-800 dark:text-[#E7ECF5] text-xs font-bold ring-1 ring-black/5 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center gap-1 p-1 bg-white/95 dark:bg-surface/95 backdrop-blur-md border border-slate-200/90 dark:border-border-default shadow-xl rounded-full text-slate-800 dark:text-text-main text-xs font-bold ring-1 ring-black/5 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-150">
             <button
               onClick={() => setMobilePersonaOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#18243A] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-elevated transition-colors cursor-pointer"
             >
-              <ActiveIcon className="w-3.5 h-3.5 text-[#F43F7A]" />
+              <ActiveIcon className="w-3.5 h-3.5 text-brand" />
               <span className="text-[11px]">{getPersonaLabel()}</span>
             </button>
             <button
@@ -580,18 +580,18 @@ const MainSwitcher: React.FC = () => {
           onClick={() => setMobilePersonaOpen(false)}
         >
           <div
-            className="w-full max-w-sm bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-3xl p-4 shadow-2xl space-y-3 animate-in slide-in-from-bottom duration-200 text-right"
+            className="w-full max-w-sm bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-3xl p-4 shadow-2xl space-y-3 animate-in slide-in-from-bottom duration-200 text-right"
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#344258]">
-              <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-[#F43F7A]" />
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-border-default">
+              <span className="text-xs font-bold text-slate-800 dark:text-text-main flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-brand" />
                 انتخاب بخش پلتفرم نوبت‌آرا
               </span>
               <button
                 onClick={() => setMobilePersonaOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#E7ECF5] cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-text-main cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -606,8 +606,8 @@ const MainSwitcher: React.FC = () => {
                 }}
                 className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
                   persona === 'salon_website'
-                    ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                    : 'bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]'
+                    ? 'bg-brand dark:bg-brand text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -625,8 +625,8 @@ const MainSwitcher: React.FC = () => {
                 }}
                 className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
                   persona === 'salon_app'
-                    ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                    : 'bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]'
+                    ? 'bg-brand dark:bg-brand text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -644,8 +644,8 @@ const MainSwitcher: React.FC = () => {
                 }}
                 className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
                   persona === 'super_admin'
-                    ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                    : 'bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]'
+                    ? 'bg-brand dark:bg-brand text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -661,8 +661,8 @@ const MainSwitcher: React.FC = () => {
               </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-[#344258] flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-500 dark:text-[#9AAAC2]">پوسته صفحه:</span>
+            <div className="pt-2 border-t border-slate-100 dark:border-border-default flex items-center justify-between text-xs">
+              <span className="text-[11px] text-slate-500 dark:text-text-muted">پوسته صفحه:</span>
               <ThemeToggle variant="segmented" />
             </div>
           </div>
