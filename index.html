@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl" class="dark" data-theme="dark">
+<html lang="fa" dir="rtl" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,6 +9,16 @@
     <meta property="og:description" content="پنل مدیریت جامع ادمین اصلی با امکانات ارتقای UI/UX، مانیتورینگ امنیتی، مدیریت کسبوکارها، کاربران، اشتراکها، صف پیامک و پشتیبانی" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      /* Apply the saved theme before first paint (light is the default) so nothing flashes. */
+      try {
+        var d = localStorage.getItem('nobatara_theme') === 'dark';
+        var r = document.documentElement;
+        r.classList.toggle('dark', d);
+        r.setAttribute('data-theme', d ? 'dark' : 'light');
+        r.style.colorScheme = d ? 'dark' : 'light';
+      } catch (e) {}
+    </script>
   </head>
   <body class="font-sans antialiased selection:bg-[var(--brand-primary)] selection:text-white">
     <div id="root"></div>

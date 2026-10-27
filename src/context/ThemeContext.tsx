@@ -19,7 +19,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return saved;
       }
     }
-    return 'dark'; // Deep navy dark mode (#0B1120) is default
+    return 'light'; // Light is the default; a saved choice always wins
   });
 
   useEffect(() => {
