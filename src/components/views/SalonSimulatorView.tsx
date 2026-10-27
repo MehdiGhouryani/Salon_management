@@ -156,18 +156,18 @@ export const SalonSimulatorView: React.FC = () => {
       {/* Header & Salon Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-rose-400" />
             شبیه‌ساز زنده اپلیکیشن سالن‌دستیار (Companion Salon App)
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-text-subtle mt-1">
             مشاهده و تست عملکرد دستیار سالن و نوبت‌دهی آنلاین از نگاه مدیر و مشتریان هر سالن در شبکه
           </p>
         </div>
 
         {/* Salon Selector */}
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-400 font-medium">مشاهده عملکرد سالن:</span>
+          <span className="text-text-subtle font-medium">مشاهده عملکرد سالن:</span>
           <select
             value={currentSalon?.id}
             onChange={(e) => setSimulatorSalonId(e.target.value)}
@@ -183,13 +183,13 @@ export const SalonSimulatorView: React.FC = () => {
       </div>
 
       {/* Policy Notice: In-person Payment for Appointments */}
-      <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 flex items-start gap-3">
+      <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 flex items-start gap-3">
         <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
         <div className="space-y-0.5">
-          <p className="font-bold text-indigo-200">
+          <p className="font-bold text-indigo-900 dark:text-indigo-200">
             مدل تسویه نوبت‌ها: منحصراً حضوری در سالن (نقد و کارتخوان سالن)
           </p>
-          <p className="text-[11px] text-indigo-300/80 leading-relaxed">
+          <p className="text-[11px] text-indigo-700/90 dark:text-indigo-300/80 leading-relaxed">
             مشتریان نوبت‌ها به درگاه پرداخت اینترنتی متصل نمی‌شوند؛ برنامه فقط قیمت مصوب را نمایش داده و رزرو را ثبت می‌کند. پرداخت نهایی در محل سالن انجام می‌شود. درگاه‌های بانکی سیستم صرفاً برای خرید اشتراک سالن‌ها است.
           </p>
         </div>
@@ -216,12 +216,12 @@ export const SalonSimulatorView: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <h3 className="font-bold text-dk-text">{currentSalon?.name}</h3>
                   {currentSalon?.verifiedBadge && (
-                    <span className="text-sky-400 font-bold text-[10px]" title="تایید شده">
+                    <span className="text-sky-400 font-bold text-[11px]" title="تایید شده">
                       ✓
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-dk-muted mt-0.5">
+                <p className="text-[11px] text-dk-muted mt-0.5">
                   {currentSalon?.city} · مدیر: {currentSalon?.ownerName}
                 </p>
               </div>
@@ -241,21 +241,21 @@ export const SalonSimulatorView: React.FC = () => {
           {/* Today Summary Strip */}
           <div className="p-3 bg-dk-surface/90 border-b border-dk-border grid grid-cols-3 gap-2 text-center text-[11px]">
             <div className="p-2 bg-dk-elevated border border-dk-border rounded-xl">
-              <span className="text-dk-muted block text-[10px]">نوبت‌های امروز</span>
+              <span className="text-dk-muted block text-[11px]">نوبت‌های امروز</span>
               <span className="font-bold text-dk-text text-xs mt-0.5 block tabular-nums">
                 {toPersianDigits(appointments.length)} نوبت
               </span>
             </div>
 
             <div className="p-2 bg-dk-elevated border border-dk-border rounded-xl">
-              <span className="text-dk-muted block text-[10px]">تکمیل شده</span>
+              <span className="text-dk-muted block text-[11px]">تکمیل شده</span>
               <span className="font-bold text-emerald-400 text-xs mt-0.5 block tabular-nums">
                 {toPersianDigits(completedCount)} نوبت
               </span>
             </div>
 
             <div className="p-2 bg-dk-elevated border border-dk-border rounded-xl">
-              <span className="text-dk-muted block text-[10px]">فروش امروز</span>
+              <span className="text-dk-muted block text-[11px]">فروش امروز</span>
               <span className="font-bold text-amber-300 text-xs mt-0.5 block tabular-nums">
                 {formatCurrency(todayRevenue, 'toman')}
               </span>
@@ -267,7 +267,7 @@ export const SalonSimulatorView: React.FC = () => {
             {/* TAB 1: Calendar & Appointments */}
             {mobileTab === 'calendar' && (
               <>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 mb-1">
+                <div className="flex items-center justify-between text-[11px] text-text-subtle px-1 mb-1">
                   <span className="font-bold text-slate-300">تقویم نوبت‌های رزرو شده</span>
                   <span>امروز</span>
                 </div>
@@ -291,7 +291,7 @@ export const SalonSimulatorView: React.FC = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-dk-text">{apt.clientName}</span>
-                            <span className="text-[10px] text-dk-muted font-mono" dir="ltr">
+                            <span className="text-[11px] text-dk-muted font-mono" dir="ltr">
                               {apt.clientPhone}
                             </span>
                           </div>
@@ -351,15 +351,15 @@ export const SalonSimulatorView: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-dk-text">{c.name}</span>
                         {c.vip && (
-                          <span className="flex items-center gap-0.5 text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
+                          <span className="flex items-center gap-0.5 text-[11px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
                             <Star className="w-2.5 h-2.5 fill-amber-300" /> VIP
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-dk-muted font-mono block mt-0.5" dir="ltr">
+                      <span className="text-[11px] text-dk-muted font-mono block mt-0.5" dir="ltr">
                         {c.phone}
                       </span>
-                      <span className="text-[10px] text-rose-400 block mt-0.5">
+                      <span className="text-[11px] text-rose-400 block mt-0.5">
                         آخرین مراجعه: {c.lastService}
                       </span>
                     </div>
@@ -376,7 +376,7 @@ export const SalonSimulatorView: React.FC = () => {
                             message: `ارسال پیام به ${c.name} (${c.phone})`,
                           });
                         }}
-                        className="mt-1 px-2 py-0.5 rounded bg-dk-surface text-dk-muted hover:text-dk-text border border-dk-border text-[10px] transition-colors cursor-pointer"
+                        className="mt-1 px-2 py-0.5 rounded bg-dk-surface text-dk-muted hover:text-dk-text border border-dk-border text-[11px] transition-colors cursor-pointer"
                       >
                         ارسال پیامک
                       </button>
@@ -398,7 +398,7 @@ export const SalonSimulatorView: React.FC = () => {
                   <div key={i} className="p-3 rounded-2xl bg-dk-elevated border border-dk-border flex items-center justify-between">
                     <div>
                       <span className="font-bold text-dk-text block">{srv.name}</span>
-                      <span className="text-[10px] text-dk-muted mt-0.5 flex items-center gap-1">
+                      <span className="text-[11px] text-dk-muted mt-0.5 flex items-center gap-1">
                         <Clock className="w-3 h-3 text-dk-muted" /> مدت زمان: {srv.duration}
                       </span>
                     </div>
@@ -407,7 +407,7 @@ export const SalonSimulatorView: React.FC = () => {
                       <span className="font-bold text-emerald-400 text-xs tabular-nums block">
                         {formatCurrency(srv.price, 'toman')}
                       </span>
-                      <span className="text-[10px] text-dk-muted font-medium">{srv.category}</span>
+                      <span className="text-[11px] text-dk-muted font-medium">{srv.category}</span>
                     </div>
                   </div>
                 ))}
@@ -416,7 +416,7 @@ export const SalonSimulatorView: React.FC = () => {
           </div>
 
           {/* Mobile Bottom Navigation Bar (Interactive) */}
-          <div className="p-2.5 bg-dk-surface border-t border-dk-border flex items-center justify-around text-[10px]">
+          <div className="p-2.5 bg-dk-surface border-t border-dk-border flex items-center justify-around text-[11px]">
             <button
               onClick={() => setMobileTab('calendar')}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-colors cursor-pointer ${
@@ -458,7 +458,7 @@ export const SalonSimulatorView: React.FC = () => {
           <div className="relative w-full max-w-sm bg-dk-surface border border-dk-border rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4 text-xs text-dk-text">
             <div className="flex items-center justify-between pb-3 border-b border-dk-border">
               <h3 className="font-bold text-dk-text flex items-center gap-2">
-                <Plus className="w-4 h-4 text-rose-500 dark:text-brand" />
+                <Plus className="w-4 h-4 text-rose-500 dark:text-brand-accent" />
                 ثبت رزرو جدید برای {currentSalon?.name}
               </h3>
               <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-dk-muted hover:text-dk-text cursor-pointer">

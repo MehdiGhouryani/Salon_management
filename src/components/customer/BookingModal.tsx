@@ -426,7 +426,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-border-subtle flex items-center justify-between">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-text-main flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-brand" />
+              <Calendar className="w-5 h-5 text-brand-accent" />
               <span>رزرو نوبت {salon.name}</span>
             </h2>
             <p className="text-xs text-text-muted mt-0.5">
@@ -445,7 +445,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
         {/* 3-Step Clean Progress Bar */}
         <div className="px-3 sm:px-5 pt-2.5 pb-2 bg-elevated/40 border-b border-border-subtle">
-          <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] sm:text-xs">
+          <div className="grid grid-cols-3 gap-1.5 text-center text-[11px] sm:text-xs">
             <div className={`py-1.5 px-1 sm:px-2 rounded-lg font-bold transition-all truncate ${step === 1 ? 'bg-brand text-white shadow-xs' : step > 1 ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' : 'text-text-subtle'}`}>
               ۱. خدمت و متخصص
             </div>
@@ -497,7 +497,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           </p>
                         </div>
                         <div className="text-left shrink-0">
-                          <span className="text-xs sm:text-sm font-extrabold text-brand font-mono tabular-nums">
+                          <span className="text-xs sm:text-sm font-extrabold text-brand-accent font-mono tabular-nums">
                             {formatCurrency(srv.price)}
                           </span>
                         </div>
@@ -518,12 +518,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     onClick={() => setSelectedStaff('any')}
                     className={`p-2.5 rounded-xl border text-right transition-all cursor-pointer ${
                       selectedStaff === 'any'
-                        ? 'bg-brand-subdued border-brand text-brand font-bold ring-1 ring-brand/30'
+                        ? 'bg-brand-subdued border-brand text-brand-accent font-bold ring-1 ring-brand/30'
                         : 'bg-elevated/50 border-border-subtle text-text-main'
                     }`}
                   >
                     <div className="text-xs font-bold">اولین متخصص خالی</div>
-                    <div className="text-[10px] text-text-subtle mt-0.5">پیشنهادی سالن</div>
+                    <div className="text-[11px] text-text-subtle mt-0.5">پیشنهادی سالن</div>
                   </button>
 
                   {salon.staff.map((st) => {
@@ -542,7 +542,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         <img src={st.avatar} alt={st.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                         <div className="min-w-0">
                           <div className="text-xs font-bold truncate text-text-main">{st.name}</div>
-                          <div className="text-[10px] text-text-subtle truncate">{st.specialty || st.role}</div>
+                          <div className="text-[11px] text-text-subtle truncate">{st.specialty || st.role}</div>
                         </div>
                       </button>
                     );
@@ -593,7 +593,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     ساعت‌های آزاد نوبت:
                   </label>
                   {slotsLoading && (
-                    <span className="text-[11px] text-brand flex items-center gap-1">
+                    <span className="text-[11px] text-brand-accent flex items-center gap-1">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>در حال استعلام زمان‌های آزاد...</span>
                     </span>
@@ -629,7 +629,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         >
                           <div>{toPersianDigits(slot.time)}</div>
                           {!isAvailable && (
-                            <span className="text-[9px] block text-rose-500 font-sans not-italic font-normal">
+                            <span className="text-[11px] block text-rose-500 font-sans not-italic font-normal">
                               تکمیل
                             </span>
                           )}
@@ -706,8 +706,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   {otpStage === 'input_code' && (
                     <form onSubmit={handleVerifyOtp} className="space-y-3">
                       <div className="p-3 bg-brand-subdued border border-brand/30 rounded-xl text-xs text-text-main space-y-1">
-                        <div className="font-bold flex items-center gap-1.5 text-brand">
-                          <ShieldCheck className="w-4 h-4 text-brand shrink-0" />
+                        <div className="font-bold flex items-center gap-1.5 text-brand-accent">
+                          <ShieldCheck className="w-4 h-4 text-brand-accent shrink-0" />
                           <span>کد تایید ۶ رقمی سرور</span>
                         </div>
                         <p className="text-[11px] text-text-muted leading-relaxed">
@@ -806,7 +806,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     </div>
                     <div className="flex justify-between text-text-muted pt-2 border-t border-border-subtle">
                       <span>مبلغ پرداختی در سالن:</span>
-                      <span className="font-bold text-brand font-mono text-sm tabular-nums">{formatCurrency(selectedService.price)}</span>
+                      <span className="font-bold text-brand-accent font-mono text-sm tabular-nums">{formatCurrency(selectedService.price)}</span>
                     </div>
                   </div>
                 </div>

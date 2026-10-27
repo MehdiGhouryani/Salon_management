@@ -230,7 +230,7 @@ export const SalonQrModal: React.FC<SalonQrModalProps> = ({
           </Button>
         </div>
 
-        <p className="text-[10px] text-[var(--text-muted)] leading-normal">
+        <p className="text-[11px] text-[var(--text-muted)] leading-normal">
           💡 این بارکد را می‌توانید چاپ کرده و روی آینه‌ها، کارت ویزیت یا استند پذیرش سالن قرار دهید تا مشتریان بدون معطلی نوبت بگیرند.
         </p>
       </div>

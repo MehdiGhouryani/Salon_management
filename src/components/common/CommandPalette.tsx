@@ -167,7 +167,7 @@ export const CommandPalette: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
                       مشاهده جزئیات
                     </span>
                   </button>
@@ -201,7 +201,7 @@ export const CommandPalette: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
                       مدیریت کاربر
                     </span>
                   </button>

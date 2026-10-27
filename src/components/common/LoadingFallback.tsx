@@ -94,7 +94,7 @@ export const LoadingFallback: React.FC<LoadingFallbackProps> = ({
       </div>
 
       {message && (
-        <p className="text-center text-xs text-zinc-400 dark:text-text-muted pt-2 font-medium">
+        <p className="text-center text-xs text-text-subtle dark:text-text-muted pt-2 font-medium">
           {message}
         </p>
       )}

@@ -56,7 +56,7 @@ export const SupportView: React.FC = () => {
       case 'medium':
         return { label: 'معمولی', color: 'text-sky-600 bg-sky-50 dark:bg-sky-950/40 border-sky-500/20' };
       case 'low':
-        return { label: 'کم', color: 'text-zinc-500 bg-stone-100 dark:bg-zinc-800 border-stone-200' };
+        return { label: 'کم', color: 'text-text-muted bg-stone-100 dark:bg-zinc-800 border-stone-200' };
     }
   };
 
@@ -69,7 +69,7 @@ export const SupportView: React.FC = () => {
             <HelpCircle className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             مرکز پشتیبانی و تیکت‌های سالن‌ها
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-text-muted mt-0.5">
+          <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
             رسیدگی به درخواست‌های فنی، مالی و راهنمایی مدیران سالن‌ها
           </p>
         </div>
@@ -125,12 +125,12 @@ export const SupportView: React.FC = () => {
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <h4 className="font-bold text-zinc-900 dark:text-text-main truncate">{t.subject}</h4>
-                    <span className={`px-1.5 py-0.2 text-[10px] rounded-md font-semibold border shrink-0 ${prio.color}`}>
+                    <span className={`px-1.5 py-0.2 text-[11px] rounded-md font-semibold border shrink-0 ${prio.color}`}>
                       {prio.label}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                  <div className="flex items-center justify-between text-[11px] text-text-muted">
                     <span>{t.salonName}</span>
                     <span>{t.updatedAt}</span>
                   </div>
@@ -139,7 +139,7 @@ export const SupportView: React.FC = () => {
             })}
 
             {filteredTickets.length === 0 && (
-              <div className="py-8 text-center text-zinc-400">
+              <div className="py-8 text-center text-text-subtle">
                 تیکتی یافت نشد.
               </div>
             )}
@@ -154,7 +154,7 @@ export const SupportView: React.FC = () => {
               <div className="flex items-start justify-between pb-3 border-b border-stone-100 dark:border-border-default">
                 <div>
                   <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">{selectedTicket.subject}</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <p className="text-xs text-text-muted mt-0.5">
                     سالن: {selectedTicket.salonName} · ثبت توسط: {selectedTicket.creatorName}
                   </p>
                 </div>
@@ -171,7 +171,7 @@ export const SupportView: React.FC = () => {
                   {selectedTicket.status !== 'closed' && (
                     <button
                       onClick={() => closeTicket(selectedTicket.id)}
-                      className="px-3 py-1 text-xs text-zinc-500 hover:text-zinc-800 rounded-lg cursor-pointer"
+                      className="px-3 py-1 text-xs text-text-muted hover:text-zinc-800 rounded-lg cursor-pointer"
                     >
                       بستن
                     </button>
@@ -190,7 +190,7 @@ export const SupportView: React.FC = () => {
                         : 'bg-stone-50 dark:bg-surface border border-stone-200/80 dark:border-border-default text-zinc-800 dark:text-zinc-200 ml-auto'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1">
+                    <div className="flex items-center justify-between text-[11px] text-text-subtle mb-1">
                       <span className="font-bold">{m.senderName} ({m.senderRole === 'admin' ? 'پشتیبان نوبت‌آرا' : 'سالن'})</span>
                       <span>{m.timestamp}</span>
                     </div>
@@ -207,7 +207,7 @@ export const SupportView: React.FC = () => {
                   <button
                     key={idx}
                     onClick={() => setReplyText(res)}
-                    className="px-2 py-0.5 text-[10px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-text-muted rounded-lg hover:bg-stone-200 cursor-pointer"
+                    className="px-2 py-0.5 text-[11px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-text-muted rounded-lg hover:bg-stone-200 cursor-pointer"
                   >
                     {res.slice(0, 30)}...
                   </button>
@@ -233,7 +233,7 @@ export const SupportView: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="lg:col-span-2 p-12 text-center text-zinc-400 bg-white dark:bg-elevated rounded-2xl border border-stone-200 dark:border-border-default">
+          <div className="lg:col-span-2 p-12 text-center text-text-subtle bg-white dark:bg-elevated rounded-2xl border border-stone-200 dark:border-border-default">
             لطفاً یک تیکت را از لیست انتخاب کنید.
           </div>
         )}

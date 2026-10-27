@@ -111,7 +111,7 @@ export const StatusReasonModal: React.FC<StatusReasonModalProps> = ({
         )}
 
         <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] mt-2">
-          <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+          <span className="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-[var(--status-success)]" />
             <span>ثبت امن با شناسه اپراتور</span>
           </span>

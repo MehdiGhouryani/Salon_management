@@ -392,11 +392,11 @@ export const SalonAppView: React.FC = () => {
           <div>
             <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-text-main flex items-center gap-2">
               <span>اپلیکیشن مدیر سالن</span>
-              <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-elevated text-slate-600 dark:text-text-muted font-mono">
+              <span className="text-[11px] sm:text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-elevated text-slate-600 dark:text-text-muted font-mono">
                 نسخه مدیریت هوشمند
               </span>
             </h2>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-text-muted mt-0.5">
+            <p className="text-[11px] sm:text-xs text-text-muted dark:text-text-muted mt-0.5">
               مدیریت نوبت‌ها، تسویه حضوری، بارکد QR اختصاصی و تنظیمات وب‌سایت
             </p>
           </div>
@@ -405,7 +405,7 @@ export const SalonAppView: React.FC = () => {
         {/* Change Salon selector, QR Trigger, and Theme Toggle */}
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
           <div className="flex items-center gap-1.5 flex-1 sm:flex-initial">
-            <span className="text-xs text-slate-500 dark:text-text-muted whitespace-nowrap">سالن:</span>
+            <span className="text-xs text-text-muted dark:text-text-muted whitespace-nowrap">سالن:</span>
             <select
               value={currentSalon.slug}
               onChange={(e) => setCurrentSalonSlug(e.target.value)}
@@ -443,13 +443,13 @@ export const SalonAppView: React.FC = () => {
           </div>
 
           {/* Android Status Bar */}
-          <div className="pt-2 sm:pt-3 pb-1.5 px-4 sm:px-6 bg-slate-100 dark:bg-canvas text-[11px] font-mono text-slate-500 dark:text-text-muted flex items-center justify-between border-b border-slate-200 dark:border-border-default/80 z-20">
+          <div className="pt-2 sm:pt-3 pb-1.5 px-4 sm:px-6 bg-slate-100 dark:bg-canvas text-[11px] font-mono text-text-muted dark:text-text-muted flex items-center justify-between border-b border-slate-200 dark:border-border-default/80 z-20">
             <span className="font-bold text-slate-800 dark:text-slate-200">۱۰:۲۸</span>
             <div className="flex items-center gap-2">
-              <span className="text-[10px]">5G</span>
-              <Wifi className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-[11px]">5G</span>
+              <Wifi className="w-3.5 h-3.5 text-text-subtle" />
               <div className="flex items-center gap-1">
-                <span className="text-[10px]">۹۲٪</span>
+                <span className="text-[11px]">۹۲٪</span>
                 <Battery className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
@@ -468,7 +468,7 @@ export const SalonAppView: React.FC = () => {
                   </h3>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 </div>
-                <span className="text-[10px] text-slate-500 dark:text-text-muted block truncate">
+                <span className="text-[11px] text-text-muted dark:text-text-muted block truncate">
                   {currentSalon.city} · مدیر: {currentSalon.ownerName}
                 </span>
               </div>
@@ -477,7 +477,7 @@ export const SalonAppView: React.FC = () => {
             {/* Quick QR & Share Button */}
             <button
               onClick={() => setQrModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 text-[10px] font-bold cursor-pointer active:scale-95 transition-all"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 text-[11px] font-bold cursor-pointer active:scale-95 transition-all"
             >
               <QrCode className="w-3 h-3" />
               <span>کد QR</span>
@@ -498,14 +498,14 @@ export const SalonAppView: React.FC = () => {
                       <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       خلاصه دخل و تسویه امروز
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-[11px] text-text-muted font-mono">
                       {toPersianDigits(dailyStats.completedCount + dailyStats.confirmedCount)} نوبت کل
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="p-2.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 rounded-xl">
-                      <span className="text-[10px] text-emerald-800 dark:text-emerald-300 block">
+                      <span className="text-[11px] text-emerald-800 dark:text-emerald-300 block">
                         تسویه شده امروز:
                       </span>
                       <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 font-mono tabular-nums mt-0.5 block">
@@ -514,7 +514,7 @@ export const SalonAppView: React.FC = () => {
                     </div>
 
                     <div className="p-2.5 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-xl">
-                      <span className="text-[10px] text-amber-800 dark:text-amber-300 block">
+                      <span className="text-[11px] text-amber-800 dark:text-amber-300 block">
                         در انتظار تسویه:
                       </span>
                       <span className="text-xs font-black text-amber-700 dark:text-amber-400 font-mono tabular-nums mt-0.5 block">
@@ -531,7 +531,7 @@ export const SalonAppView: React.FC = () => {
                       <Calendar className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                       صف نوبت‌های سالن
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold">
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-text-subtle font-bold">
                       {toPersianDigits(filteredSalonBookings.length)}
                     </span>
                   </div>
@@ -547,19 +547,19 @@ export const SalonAppView: React.FC = () => {
                 {/* 2.1 Search and Quick Filter Bar */}
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                    <Search className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle dark:text-text-muted pointer-events-none" />
                     <input
                       type="text"
                       value={bookingSearch}
                       onChange={(e) => setBookingSearch(e.target.value)}
                       placeholder="جستجو با نام، شماره، خدمت یا پرسنل..."
-                      className="w-full pr-8 pl-8 py-2 text-xs bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all"
+                      className="w-full pr-8 pl-8 py-2 text-xs bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-text-subtle dark:placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all"
                     />
                     {bookingSearch && (
                       <button
                         type="button"
                         onClick={() => setBookingSearch('')}
-                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-subtle hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-md cursor-pointer"
                         title="پاک کردن جستجو"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -575,7 +575,7 @@ export const SalonAppView: React.FC = () => {
                       className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
                         bookingStatusFilter === 'all'
                           ? 'bg-rose-600 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-text-subtle hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       همه ({toPersianDigits(salonBookings.length)})
@@ -586,7 +586,7 @@ export const SalonAppView: React.FC = () => {
                       className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
                         bookingStatusFilter === 'confirmed'
                           ? 'bg-rose-600 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-text-subtle hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       در انتظار ({toPersianDigits(salonBookings.filter((b) => b.status === 'confirmed').length)})
@@ -597,7 +597,7 @@ export const SalonAppView: React.FC = () => {
                       className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
                         bookingStatusFilter === 'completed'
                           ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-text-subtle hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       تسویه شده ({toPersianDigits(salonBookings.filter((b) => b.status === 'completed').length)})
@@ -608,7 +608,7 @@ export const SalonAppView: React.FC = () => {
                       className={`px-2.5 py-1 rounded-lg font-bold shrink-0 transition-all cursor-pointer ${
                         bookingStatusFilter === 'cancelled'
                           ? 'bg-rose-900 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                          : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-text-subtle hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       لغو شده ({toPersianDigits(salonBookings.filter((b) => b.status === 'cancelled').length)})
@@ -617,7 +617,7 @@ export const SalonAppView: React.FC = () => {
 
                   {/* Filter Count and Reset Indicator */}
                   {(bookingSearch || bookingStatusFilter !== 'all') && (
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 px-1">
+                    <div className="flex items-center justify-between text-[11px] text-text-muted dark:text-text-subtle px-1">
                       <span>
                         نمایش {toPersianDigits(paginatedSalonBookings.length)} از {toPersianDigits(filteredSalonBookings.length)} نوبت فیلتر شده
                       </span>
@@ -703,7 +703,7 @@ export const SalonAppView: React.FC = () => {
                               <span className="text-xs font-bold text-slate-900 dark:text-text-main group-hover:text-rose-600 transition-colors">
                                 {b.clientName}
                               </span>
-                              <span className="text-[10px] font-mono text-slate-500 dark:text-text-muted">
+                              <span className="text-[11px] font-mono text-text-muted dark:text-text-muted">
                                 {b.clientPhone}
                               </span>
                             </div>
@@ -731,7 +731,7 @@ export const SalonAppView: React.FC = () => {
                                 {formatCurrency(b.price)}
                               </strong>
                             </div>
-                            <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                            <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                               <CreditCard className="w-3 h-3" />
                               تسویه حضوری در سالن
                             </div>
@@ -739,7 +739,7 @@ export const SalonAppView: React.FC = () => {
 
                           {/* Action Bar */}
                           <div className="pt-2 border-t border-slate-100 dark:border-border-default flex items-center justify-between gap-2">
-                            <span className="text-[10px] text-slate-400 flex items-center gap-1 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors font-medium">
+                            <span className="text-[11px] text-text-subtle flex items-center gap-1 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors font-medium">
                               <Edit3 className="w-3 h-3" />
                               <span>جزئیات و ویرایش نوبت</span>
                             </span>
@@ -760,7 +760,7 @@ export const SalonAppView: React.FC = () => {
                                   e.stopPropagation();
                                   completeCustomerBookingInSalon(b.id);
                                 }}
-                                className="py-1 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 transition-all"
+                                className="py-1 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 transition-all"
                               >
                                 <CheckCircle2 className="w-3 h-3" />
                                 <span>تکمیل و تسویه</span>
@@ -801,7 +801,7 @@ export const SalonAppView: React.FC = () => {
                     <Scissors className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                     خدمات فعال سالن در وب‌سایت:
                   </span>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[11px] text-text-muted">
                     {toPersianDigits(salonDetailed.services.length)} لاین فعال
                   </span>
                 </div>
@@ -816,7 +816,7 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main truncate">
                           {srv.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted mt-0.5">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted mt-0.5">
                           {srv.duration} · {srv.categoryLabel}
                         </div>
                       </div>
@@ -847,7 +847,7 @@ export const SalonAppView: React.FC = () => {
                           <div className="text-xs font-bold text-slate-900 dark:text-text-main truncate">
                             {st.name}
                           </div>
-                          <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                          <div className="text-[11px] text-text-subtle truncate mt-0.5">
                             {st.role}
                           </div>
                         </div>
@@ -870,7 +870,7 @@ export const SalonAppView: React.FC = () => {
                       <Store className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                       ویترین و مشخصات صفحه اختصاصی سالن
                     </span>
-                    <span className="text-[10px] text-slate-500 dark:text-text-muted">
+                    <span className="text-[11px] text-text-muted dark:text-text-muted">
                       تنظیم بنر، تیتر معرفی و نحوه نمایش در سایت
                     </span>
                   </div>
@@ -931,7 +931,7 @@ export const SalonAppView: React.FC = () => {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                           />
                           <div className="absolute inset-0 bg-black/40 flex items-end p-1.5">
-                            <span className="text-[10px] text-white font-bold truncate leading-tight">
+                            <span className="text-[11px] text-white font-bold truncate leading-tight">
                               {preset.name}
                             </span>
                           </div>
@@ -1050,18 +1050,18 @@ export const SalonAppView: React.FC = () => {
                       <span className="text-xs text-slate-600 dark:text-text-muted block mt-0.5">
                         مدیریت: {currentSalon.ownerName}
                       </span>
-                      <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
+                      <span className="text-[11px] font-mono text-text-subtle block mt-0.5">
                         {currentSalon.phone}
                       </span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-border-default flex items-center justify-between text-[11px] text-slate-500 dark:text-text-muted">
+                  <div className="pt-2 border-t border-slate-100 dark:border-border-default flex items-center justify-between text-[11px] text-text-muted dark:text-text-muted">
                     <span className="flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                       حساب تجاری رسمی احراز هویت شده
                     </span>
-                    <span className="font-mono text-slate-400">
+                    <span className="font-mono text-text-subtle">
                       کد {currentSalon.id}
                     </span>
                   </div>
@@ -1082,19 +1082,19 @@ export const SalonAppView: React.FC = () => {
                             ? 'اشتراک نقره‌ای سالن'
                             : 'اشتراک برنزی پایه'}
                         </div>
-                        <div className="text-[10px] text-slate-300">
+                        <div className="text-[11px] text-slate-300">
                           انقضا: {currentSalon.planExpiry} (۲۶ روز مانده)
                         </div>
                       </div>
                     </div>
 
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
                       فعال
                     </span>
                   </div>
 
                   <div className="pt-2 flex items-center justify-between gap-2 border-t border-white/10">
-                    <span className="text-[10px] text-slate-300">
+                    <span className="text-[11px] text-slate-300">
                       پرسنل نامحدود · پیامک خودکار · درگاه اختصاصی
                     </span>
                     <button
@@ -1122,12 +1122,12 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main">
                           بارکد QR اختصاصی و لینک سالن
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted">
                           چاپ برای آینه‌ها، استند و اشتراک با مشتریان
                         </div>
                       </div>
                     </div>
-                    <ChevronLeft className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition-colors" />
+                    <ChevronLeft className="w-4 h-4 text-text-subtle group-hover:text-rose-600 transition-colors" />
                   </div>
 
                   {/* Row 2: Online booking toggle */}
@@ -1140,7 +1140,7 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main">
                           پذیرش نوبت آنلاین در سایت
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted">
                           امکان رزرو توسط مشتریان فعال باشد
                         </div>
                       </div>
@@ -1173,7 +1173,7 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main">
                           پیامک خودکار تایید و یادآوری
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted">
                           ارسال کد پیگیری بلافاصله پس از ثبت نوبت
                         </div>
                       </div>
@@ -1209,12 +1209,12 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main">
                           ساعات کاری و مشخصات ویترین
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted">
                           ویرایش عکس بنر، آدرس و زمان‌بندی سالن
                         </div>
                       </div>
                     </div>
-                    <ChevronLeft className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition-colors" />
+                    <ChevronLeft className="w-4 h-4 text-text-subtle group-hover:text-rose-600 transition-colors" />
                   </div>
 
                   {/* Row 5: Theme switcher row */}
@@ -1230,7 +1230,7 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main">
                           حالت نمایش (تاریک / روشن)
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted">
                           {theme === 'dark' ? 'تم سرمه‌ای شب فعال است' : 'تم روز فعال است'}
                         </div>
                       </div>
@@ -1259,12 +1259,12 @@ export const SalonAppView: React.FC = () => {
                         <div className="font-bold text-slate-900 dark:text-text-main">
                           پشتیبانی و راهنمای سالن‌ها
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-text-muted">
+                        <div className="text-[11px] text-text-muted dark:text-text-muted">
                           تماس با کارشناس سامانه نوبت‌آرا
                         </div>
                       </div>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="text-[11px] text-text-subtle font-mono">
                       ۰۲۱-۹۱۰۰۸۰۰۰
                     </span>
                   </div>
@@ -1283,13 +1283,13 @@ export const SalonAppView: React.FC = () => {
           </div>
 
           {/* Android Bottom Navigation Bar (4 CLEAN TABS: Calendar, Services, Showcase, Profile) */}
-          <div className="p-2 bg-white dark:bg-canvas border-t border-slate-200 dark:border-border-default grid grid-cols-4 gap-1 text-center text-[10px] select-none shadow-sm">
+          <div className="p-2 bg-white dark:bg-canvas border-t border-slate-200 dark:border-border-default grid grid-cols-4 gap-1 text-center text-[11px] select-none shadow-sm">
             <button
               onClick={() => setActiveAppTab('appointments')}
               className={`p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center gap-1 min-h-[44px] justify-center ${
                 activeAppTab === 'appointments'
                   ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
+                  : 'text-text-muted hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               <Calendar className="w-4 h-4" />
@@ -1301,7 +1301,7 @@ export const SalonAppView: React.FC = () => {
               className={`p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center gap-1 min-h-[44px] justify-center ${
                 activeAppTab === 'services'
                   ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
+                  : 'text-text-muted hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               <Scissors className="w-4 h-4" />
@@ -1313,7 +1313,7 @@ export const SalonAppView: React.FC = () => {
               className={`p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center gap-1 min-h-[44px] justify-center ${
                 activeAppTab === 'showcase'
                   ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
+                  : 'text-text-muted hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               <Store className="w-4 h-4" />
@@ -1325,7 +1325,7 @@ export const SalonAppView: React.FC = () => {
               className={`p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center gap-1 min-h-[44px] justify-center ${
                 activeAppTab === 'profile'
                   ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
+                  : 'text-text-muted hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               <User className="w-4 h-4" />
@@ -1354,14 +1354,14 @@ export const SalonAppView: React.FC = () => {
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                         ثبت نوبت حضوری جدید
                       </h4>
-                      <span className="text-[10px] text-slate-500 dark:text-text-muted block">
+                      <span className="text-[11px] text-text-muted dark:text-text-muted block">
                         مشابه ثبت سریع در اپلیکیشن‌های اسنپ و دیجی‌کالا
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={() => setNewBookingSheetOpen(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated cursor-pointer"
+                    className="p-1.5 rounded-lg text-text-subtle hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1371,7 +1371,7 @@ export const SalonAppView: React.FC = () => {
                   {/* Client Info */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-600 dark:text-text-muted mb-1">
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-text-muted mb-1">
                         نام مشتری:
                       </label>
                       <input
@@ -1384,7 +1384,7 @@ export const SalonAppView: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-600 dark:text-text-muted mb-1">
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-text-muted mb-1">
                         تلفن همراه:
                       </label>
                       <input
@@ -1400,7 +1400,7 @@ export const SalonAppView: React.FC = () => {
 
                   {/* Quick Service Selection Chips */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-text-muted">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-text-muted">
                       انتخاب سریع از خدمات سالن:
                     </label>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1412,7 +1412,7 @@ export const SalonAppView: React.FC = () => {
                             setManualServiceName(srv.name);
                             setManualPrice(srv.price);
                           }}
-                          className={`px-2.5 py-1.5 rounded-xl border text-[10px] font-bold whitespace-nowrap transition-all cursor-pointer ${
+                          className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${
                             manualServiceName === srv.name
                               ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                               : 'bg-slate-50 dark:bg-elevated border-slate-200 dark:border-border-default text-slate-700 dark:text-text-muted hover:border-rose-300'
@@ -1426,7 +1426,7 @@ export const SalonAppView: React.FC = () => {
 
                   {/* Staff Chips */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-text-muted">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-text-muted">
                       انتخاب متخصص سالن:
                     </label>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1435,7 +1435,7 @@ export const SalonAppView: React.FC = () => {
                           key={st.id}
                           type="button"
                           onClick={() => setManualStaffName(st.name)}
-                          className={`px-2.5 py-1 rounded-xl border text-[10px] font-medium whitespace-nowrap transition-all cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-xl border text-[11px] font-medium whitespace-nowrap transition-all cursor-pointer ${
                             manualStaffName === st.name || (!manualStaffName && salonDetailed.staff[0]?.name === st.name)
                               ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 font-bold'
                               : 'bg-slate-50 dark:bg-elevated border-slate-200 dark:border-border-default text-slate-600 dark:text-text-muted'
@@ -1449,7 +1449,7 @@ export const SalonAppView: React.FC = () => {
 
                   {/* Time slots */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-600 dark:text-text-muted">
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-text-muted">
                       ساعت نوبت:
                     </label>
                     <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
@@ -1458,7 +1458,7 @@ export const SalonAppView: React.FC = () => {
                           key={t}
                           type="button"
                           onClick={() => setManualTime(t)}
-                          className={`px-2.5 py-1 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold transition-all cursor-pointer ${
                             manualTime === t
                               ? 'bg-rose-600 text-white border-rose-600'
                               : 'bg-slate-50 dark:bg-elevated border-slate-200 dark:border-border-default text-slate-700 dark:text-text-muted'
@@ -1472,7 +1472,7 @@ export const SalonAppView: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <div>
-                      <label className="block text-[10px] font-medium text-slate-600 dark:text-text-muted mb-1">
+                      <label className="block text-[11px] font-medium text-slate-600 dark:text-text-muted mb-1">
                         زمان سفارشی:
                       </label>
                       <input
@@ -1483,7 +1483,7 @@ export const SalonAppView: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-medium text-slate-600 dark:text-text-muted mb-1">
+                      <label className="block text-[11px] font-medium text-slate-600 dark:text-text-muted mb-1">
                         مبلغ تسویه (تومان):
                       </label>
                       <input
@@ -1530,19 +1530,19 @@ export const SalonAppView: React.FC = () => {
                         {selectedBookingForSheet.clientName}
                       </h4>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-text-muted">
+                        <span className="text-[11px] font-mono text-text-muted dark:text-text-muted">
                           {selectedBookingForSheet.clientPhone}
                         </span>
                         {selectedBookingForSheet.status === 'completed' ? (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">
+                          <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800">
                             تسویه شده
                           </span>
                         ) : selectedBookingForSheet.status === 'cancelled' ? (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-900">
+                          <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 font-bold border border-rose-200 dark:border-rose-900">
                             لغو شده
                           </span>
                         ) : (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-800">
+                          <span className="text-[11px] px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 font-bold border border-amber-200 dark:border-amber-800">
                             در انتظار تسویه حضوری
                           </span>
                         )}
@@ -1551,7 +1551,7 @@ export const SalonAppView: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setSelectedBookingForSheet(null)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated cursor-pointer"
+                    className="p-1.5 rounded-lg text-text-subtle hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1561,7 +1561,7 @@ export const SalonAppView: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2">
                   <a
                     href={`tel:${selectedBookingForSheet.clientPhone}`}
-                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-elevated hover:bg-slate-100 dark:hover:bg-elevated border border-slate-200 dark:border-border-default text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors"
+                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-elevated hover:bg-slate-100 dark:hover:bg-elevated border border-slate-200 dark:border-border-default text-slate-800 dark:text-slate-200 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
                   >
                     <Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                     <span>تماس با مشتری</span>
@@ -1570,7 +1570,7 @@ export const SalonAppView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleSendClientSms(selectedBookingForSheet.clientPhone, selectedBookingForSheet.clientName)}
-                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-elevated hover:bg-slate-100 dark:hover:bg-elevated border border-slate-200 dark:border-border-default text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-elevated hover:bg-slate-100 dark:hover:bg-elevated border border-slate-200 dark:border-border-default text-slate-800 dark:text-slate-200 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                   >
                     <MessageSquare className="w-3 h-3 text-rose-600 dark:text-rose-400" />
                     <span>ارسال پیامک</span>
@@ -1582,9 +1582,9 @@ export const SalonAppView: React.FC = () => {
                       navigator.clipboard?.writeText(selectedBookingForSheet.clientPhone);
                       addToast({ type: 'success', title: 'شماره تلفن کپی شد' });
                     }}
-                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-elevated hover:bg-slate-100 dark:hover:bg-elevated border border-slate-200 dark:border-border-default text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="py-1.5 px-2 rounded-xl bg-slate-50 dark:bg-elevated hover:bg-slate-100 dark:hover:bg-elevated border border-slate-200 dark:border-border-default text-slate-800 dark:text-slate-200 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
                   >
-                    <Copy className="w-3 h-3 text-slate-400" />
+                    <Copy className="w-3 h-3 text-text-subtle" />
                     <span>کپی شماره</span>
                   </button>
                 </div>
@@ -1592,7 +1592,7 @@ export const SalonAppView: React.FC = () => {
                 {/* Appointment Card Prominent Info (No tracking code!) */}
                 <div className="p-3.5 bg-slate-50 dark:bg-elevated border border-slate-200 dark:border-border-default rounded-2xl space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-text-muted text-[11px]">تاریخ و زمان نوبت:</span>
+                    <span className="text-text-muted dark:text-text-muted text-[11px]">تاریخ و زمان نوبت:</span>
                     <span className="font-bold text-rose-600 dark:text-rose-400 font-mono flex items-center gap-1 bg-white dark:bg-surface px-2 py-0.5 rounded-lg border border-slate-200 dark:border-border-default">
                       <Clock className="w-3 h-3" />
                       <span>{selectedBookingForSheet.date} · ساعت {selectedBookingForSheet.time}</span>
@@ -1600,17 +1600,17 @@ export const SalonAppView: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-border-default/60">
-                    <span className="text-slate-500 text-[11px]">خدمت درخواستی:</span>
+                    <span className="text-text-muted text-[11px]">خدمت درخواستی:</span>
                     <strong className="text-slate-900 dark:text-text-main">{selectedBookingForSheet.serviceName}</strong>
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-border-default/60">
-                    <span className="text-slate-500 text-[11px]">متخصص مسئول:</span>
+                    <span className="text-text-muted text-[11px]">متخصص مسئول:</span>
                     <span className="text-slate-800 dark:text-slate-200 font-medium">{selectedBookingForSheet.staffName}</span>
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-border-default/60">
-                    <span className="text-slate-500 text-[11px]">مبلغ خدمت:</span>
+                    <span className="text-text-muted text-[11px]">مبلغ خدمت:</span>
                     <strong className="text-rose-600 dark:text-rose-400 font-mono tabular-nums text-xs">
                       {formatCurrency(selectedBookingForSheet.price)}
                     </strong>
@@ -1627,7 +1627,7 @@ export const SalonAppView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditingTimeMode(!isEditingTimeMode)}
-                      className="text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                      className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
                     >
                       {isEditingTimeMode ? 'بستن لیست ساعت‌ها' : 'انتخاب ساعت جدید'}
                     </button>
@@ -1641,7 +1641,7 @@ export const SalonAppView: React.FC = () => {
                             key={slot}
                             type="button"
                             onClick={() => setEditBookingTime(slot)}
-                            className={`px-2.5 py-1 rounded-xl border text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                            className={`px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold transition-all cursor-pointer ${
                               editBookingTime === slot
                                 ? 'bg-rose-600 text-white border-rose-600'
                                 : 'bg-slate-50 dark:bg-elevated border-slate-200 dark:border-border-default text-slate-700 dark:text-text-muted'
@@ -1653,7 +1653,7 @@ export const SalonAppView: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-500 whitespace-nowrap">ساعت سفارشی:</span>
+                        <span className="text-[11px] text-text-muted whitespace-nowrap">ساعت سفارشی:</span>
                         <input
                           type="text"
                           value={editBookingTime}
@@ -1761,12 +1761,12 @@ export const SalonAppView: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold">تمدید یا ارتقای اشتراک سالن</h3>
-                  <p className="text-[10px] text-slate-500">پرداخت امن از درگاه شاپرک</p>
+                  <p className="text-[11px] text-text-muted">پرداخت امن از درگاه شاپرک</p>
                 </div>
               </div>
               <button
                 onClick={() => setSubModalOpen(false)}
-                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center"
+                className="w-7 h-7 rounded-lg text-text-subtle hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center"
               >
                 ✕
               </button>
@@ -1808,7 +1808,7 @@ export const SalonAppView: React.FC = () => {
                 >
                   <div>
                     <div>{p.name}</div>
-                    <div className="text-[10px] text-slate-400 font-normal mt-0.5">{p.desc}</div>
+                    <div className="text-[11px] text-text-subtle font-normal mt-0.5">{p.desc}</div>
                   </div>
                   <div className="font-mono font-bold text-rose-600 dark:text-rose-400 tabular-nums">
                     {formatCurrency(p.price)}

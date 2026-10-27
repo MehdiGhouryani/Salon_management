@@ -87,7 +87,7 @@ export const Header: React.FC = React.memo(() => {
             <Search className="w-3.5 h-3.5 text-[var(--text-muted)] group-hover:text-[var(--brand-primary)] transition-colors shrink-0" />
             <span className="truncate">جستجوی سالن، کاربر...</span>
           </div>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md text-[var(--text-muted)] font-mono shadow-inner">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[11px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md text-[var(--text-muted)] font-mono shadow-inner">
             <Command className="w-2.5 h-2.5" /> K
           </kbd>
         </button>
@@ -137,7 +137,7 @@ export const Header: React.FC = React.memo(() => {
           >
             <Bell className="w-4 h-4" />
             {totalAlerts > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[10px] font-bold text-white shadow-xs tabular-nums">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[11px] font-bold text-white shadow-xs tabular-nums">
                 {toPersianDigits(totalAlerts)}
               </span>
             )}
@@ -261,7 +261,7 @@ export const Header: React.FC = React.memo(() => {
             <span className="text-xs font-bold text-[var(--text-primary)] leading-tight">
               مهدی غوریانی
             </span>
-            <span className="text-[10px] text-[var(--status-success)] flex items-center gap-1 font-medium">
+            <span className="text-[11px] text-[var(--status-success)] flex items-center gap-1 font-medium">
               <ShieldCheck className="w-2.5 h-2.5" /> ادمین اصلی
             </span>
           </div>

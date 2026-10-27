@@ -43,7 +43,7 @@ export const OperationsView: React.FC = () => {
             <Activity className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             سلامت سیستم و پایش زیرساخت
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-text-muted mt-0.5">
+          <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
             پایش بار سرور، مصرف حافظه، کش Redis و صف‌های پیامک
           </p>
         </div>
@@ -70,7 +70,7 @@ export const OperationsView: React.FC = () => {
       {/* Hardware & Infrastructure KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span>پردازنده سرور (CPU)</span>
             <Cpu className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
@@ -86,7 +86,7 @@ export const OperationsView: React.FC = () => {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span>حافظه RAM</span>
             <HardDrive className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
@@ -102,25 +102,25 @@ export const OperationsView: React.FC = () => {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span>تاخیر پاسخگویی (Latency)</span>
             <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             {toPersianDigits(metrics.avgResponseTimeMs)} میلی‌ثانیه
           </span>
-          <p className="text-[11px] text-zinc-400 mt-2">عالی و در محدوده سبز</p>
+          <p className="text-[11px] text-text-subtle mt-2">عالی و در محدوده سبز</p>
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span>کش Redis</span>
             <Database className="w-4 h-4 text-sky-600 dark:text-sky-400" />
           </div>
           <span className="text-2xl font-bold text-zinc-900 dark:text-text-main tabular-nums">
             {toPersianDigits(metrics.redisCacheHitRate)}٪ هیت‌ریت
           </span>
-          <p className="text-[11px] text-zinc-400 mt-2">{toPersianDigits(metrics.activeWebsockets)} سالن متصل زنده</p>
+          <p className="text-[11px] text-text-subtle mt-2">{toPersianDigits(metrics.activeWebsockets)} سالن متصل زنده</p>
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export const OperationsView: React.FC = () => {
                 className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   logFilter === filter
                     ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold'
-                    : 'text-zinc-500 hover:text-zinc-800'
+                    : 'text-text-muted hover:text-zinc-800'
                 }`}
               >
                 {filter === 'all' ? 'همه رویدادها' : filter === 'error' ? 'هشدار و خطا' : 'کرون جابز'}
@@ -152,14 +152,14 @@ export const OperationsView: React.FC = () => {
         <div className="p-3 bg-stone-50 dark:bg-elevated rounded-xl border border-stone-100 dark:border-border-default/80 my-3 font-mono text-xs space-y-2 max-h-72 overflow-y-auto" dir="ltr">
           {filteredLogs.map((log, i) => (
             <div key={i} className="flex items-start gap-2 text-left">
-              <span className="text-zinc-400 shrink-0">[{log.time}]</span>
+              <span className="text-text-subtle shrink-0">[{log.time}]</span>
               <span
                 className={`font-semibold shrink-0 ${
                   log.level === 'error'
                     ? 'text-rose-500'
                     : log.level === 'warn'
-                    ? 'text-amber-500'
-                    : 'text-emerald-500'
+                    ? 'text-amber-700 dark:text-amber-400'
+                    : 'text-emerald-700 dark:text-emerald-400'
                 }`}
               >
                 [{log.level.toUpperCase()}]

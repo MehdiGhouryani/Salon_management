@@ -131,7 +131,7 @@ export const ProductionSalonLogin: React.FC<ProductionSalonLoginProps> = ({ onCa
           <div>
             <h2 className="text-lg font-bold text-white">ورود به اپلیکیشن مدیریت سالن</h2>
             <p className="text-xs text-rose-300 font-semibold mt-1">احراز هویت پیامکی مدیران و کادر تخصصی سالن</p>
-            <p className="text-xs text-slate-400 leading-relaxed mt-2">
+            <p className="text-xs text-text-subtle leading-relaxed mt-2">
               جهت مشاهده و مدیریت نوبت‌ها، تنظیم ساعات کاری و گزارش‌های مالی، با شماره همراه ثبت‌شده خود در سالن وارد شوید.
             </p>
           </div>
@@ -161,9 +161,9 @@ export const ProductionSalonLogin: React.FC<ProductionSalonLoginProps> = ({ onCa
                   autoFocus
                   className="w-full text-left pl-10 pr-3.5 py-2.5 rounded-xl border border-dk-border bg-dk-canvas text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
                 />
-                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Phone className="w-4 h-4 text-text-subtle absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-[11px] text-text-muted mt-1">
                 کد تایید یکبار مصرف ۶ رقمی به این شماره ارسال خواهد شد.
               </p>
             </div>
@@ -210,12 +210,12 @@ export const ProductionSalonLogin: React.FC<ProductionSalonLoginProps> = ({ onCa
                   autoFocus
                   className="w-full text-center tracking-[0.4em] py-2.5 rounded-xl border border-dk-border bg-dk-canvas text-white text-lg font-bold focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono"
                 />
-                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <KeyRound className="w-4 h-4 text-text-subtle absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
             {countdown > 0 && (
-              <p className="text-xs text-slate-400 text-center">
+              <p className="text-xs text-text-subtle text-center">
                 امکان ارسال مجدد کد پس از {countdown} ثانیه
               </p>
             )}

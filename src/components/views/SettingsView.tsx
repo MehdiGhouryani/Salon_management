@@ -81,7 +81,7 @@ export const SettingsView: React.FC = () => {
           <Settings className="w-5 h-5 text-rose-600 dark:text-rose-400" />
           تنظیمات هسته و اتصالات
         </h2>
-        <p className="text-xs text-zinc-500 dark:text-text-muted mt-0.5">
+        <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
           پیکربندی کلیدهای وب‌سرویس پیامک، درگاه بانکی شاپرک و اطلاعیه‌های سراسری
         </p>
       </div>
@@ -97,7 +97,7 @@ export const SettingsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowKeys(!showKeys)}
-              className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
+              className="text-xs text-text-muted hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
             >
               {showKeys ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               <span>{showKeys ? 'پنهان‌سازی کلیدها' : 'نمایش کلیدها'}</span>
@@ -156,7 +156,7 @@ export const SettingsView: React.FC = () => {
               <Bell className="w-4 h-4 text-rose-500" />
               پیام اطلاعیه سراسری
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               نمایش بنر هشدار در بالای پنل تمام سالن‌ها و اپلیکیشن‌ها
             </p>
           </div>

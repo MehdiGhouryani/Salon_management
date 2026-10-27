@@ -161,7 +161,7 @@ export const CustomerPortal: React.FC = () => {
             <ChevronLeft className="w-3 h-3 text-rose-400" />
           </button>
         ) : (
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-text-subtle">
             ورود ادمین: منحصراً از درگاه امن
           </span>
         )}
@@ -178,11 +178,11 @@ export const CustomerPortal: React.FC = () => {
             <div>
               <div className="text-base font-extrabold text-white tracking-tight flex items-center gap-1.5">
                 <span>بیوتی‌پلاس</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   سامانه مشتریان
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">رزرو آنلاین و پرداخت در محل سالن‌های زیبایی</p>
+              <p className="text-[11px] text-text-subtle">رزرو آنلاین و پرداخت در محل سالن‌های زیبایی</p>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export const CustomerPortal: React.FC = () => {
               <Calendar className="w-4 h-4 text-rose-400" />
               <span>نوبت‌های من</span>
               {activeBookingsCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-mono flex items-center justify-center font-bold">
+                <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[11px] font-mono flex items-center justify-center font-bold">
                   {toPersianDigits(activeBookingsCount)}
                 </span>
               )}
@@ -247,7 +247,7 @@ export const CustomerPortal: React.FC = () => {
           {/* Unified Search Box */}
           <div className="max-w-2xl mx-auto mt-6 bg-slate-900/90 p-2 rounded-2xl border border-slate-700/80 shadow-2xl flex flex-col sm:flex-row items-center gap-2">
             <div className="flex-1 flex items-center gap-2 px-3 w-full">
-              <Search className="w-4 h-4 text-slate-400 shrink-0" />
+              <Search className="w-4 h-4 text-text-subtle shrink-0" />
               <input
                 type="text"
                 value={searchTerm}
@@ -256,7 +256,7 @@ export const CustomerPortal: React.FC = () => {
                 className="w-full py-2 text-xs bg-transparent text-white placeholder-slate-400 focus:outline-none"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="text-slate-400 hover:text-white">
+                <button onClick={() => setSearchTerm('')} className="text-text-subtle hover:text-white">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -291,7 +291,7 @@ export const CustomerPortal: React.FC = () => {
               <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />
               <div>
                 <span className="font-bold text-white block">پرداخت حضوری</span>
-                <span className="text-[10px] text-slate-400">کارتخوان یا نقد در سالن</span>
+                <span className="text-[11px] text-text-subtle">کارتخوان یا نقد در سالن</span>
               </div>
             </div>
 
@@ -299,7 +299,7 @@ export const CustomerPortal: React.FC = () => {
               <Clock className="w-4 h-4 text-blue-400 shrink-0" />
               <div>
                 <span className="font-bold text-white block">رزرو فوری نوبت</span>
-                <span className="text-[10px] text-slate-400">بدون معطلی و در لحظه</span>
+                <span className="text-[11px] text-text-subtle">بدون معطلی و در لحظه</span>
               </div>
             </div>
 
@@ -307,7 +307,7 @@ export const CustomerPortal: React.FC = () => {
               <ShieldCheck className="w-4 h-4 text-rose-400 shrink-0" />
               <div>
                 <span className="font-bold text-white block">سالن‌های تاییدشده</span>
-                <span className="text-[10px] text-slate-400">دارای جواز رسمی کسب</span>
+                <span className="text-[11px] text-text-subtle">دارای جواز رسمی کسب</span>
               </div>
             </div>
 
@@ -315,7 +315,7 @@ export const CustomerPortal: React.FC = () => {
               <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
               <div>
                 <span className="font-bold text-white block">پیامک تایید فوری</span>
-                <span className="text-[10px] text-slate-400">ارسال کد رهگیری نوبت</span>
+                <span className="text-[11px] text-text-subtle">ارسال کد رهگیری نوبت</span>
               </div>
             </div>
           </div>
@@ -335,7 +335,7 @@ export const CustomerPortal: React.FC = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-rose-600 text-white shadow-md shadow-rose-600/20'
-                    : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800/90 border border-slate-800'
+                    : 'bg-slate-900 text-text-subtle hover:text-slate-200 hover:bg-slate-800/90 border border-slate-800'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -352,16 +352,16 @@ export const CustomerPortal: React.FC = () => {
           <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <span>سالن‌های برگزیده و آماده رزرو</span>
-              <span className="text-xs font-normal text-slate-400">
+              <span className="text-xs font-normal text-text-subtle">
                 ({toPersianDigits(filteredSalons.length)} سالن فعال)
               </span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-text-subtle mt-0.5">
               تمامی قیمت‌ها مصوب سالن بوده و پرداخت به طور کامل در زمان حضور انجام می‌شود.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 text-xs text-text-subtle">
             <span>مرتب‌سازی:</span>
             <span className="font-semibold text-rose-400">بیشترین امتیاز و رضایت مشتریان</span>
           </div>
@@ -369,10 +369,10 @@ export const CustomerPortal: React.FC = () => {
 
         {/* SALON CARDS GRID */}
         {filteredSalons.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 space-y-3 bg-slate-900/40 rounded-2xl border border-slate-800">
+          <div className="py-16 text-center text-text-subtle space-y-3 bg-slate-900/40 rounded-2xl border border-slate-800">
             <Building className="w-12 h-12 mx-auto text-slate-600 stroke-1" />
             <h3 className="text-sm font-bold text-white">سالنی با فیلترهای انتخابی یافت نشد</h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-text-muted">
               لطفاً شهر یا عبارت جستجو را تغییر دهید یا فیلتر دسته‌بندی را روی «همه خدمات» بگذارید.
             </p>
             <button
@@ -407,14 +407,14 @@ export const CustomerPortal: React.FC = () => {
 
                     {/* Verified Badge */}
                     {salon.verifiedBadge && (
-                      <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3 text-emerald-400" />
                         <span>تایید هویت و صلاحیت</span>
                       </div>
                     )}
 
                     {/* In-Person Payment Tag */}
-                    <div className="absolute top-3 left-3 bg-emerald-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <div className="absolute top-3 left-3 bg-emerald-950/80 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <CreditCard className="w-3 h-3" />
                       <span>پرداخت در سالن</span>
                     </div>
@@ -423,7 +423,7 @@ export const CustomerPortal: React.FC = () => {
                     <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-800 text-xs">
                       <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                       <span className="font-bold text-white">{detail.rating}</span>
-                      <span className="text-[10px] text-slate-400">({toPersianDigits(detail.reviewsCount)} نظر)</span>
+                      <span className="text-[11px] text-text-subtle">({toPersianDigits(detail.reviewsCount)} نظر)</span>
                     </div>
 
                     <div className="absolute bottom-3 left-3 text-[11px] text-slate-300 flex items-center gap-1 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-800">
@@ -438,10 +438,10 @@ export const CustomerPortal: React.FC = () => {
                       <h3 className="text-base font-bold text-white group-hover:text-rose-300 transition-colors">
                         {salon.name}
                       </h3>
-                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">{detail.tagline}</p>
+                      <p className="text-[11px] text-text-subtle mt-1 line-clamp-1">{detail.tagline}</p>
 
-                      <div className="mt-3 flex items-center gap-1.5 text-slate-400 text-[11px]">
-                        <Clock className="w-3 h-3 text-slate-500" />
+                      <div className="mt-3 flex items-center gap-1.5 text-text-subtle text-[11px]">
+                        <Clock className="w-3 h-3 text-text-muted" />
                         <span className="truncate">
                           {typeof detail.workingHours === 'string'
                             ? detail.workingHours
@@ -452,7 +452,7 @@ export const CustomerPortal: React.FC = () => {
 
                     {/* Top Services Samples with In-Person Prices */}
                     <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 space-y-2">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                      <div className="text-[11px] font-bold text-text-subtle uppercase tracking-wider flex items-center justify-between">
                         <span>خدمات منتخب و قیمت:</span>
                         <span className="text-emerald-400">تسویه با کارتخوان</span>
                       </div>
@@ -572,11 +572,11 @@ export const CustomerPortal: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-white">{srv.name}</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">
+                          <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-text-subtle">
                             {srv.duration}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-1">{srv.description}</p>
+                        <p className="text-[11px] text-text-subtle mt-1">{srv.description}</p>
                       </div>
 
                       <div className="text-left shrink-0 space-y-1">
@@ -610,8 +610,8 @@ export const CustomerPortal: React.FC = () => {
                       <img src={st.avatar} alt={st.name} className="w-10 h-10 rounded-full object-cover border border-slate-700" />
                       <div>
                         <div className="text-xs font-bold text-white">{st.name}</div>
-                        <div className="text-[10px] text-rose-400">{st.role}</div>
-                        <div className="text-[10px] text-slate-400">{st.specialty}</div>
+                        <div className="text-[11px] text-rose-400">{st.role}</div>
+                        <div className="text-[11px] text-text-subtle">{st.specialty}</div>
                       </div>
                     </div>
                   ))}
@@ -675,7 +675,7 @@ export const CustomerPortal: React.FC = () => {
       />
 
       {/* 10. PUBLIC FOOTER */}
-      <footer className="mt-16 bg-slate-950 border-t border-slate-800/80 py-8 px-4 text-xs text-slate-400">
+      <footer className="mt-16 bg-slate-950 border-t border-slate-800/80 py-8 px-4 text-xs text-text-subtle">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Scissors className="w-4 h-4 text-rose-500" />
@@ -683,7 +683,7 @@ export const CustomerPortal: React.FC = () => {
             <span>- پلتفرم سراسری نوبت‌دهی سالن‌های زیبایی</span>
           </div>
 
-          <div className="flex items-center gap-4 text-slate-400">
+          <div className="flex items-center gap-4 text-text-subtle">
             <span>شرایط پرداخت: تسویه حضوری در محل سالن</span>
             {isDemoMode && (
               <>

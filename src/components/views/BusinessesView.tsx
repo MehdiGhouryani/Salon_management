@@ -272,10 +272,10 @@ export const BusinessesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-slate-900 dark:text-text-main flex items-center gap-2">
-            <Store className="w-5 h-5 text-brand dark:text-brand" />
+            <Store className="w-5 h-5 text-brand-accent dark:text-brand-accent" />
             <span className="tabular-nums">سالن‌ها و مراکز زیبایی ({toPersianDigits(salons.length)})</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5">
+          <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
             تایید صلاحیت مدارک، وضعیت فعالیت و مدیریت بسته‌های اشتراک
           </p>
         </div>
@@ -288,7 +288,7 @@ export const BusinessesView: React.FC = () => {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                 viewMode === 'grid'
                   ? 'bg-white dark:bg-surface text-slate-900 dark:text-text-main font-bold shadow-xs border border-slate-200 dark:border-border-default'
-                  : 'text-slate-500 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-main'
+                  : 'text-text-muted dark:text-text-muted hover:text-slate-700 dark:hover:text-text-main'
               }`}
               title="نمایش کارت‌های خلوت"
             >
@@ -300,7 +300,7 @@ export const BusinessesView: React.FC = () => {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                 viewMode === 'table'
                   ? 'bg-white dark:bg-surface text-slate-900 dark:text-text-main font-bold shadow-xs border border-slate-200 dark:border-border-default'
-                  : 'text-slate-500 dark:text-text-muted hover:text-slate-700 dark:hover:text-text-main'
+                  : 'text-text-muted dark:text-text-muted hover:text-slate-700 dark:hover:text-text-main'
               }`}
               title="نمایش جدول فشرده"
             >
@@ -343,14 +343,14 @@ export const BusinessesView: React.FC = () => {
               onClick={() => setStatusFilter(tab.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium ${
                 isSelected
-                  ? 'bg-rose-50 dark:bg-brand/15 text-brand dark:text-brand-accent font-bold border border-rose-300 dark:border-brand/30 shadow-xs'
+                  ? 'bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent font-bold border border-rose-300 dark:border-brand/30 shadow-xs'
                   : 'text-slate-600 dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main hover:bg-slate-100 dark:hover:bg-elevated border border-transparent'
               }`}
             >
               <span>{tab.label}</span>
               <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
-                  isSelected ? 'bg-rose-500/20 text-brand dark:text-brand-accent' : 'bg-slate-100 dark:bg-elevated text-slate-500 dark:text-text-muted'
+                className={`px-1.5 py-0.2 rounded-full text-[11px] font-bold tabular-nums ${
+                  isSelected ? 'bg-rose-500/20 text-brand-accent dark:text-brand-accent' : 'bg-slate-100 dark:bg-elevated text-text-muted dark:text-text-muted'
                 }`}
               >
                 {toPersianDigits(tab.count)}
@@ -365,7 +365,7 @@ export const BusinessesView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           {/* Search Input */}
           <div className="lg:col-span-3 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-text-subtle absolute right-3 top-2.5" />
             <input
               type="text"
               value={search}
@@ -376,7 +376,7 @@ export const BusinessesView: React.FC = () => {
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute left-2.5 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-text-main"
+                className="absolute left-2.5 top-2.5 text-text-subtle hover:text-slate-700 dark:hover:text-text-main"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -413,13 +413,13 @@ export const BusinessesView: React.FC = () => {
         </div>
 
         {/* Sort & Result Count */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-border-default text-[11px] text-slate-500 dark:text-text-muted">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-border-default text-[11px] text-text-muted dark:text-text-muted">
           <div className="flex items-center gap-2">
             <span>مرتب‌سازی:</span>
             <button
               onClick={() => setSortBy('revenue')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-brand/15 text-brand dark:text-brand-accent font-semibold border border-rose-200 dark:border-brand/30' : 'hover:text-slate-800 dark:hover:text-text-main'
+                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent font-semibold border border-rose-200 dark:border-brand/30' : 'hover:text-slate-800 dark:hover:text-text-main'
               }`}
             >
               بیشترین درآمد
@@ -427,7 +427,7 @@ export const BusinessesView: React.FC = () => {
             <button
               onClick={() => setSortBy('appointments')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-brand/15 text-brand dark:text-brand-accent font-semibold border border-rose-200 dark:border-brand/30' : 'hover:text-slate-800 dark:hover:text-text-main'
+                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent font-semibold border border-rose-200 dark:border-brand/30' : 'hover:text-slate-800 dark:hover:text-text-main'
               }`}
             >
               بیشترین نوبت
@@ -459,7 +459,7 @@ export const BusinessesView: React.FC = () => {
                         {/* Card Header: Icon, Name, Category & Status Badge */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-elevated border border-slate-200 dark:border-border-default flex items-center justify-center font-bold text-brand dark:text-brand shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-elevated border border-slate-200 dark:border-border-default flex items-center justify-center font-bold text-brand-accent dark:text-brand-accent shrink-0">
                               {salon.name.slice(0, 1)}
                             </div>
                             <div className="min-w-0">
@@ -471,13 +471,13 @@ export const BusinessesView: React.FC = () => {
                                   <span className="text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-text-muted truncate mt-0.5">
+                              <p className="text-[11px] text-text-muted dark:text-text-muted truncate mt-0.5">
                                 {salon.category}
                               </p>
                             </div>
                           </div>
 
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
+                          <span className={`px-2 py-0.5 text-[11px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
                             {badge.label}
                           </span>
                         </div>
@@ -505,21 +505,21 @@ export const BusinessesView: React.FC = () => {
                         {/* Clean Metrics Row */}
                         <div className="grid grid-cols-3 gap-2 my-3 text-center">
                           <div className="p-2 rounded-xl bg-slate-50 dark:bg-subsurface border border-slate-100 dark:border-border-default/60">
-                            <span className="text-[10px] text-slate-500 dark:text-text-muted block mb-0.5">گردش ماه</span>
+                            <span className="text-[11px] text-text-muted dark:text-text-muted block mb-0.5">گردش ماه</span>
                             <span className="text-xs font-bold text-emerald-600 dark:text-status-success tabular-nums">
                               {formatCurrency(salon.monthlyRevenue, 'toman')}
                             </span>
                           </div>
 
                           <div className="p-2 rounded-xl bg-slate-50 dark:bg-subsurface border border-slate-100 dark:border-border-default/60">
-                            <span className="text-[10px] text-slate-500 dark:text-text-muted block mb-0.5">نوبت‌ها</span>
+                            <span className="text-[11px] text-text-muted dark:text-text-muted block mb-0.5">نوبت‌ها</span>
                             <span className="text-xs font-bold text-slate-800 dark:text-text-main tabular-nums">
                               {toPersianDigits(salon.totalAppointments)}
                             </span>
                           </div>
 
                           <div className="p-2 rounded-xl bg-slate-50 dark:bg-subsurface border border-slate-100 dark:border-border-default/60">
-                            <span className="text-[10px] text-slate-500 dark:text-text-muted block mb-0.5">پرسنل</span>
+                            <span className="text-[11px] text-text-muted dark:text-text-muted block mb-0.5">پرسنل</span>
                             <span className="text-xs font-bold text-slate-800 dark:text-text-main tabular-nums">
                               {toPersianDigits(salon.activeStaffCount)} نفر
                             </span>
@@ -540,7 +540,7 @@ export const BusinessesView: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => setInspectedSalon(salon)}
-                            className="p-1.5 text-slate-500 hover:text-slate-800 dark:text-text-muted dark:hover:text-text-main hover:bg-slate-100 dark:hover:bg-elevated rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 text-text-muted hover:text-slate-800 dark:text-text-muted dark:hover:text-text-main hover:bg-slate-100 dark:hover:bg-elevated rounded-lg transition-colors cursor-pointer"
                             title="مشاهده جزئیات کامل"
                           >
                             <Eye className="w-4 h-4" />
@@ -620,7 +620,7 @@ export const BusinessesView: React.FC = () => {
             <>
               <div className="overflow-x-auto">
                 <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 dark:bg-subsurface border-b border-slate-200 dark:border-border-default text-slate-500 dark:text-text-muted font-semibold">
+                  <thead className="bg-slate-50 dark:bg-subsurface border-b border-slate-200 dark:border-border-default text-text-muted dark:text-text-muted font-semibold">
                     <tr>
                       <th className="py-3 px-4">نام سالن و دسته‌بندی</th>
                       <th className="py-3 px-4">مدیر و تماس</th>
@@ -640,18 +640,18 @@ export const BusinessesView: React.FC = () => {
                         <tr key={salon.id} className="hover:bg-slate-50/60 dark:hover:bg-elevated/50 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-elevated flex items-center justify-center font-bold text-brand dark:text-brand shrink-0 border border-slate-200 dark:border-border-default">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-elevated flex items-center justify-center font-bold text-brand-accent dark:text-brand-accent shrink-0 border border-slate-200 dark:border-border-default">
                                 {salon.name.slice(0, 1)}
                               </div>
                               <div>
                                 <span className="font-bold text-slate-900 dark:text-text-main block">{salon.name}</span>
-                                <span className="text-[11px] text-slate-500 dark:text-text-muted">{salon.category}</span>
+                                <span className="text-[11px] text-text-muted dark:text-text-muted">{salon.category}</span>
                               </div>
                             </div>
                           </td>
                           <td className="py-3 px-4">
                             <span className="block font-medium">{salon.ownerName}</span>
-                            <span className="font-mono text-[11px] text-slate-500 dark:text-text-muted" dir="ltr">{maskPhone(salon.phone)}</span>
+                            <span className="font-mono text-[11px] text-text-muted dark:text-text-muted" dir="ltr">{maskPhone(salon.phone)}</span>
                           </td>
                           <td className="py-3 px-4 text-slate-600 dark:text-text-muted hidden md:table-cell">{salon.city}</td>
                           <td className="py-3 px-4 hidden sm:table-cell">
@@ -666,7 +666,7 @@ export const BusinessesView: React.FC = () => {
                             {toPersianDigits(salon.activeStaffCount)} نفر
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
+                            <span className={`inline-block px-2 py-0.5 text-[11px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
                               {badge.label}
                             </span>
                           </td>
@@ -674,7 +674,7 @@ export const BusinessesView: React.FC = () => {
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 onClick={() => setInspectedSalon(salon)}
-                                className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-text-main rounded-lg"
+                                className="p-1.5 text-text-subtle hover:text-slate-800 dark:hover:text-text-main rounded-lg"
                                 title="جزئیات"
                               >
                                 <Eye className="w-4 h-4" />
@@ -738,16 +738,16 @@ export const BusinessesView: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold">{inspectedSalon.name}</h3>
-                  <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border ${getStatusBadge(inspectedSalon.status).bg} ${getStatusBadge(inspectedSalon.status).text} ${getStatusBadge(inspectedSalon.status).border}`}>
+                  <span className={`px-2 py-0.5 text-[11px] rounded-md font-medium border ${getStatusBadge(inspectedSalon.status).bg} ${getStatusBadge(inspectedSalon.status).text} ${getStatusBadge(inspectedSalon.status).border}`}>
                     {getStatusBadge(inspectedSalon.status).label}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">{inspectedSalon.category}</p>
+                <p className="text-xs text-text-muted mt-1">{inspectedSalon.category}</p>
               </div>
 
               <button
                 onClick={() => setInspectedSalon(null)}
-                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1.5 text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -796,28 +796,28 @@ export const BusinessesView: React.FC = () => {
             {/* Key Facts Grid */}
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
-                <span className="text-zinc-500 block mb-1">گردش مالی ماه</span>
+                <span className="text-text-muted block mb-1">گردش مالی ماه</span>
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {formatCurrency(inspectedSalon.monthlyRevenue, 'toman')}
                 </span>
               </div>
 
               <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
-                <span className="text-zinc-500 block mb-1">کل نوبت‌ها</span>
+                <span className="text-text-muted block mb-1">کل نوبت‌ها</span>
                 <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
                   {formatNumber(inspectedSalon.totalAppointments)}
                 </span>
               </div>
 
               <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
-                <span className="text-zinc-500 block mb-1">تعداد پرسنل</span>
+                <span className="text-text-muted block mb-1">تعداد پرسنل</span>
                 <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
                   {toPersianDigits(inspectedSalon.activeStaffCount)} نفر
                 </span>
               </div>
 
               <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
-                <span className="text-zinc-500 block mb-1">پلن اشتراک</span>
+                <span className="text-text-muted block mb-1">پلن اشتراک</span>
                 <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
                   {inspectedSalon.plan === 'gold_vip' ? 'ویژه VIP' : inspectedSalon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
                 </span>
@@ -841,7 +841,7 @@ export const BusinessesView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => setRevealPhone(!revealPhone)}
-                    className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                    className="text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200"
                   >
                     {revealPhone ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
@@ -854,7 +854,7 @@ export const BusinessesView: React.FC = () => {
               </div>
 
               <div className="pt-2 border-t border-stone-200 dark:border-border-default text-zinc-600 dark:text-text-muted">
-                <span className="block text-zinc-500 mb-0.5">نشانی دقیق:</span>
+                <span className="block text-text-muted mb-0.5">نشانی دقیق:</span>
                 <p className="leading-relaxed text-zinc-800 dark:text-zinc-200">
                   {inspectedSalon.province}، {inspectedSalon.address}
                 </p>
@@ -893,7 +893,7 @@ export const BusinessesView: React.FC = () => {
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1 text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1038,11 +1038,11 @@ export const BusinessesView: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-border-default">
               <div>
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">تغییر پلن اشتراک</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">{targetSalonForPlan.name}</p>
+                <p className="text-xs text-text-muted mt-0.5">{targetSalonForPlan.name}</p>
               </div>
               <button
                 onClick={() => setIsPlanModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1 text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1067,7 +1067,7 @@ export const BusinessesView: React.FC = () => {
                     <span>{p.title}</span>
                     <span className="text-rose-600 dark:text-rose-400 text-[11px]">{p.price}</span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-1">{p.desc}</p>
+                  <p className="text-[11px] text-text-muted mt-1">{p.desc}</p>
                 </div>
               ))}
             </div>

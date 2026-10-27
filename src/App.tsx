@@ -190,7 +190,7 @@ const AdminLayout: React.FC = () => {
                       <span>{cat.label}</span>
                       {cat.badge !== undefined && (
                         <span
-                          className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums ${
+                          className={`px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums ${
                             cat.badgeType === 'error'
                               ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]'
                               : cat.badgeType === 'warning'
@@ -257,7 +257,7 @@ const AdminLayout: React.FC = () => {
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span>مرکز پیامک و دیسپچ نوبت‌ها</span>
                   {failedMessages > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] text-[10px] font-bold tabular-nums">
+                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] text-[11px] font-bold tabular-nums">
                       {failedMessages}
                     </span>
                   )}
@@ -300,7 +300,7 @@ const AdminLayout: React.FC = () => {
                   <HelpCircle className="w-3.5 h-3.5" />
                   <span>مرکز پشتیبانی و تیکت‌ها</span>
                   {openTickets > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-info-bg)] text-[var(--status-info)] border border-[var(--status-info-border)] text-[10px] font-bold tabular-nums">
+                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-info-bg)] text-[var(--status-info)] border border-[var(--status-info-border)] text-[11px] font-bold tabular-nums">
                       {openTickets}
                     </span>
                   )}
@@ -379,7 +379,7 @@ const MainSwitcher: React.FC = () => {
               <div className="space-y-2">
                 <h2 className="text-lg font-bold text-white">دسترسی مسدود است (403 Forbidden)</h2>
                 <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد مجوز مدیر کل است</p>
-                <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                <p className="text-xs text-text-subtle leading-relaxed pt-2">
                   شماره شما ({serverAuth.user?.phone}) با موفقیت احراز هویت شد، اما نقش شما در سرور ({serverAuth.user?.platformRole}) مجوز دسترسی به پنل مدیریت کل پلتفرم را ندارد.
                 </p>
               </div>
@@ -434,7 +434,7 @@ const MainSwitcher: React.FC = () => {
               <div className="space-y-2">
                 <h2 className="text-lg font-bold text-white">دسترسی مسدود است (403 Forbidden)</h2>
                 <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد عضویت در کادر سالن است</p>
-                <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                <p className="text-xs text-text-subtle leading-relaxed pt-2">
                   شماره شما ({serverAuth.user?.phone}) احراز هویت شد، اما هنوز به عنوان مدیر یا پرسنل سالنی در سامانه ثبت نگردیده است.
                 </p>
               </div>
@@ -526,11 +526,11 @@ const MainSwitcher: React.FC = () => {
         </div>
         <div className="shrink-0 mr-2">
           {isDemoMode ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
               توسعه / Demo Preview
             </span>
           ) : (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
               عملیاتی / Production
             </span>
           )}
@@ -550,7 +550,7 @@ const MainSwitcher: React.FC = () => {
             aria-label="تغییر بخش نوبت‌آرا"
             title={`بخش فعلی: ${getPersonaLabel()} (برای تغییر کلیک کنید)`}
           >
-            <ActiveIcon className="w-4 h-4 text-brand" />
+            <ActiveIcon className="w-4 h-4 text-brand-accent" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand ring-2 ring-white dark:ring-dk-surface" />
           </button>
         ) : (
@@ -559,12 +559,12 @@ const MainSwitcher: React.FC = () => {
               onClick={() => setMobilePersonaOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-elevated transition-colors cursor-pointer"
             >
-              <ActiveIcon className="w-3.5 h-3.5 text-brand" />
+              <ActiveIcon className="w-3.5 h-3.5 text-brand-accent" />
               <span className="text-[11px]">{getPersonaLabel()}</span>
             </button>
             <button
               onClick={() => setIsPillCollapsed(true)}
-              className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              className="p-1 rounded-full text-text-subtle hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               title="جمع کردن به دکمه کوچک"
             >
               <X className="w-3 h-3" />
@@ -586,12 +586,12 @@ const MainSwitcher: React.FC = () => {
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-border-default">
               <span className="text-xs font-bold text-slate-800 dark:text-text-main flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-brand" />
+                <Layers className="w-4 h-4 text-brand-accent" />
                 انتخاب بخش پلتفرم نوبت‌آرا
               </span>
               <button
                 onClick={() => setMobilePersonaOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-text-main cursor-pointer"
+                className="p-1 rounded-lg text-text-subtle hover:text-slate-700 dark:hover:text-text-main cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -652,7 +652,7 @@ const MainSwitcher: React.FC = () => {
                   <Shield className="w-4 h-4" />
                   <span>پنل مدیریت و نظارت کل</span>
                   {!isDemoMode && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                       مسدود
                     </span>
                   )}
@@ -662,7 +662,7 @@ const MainSwitcher: React.FC = () => {
             </div>
 
             <div className="pt-2 border-t border-slate-100 dark:border-border-default flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-500 dark:text-text-muted">پوسته صفحه:</span>
+              <span className="text-[11px] text-text-muted dark:text-text-muted">پوسته صفحه:</span>
               <ThemeToggle variant="segmented" />
             </div>
           </div>
@@ -713,7 +713,7 @@ const MainSwitcher: React.FC = () => {
             <Shield className="w-3.5 h-3.5" />
             <span>پنل مدیریت کل</span>
             {!isDemoMode && (
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] font-bold">
+              <span className="text-[11px] px-1.5 py-0.2 rounded bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] font-bold">
                 مسدود
               </span>
             )}

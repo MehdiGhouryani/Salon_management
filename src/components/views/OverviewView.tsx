@@ -109,17 +109,17 @@ export const OverviewView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Salons in Network */}
         <div className="p-5 rounded-2xl bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-text-muted text-xs">
+          <div className="flex items-center justify-between text-text-muted dark:text-text-muted text-xs">
             <span className="font-semibold text-slate-700 dark:text-text-main">کل سالن‌های شبکه</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-brand/15 text-brand dark:text-brand flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent flex items-center justify-center">
               <Store className="w-4 h-4" />
             </div>
           </div>
           <div className="my-3">
-            <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-text-main tabular-nums">
+            <span className="text-2xl font-bold whitespace-nowrap text-slate-900 dark:text-text-main tabular-nums">
               {toPersianDigits(salons.length)}
             </span>
-            <span className="text-xs text-slate-500 dark:text-text-muted mr-1.5 font-medium">مجموعه</span>
+            <span className="text-xs text-text-muted dark:text-text-muted mr-1.5 font-medium">مجموعه</span>
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px]">
             <span className="text-emerald-600 dark:text-status-success font-semibold flex items-center gap-1 tabular-nums">
@@ -130,7 +130,7 @@ export const OverviewView: React.FC = () => {
               <span className="w-1.5 h-1.5 rounded-full bg-[#FBBF24]"></span>
               {toPersianDigits(pendingSalons.length)} در انتظار
             </span>
-            <span className="text-slate-500 dark:text-text-muted font-medium flex items-center gap-1 tabular-nums">
+            <span className="text-text-muted dark:text-text-muted font-medium flex items-center gap-1 tabular-nums">
               {toPersianDigits(trialSalons.length)} آزمایشی
             </span>
           </div>
@@ -138,18 +138,18 @@ export const OverviewView: React.FC = () => {
 
         {/* KPI 2: Monthly Platform Revenue */}
         <div className="p-5 rounded-2xl bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-text-muted text-xs">
+          <div className="flex items-center justify-between text-text-muted dark:text-text-muted text-xs">
             <span className="font-semibold text-slate-700 dark:text-text-main">گردش ماهانه سالن‌ها</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-status-success/15 text-emerald-600 dark:text-status-success flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div className="my-3">
-            <span className="text-2xl font-black tracking-tight text-emerald-600 dark:text-status-success tabular-nums">
+            <span className="text-2xl font-bold whitespace-nowrap text-emerald-600 dark:text-status-success tabular-nums">
               {formatCurrency(totalMonthlyRevenue, 'toman')}
             </span>
           </div>
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-slate-500 dark:text-text-muted">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-text-muted dark:text-text-muted">
             <span className="text-emerald-600 dark:text-status-success font-bold flex items-center gap-0.5 tabular-nums">
               <ArrowUpRight className="w-3.5 h-3.5" /> ۱۸.۴٪ رشد
             </span>
@@ -159,19 +159,19 @@ export const OverviewView: React.FC = () => {
 
         {/* KPI 3: Total Bookings */}
         <div className="p-5 rounded-2xl bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-text-muted text-xs">
+          <div className="flex items-center justify-between text-text-muted dark:text-text-muted text-xs">
             <span className="font-semibold text-slate-700 dark:text-text-main">نوبت‌های رزرو شده</span>
             <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-status-info/15 text-sky-600 dark:text-status-info flex items-center justify-center">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="my-3">
-            <span className="text-3xl font-black tracking-tight text-slate-900 dark:text-text-main tabular-nums">
+            <span className="text-2xl font-bold whitespace-nowrap text-slate-900 dark:text-text-main tabular-nums">
               {formatNumber(totalAppointments)}
             </span>
-            <span className="text-xs text-slate-500 dark:text-text-muted mr-1.5 font-medium">نوبت</span>
+            <span className="text-xs text-text-muted dark:text-text-muted mr-1.5 font-medium">نوبت</span>
           </div>
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-slate-500 dark:text-text-muted">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-text-muted dark:text-text-muted">
             <span className="tabular-nums">{toPersianDigits(totalStaff)} متخصص فعال</span>
             <span className="text-emerald-600 dark:text-status-success font-semibold">تکمیل: ۹۷٪</span>
           </div>
@@ -179,7 +179,7 @@ export const OverviewView: React.FC = () => {
 
         {/* KPI 4: SMS Dispatch & Health */}
         <div className="p-5 rounded-2xl bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-text-muted text-xs">
+          <div className="flex items-center justify-between text-text-muted dark:text-text-muted text-xs">
             <span className="font-semibold text-slate-700 dark:text-text-main">پیامک و دیسپچ</span>
             <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-elevated text-slate-600 dark:text-text-muted flex items-center justify-center">
               <MessageSquare className="w-4 h-4" />
@@ -187,10 +187,10 @@ export const OverviewView: React.FC = () => {
           </div>
           <div className="my-3 flex items-baseline gap-3">
             <div>
-              <span className="text-3xl font-black text-slate-900 dark:text-text-main tabular-nums">
+              <span className="text-2xl font-bold whitespace-nowrap text-slate-900 dark:text-text-main tabular-nums">
                 {toPersianDigits(deliveredMessages)}
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-text-muted mr-1 font-medium">تحویل شده</span>
+              <span className="text-[11px] text-text-muted dark:text-text-muted mr-1 font-medium">تحویل شده</span>
             </div>
             {failedMessages > 0 && (
               <span className="text-xs text-rose-600 dark:text-brand-accent font-bold tabular-nums">
@@ -198,7 +198,7 @@ export const OverviewView: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-slate-500 dark:text-text-muted">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-text-muted dark:text-text-muted">
             <span className="tabular-nums">تیکت‌های باز: {toPersianDigits(openTickets)}</span>
             <span className="text-emerald-600 dark:text-status-success font-semibold">پایداری: ۹۹.۹٪</span>
           </div>
@@ -212,10 +212,10 @@ export const OverviewView: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-border-default">
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-text-main flex items-center gap-2">
-                <Activity className="w-4 h-4 text-brand dark:text-brand" />
+                <Activity className="w-4 h-4 text-brand-accent dark:text-brand-accent" />
                 روند گردش مالی و حجم نوبت‌دهی سالن‌ها
               </h3>
-              <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5">
+              <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
                 توزیع نوبت‌ها و مبالغ ثبت‌شده در بازه انتخابی
               </p>
             </div>
@@ -227,7 +227,7 @@ export const OverviewView: React.FC = () => {
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   timeRange === '7d'
                     ? 'bg-white dark:bg-elevated text-slate-900 dark:text-text-main font-bold shadow-xs'
-                    : 'text-slate-500 dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main'
+                    : 'text-text-muted dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main'
                 }`}
               >
                 ۷ روز اخیر
@@ -237,7 +237,7 @@ export const OverviewView: React.FC = () => {
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   timeRange === '30d'
                     ? 'bg-white dark:bg-elevated text-slate-900 dark:text-text-main font-bold shadow-xs'
-                    : 'text-slate-500 dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main'
+                    : 'text-text-muted dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main'
                 }`}
               >
                 ۳۰ روزه
@@ -247,7 +247,7 @@ export const OverviewView: React.FC = () => {
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   timeRange === '12m'
                     ? 'bg-white dark:bg-elevated text-slate-900 dark:text-text-main font-bold shadow-xs'
-                    : 'text-slate-500 dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main'
+                    : 'text-text-muted dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main'
                 }`}
               >
                 سالانه
@@ -263,7 +263,7 @@ export const OverviewView: React.FC = () => {
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
                     {/* Tooltip on Hover */}
-                    <div className="absolute -top-12 z-20 hidden group-hover:flex flex-col items-center bg-slate-900 text-white dark:bg-elevated dark:border dark:border-border-default px-2.5 py-1 rounded-lg text-[10px] shadow-xl whitespace-nowrap pointer-events-none">
+                    <div className="absolute -top-12 z-20 hidden group-hover:flex flex-col items-center bg-slate-900 text-white dark:bg-elevated dark:border dark:border-border-default px-2.5 py-1 rounded-lg text-[11px] shadow-xl whitespace-nowrap pointer-events-none">
                       <span className="font-bold tabular-nums">{formatCurrency(point.revenue, 'toman')}</span>
                       <span className="text-slate-300 dark:text-text-muted tabular-nums">{formatNumber(point.bookings)} نوبت</span>
                     </div>
@@ -275,7 +275,7 @@ export const OverviewView: React.FC = () => {
                         className="w-full bg-brand dark:bg-brand hover:bg-brand-hover dark:hover:bg-brand-accent rounded-t-lg transition-all duration-300"
                       />
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-text-muted font-medium truncate">
+                    <span className="text-[11px] text-text-muted dark:text-text-muted font-medium truncate">
                       {point.label}
                     </span>
                   </div>
@@ -284,7 +284,7 @@ export const OverviewView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-text-muted pt-2">
+          <div className="flex flex-wrap items-center justify-between text-xs text-text-muted dark:text-text-muted pt-2">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="w-2.5 h-2.5 rounded-xs bg-brand dark:bg-brand"></span>
@@ -307,7 +307,7 @@ export const OverviewView: React.FC = () => {
               </h3>
               <button
                 onClick={() => setActiveTab('businesses')}
-                className="text-xs font-semibold text-brand dark:text-brand-accent hover:underline cursor-pointer"
+                className="text-xs font-semibold text-brand-accent dark:text-brand-accent hover:underline cursor-pointer"
               >
                 مشاهده همه
               </button>
@@ -319,11 +319,11 @@ export const OverviewView: React.FC = () => {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 dark:text-text-main">{salon.name}</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-text-muted mt-0.5">
+                      <p className="text-[11px] text-text-muted dark:text-text-muted mt-0.5">
                         {salon.city} · مدیر: {salon.ownerName}
                       </p>
                     </div>
-                    <span className="px-2 py-0.5 text-[10px] rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-status-warning font-semibold">
+                    <span className="px-2 py-0.5 text-[11px] rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-status-warning font-semibold">
                       در انتظار
                     </span>
                   </div>
@@ -354,7 +354,7 @@ export const OverviewView: React.FC = () => {
               ))}
 
               {pendingSalons.length === 0 && (
-                <div className="py-8 text-center text-slate-400 dark:text-text-muted space-y-2">
+                <div className="py-8 text-center text-text-subtle dark:text-text-muted space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-[#34D399] mx-auto" />
                   <p className="text-xs font-medium">تمامی سالن‌ها تایید شده‌اند و پرونده معوقه‌ای وجود ندارد.</p>
                 </div>
@@ -362,7 +362,7 @@ export const OverviewView: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-slate-500 dark:text-text-muted leading-relaxed">
+          <div className="pt-3 border-t border-slate-100 dark:border-border-default text-[11px] text-text-muted dark:text-text-muted leading-relaxed">
             با تایید هر سالن، پیامک فعال‌سازی به مدیر سالن ارسال و آدرس اختصاصی وب‌سایت سالن بلافاصله فعال می‌شود.
           </div>
         </div>

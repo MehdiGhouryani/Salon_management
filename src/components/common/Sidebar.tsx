@@ -141,7 +141,7 @@ export const Sidebar: React.FC = React.memo(() => {
               <span className="text-sm font-bold text-[var(--text-primary)] truncate">
                 نوبت‌آرا
               </span>
-              <span className="text-[10px] text-[var(--text-secondary)] font-medium truncate">
+              <span className="text-[11px] text-[var(--text-secondary)] font-medium truncate">
                 سامانه مدیریت کل
               </span>
             </div>
@@ -162,7 +162,7 @@ export const Sidebar: React.FC = React.memo(() => {
         {navGroups.map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-1">
             {!collapsed && (
-              <p className="px-3 mb-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+              <p className="px-3 mb-1.5 text-[11px] font-bold text-[var(--text-muted)]">
                 {group.label}
               </p>
             )}
@@ -190,7 +190,7 @@ export const Sidebar: React.FC = React.memo(() => {
 
                   {!collapsed && item.badge !== undefined && (
                     <span
-                      className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums ${
+                      className={`px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums ${
                         item.badgeType === 'error'
                           ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]'
                           : item.badgeType === 'warning'
@@ -236,7 +236,7 @@ export const Sidebar: React.FC = React.memo(() => {
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
               سرور فعال
             </span>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] tabular-nums">نسخه ۲.۴</span>
+            <span className="font-mono text-[11px] text-[var(--text-muted)] tabular-nums">نسخه ۲.۴</span>
           </div>
         ) : (
           <div className="flex justify-center pt-1">
@@ -265,7 +265,7 @@ export const Sidebar: React.FC = React.memo(() => {
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-sm font-bold text-[var(--text-primary)]">نوبت‌آرا</span>
-                <span className="text-[10px] text-[var(--text-secondary)]">سامانه مدیریت کل</span>
+                <span className="text-[11px] text-[var(--text-secondary)]">سامانه مدیریت کل</span>
               </div>
             </div>
             <button
@@ -281,7 +281,7 @@ export const Sidebar: React.FC = React.memo(() => {
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
             {navGroups.map((group, groupIdx) => (
               <div key={groupIdx} className="space-y-1">
-                <p className="px-3 mb-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+                <p className="px-3 mb-1.5 text-[11px] font-bold text-[var(--text-muted)]">
                   {group.label}
                 </p>
                 {group.items.map((item) => {
@@ -309,7 +309,7 @@ export const Sidebar: React.FC = React.memo(() => {
                         <span>{item.title}</span>
                       </div>
                       {item.badge !== undefined && (
-                        <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums bg-[var(--brand-subdued)] text-[var(--brand-primary)] border-[var(--brand-border)]">
+                        <span className="px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums bg-[var(--brand-subdued)] text-[var(--brand-primary)] border-[var(--brand-border)]">
                           {toPersianDigits(item.badge)}
                         </span>
                       )}
@@ -328,7 +328,7 @@ export const Sidebar: React.FC = React.memo(() => {
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
                 سرور فعال
               </span>
-              <span className="font-mono text-[10px] text-[var(--text-muted)]">نسخه ۲.۴</span>
+              <span className="font-mono text-[11px] text-[var(--text-muted)]">نسخه ۲.۴</span>
             </div>
           </div>
         </div>

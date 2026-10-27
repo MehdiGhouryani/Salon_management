@@ -74,7 +74,7 @@ export const SubscriptionsView: React.FC = () => {
             <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             مالی، تعرفه‌ها و اشتراک‌های سالن‌ها
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-text-muted mt-0.5">
+          <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
             تعرفه‌گذاری نرم‌افزار، تمدید اشتراک سالن‌ها و سوابق تراکنش‌ها
           </p>
         </div>
@@ -83,33 +83,33 @@ export const SubscriptionsView: React.FC = () => {
       {/* Financial Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">درآمد ماهانه پایدار (MRR)</span>
             <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
             {formatCurrency(estimatedMRR, 'toman')}
           </span>
-          <p className="text-[11px] text-zinc-400 mt-2 flex items-center gap-1">
+          <p className="text-[11px] text-text-subtle mt-2 flex items-center gap-1">
             <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" /> بر مبنای اشتراک فعال {toPersianDigits(totalSubscribers)} سالن
           </p>
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">اشتراک‌های فعال</span>
             <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
           <span className="text-2xl font-bold text-zinc-900 dark:text-text-main tabular-nums">
             {toPersianDigits(totalSubscribers)}
           </span>
-          <p className="text-[11px] text-zinc-400 mt-2">
+          <p className="text-[11px] text-text-subtle mt-2">
             نرخ تمدید خودکار: ۹۱٪ در دوره ۳۰ روزه
           </p>
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-zinc-500 mb-2">
+          <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">درگاه‌های بانکی متصل</span>
             <Shield className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
@@ -129,7 +129,7 @@ export const SubscriptionsView: React.FC = () => {
             <Sparkles className="w-4 h-4 text-rose-500" />
             بسته‌های تعرفه و امکانات
           </h3>
-          <span className="text-xs text-zinc-400">قیمت‌ها بر اساس ماهانه</span>
+          <span className="text-xs text-text-subtle">قیمت‌ها بر اساس ماهانه</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -148,7 +148,7 @@ export const SubscriptionsView: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-bold text-zinc-900 dark:text-text-main text-sm">{p.name}</h4>
                     {isVip && (
-                      <span className="px-2 py-0.5 text-[10px] rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
+                      <span className="px-2 py-0.5 text-[11px] rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
                         محبوب‌ترین
                       </span>
                     )}
@@ -158,10 +158,10 @@ export const SubscriptionsView: React.FC = () => {
                     <span className="text-xl font-bold text-zinc-900 dark:text-text-main tabular-nums">
                       {p.priceMonthly === 0 ? 'رایگان' : formatCurrency(p.priceMonthly, 'toman')}
                     </span>
-                    {p.priceMonthly > 0 && <span className="text-xs text-zinc-400 mr-1">/ ماه</span>}
+                    {p.priceMonthly > 0 && <span className="text-xs text-text-subtle mr-1">/ ماه</span>}
                   </div>
 
-                  <p className="text-xs text-zinc-500 dark:text-text-muted mb-4 pb-3 border-b border-stone-100 dark:border-border-default">
+                  <p className="text-xs text-text-muted dark:text-text-muted mb-4 pb-3 border-b border-stone-100 dark:border-border-default">
                     {toPersianDigits(p.activeSubscribers)} سالن فعال
                   </p>
 
@@ -210,7 +210,7 @@ export const SubscriptionsView: React.FC = () => {
             <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main mb-1">
               تخصیص یا ارتقای پلن سالن
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-text-muted mb-4">
+            <p className="text-xs text-text-muted dark:text-text-muted mb-4">
               اعمال دستی بسته اشتراک برای سالن‌های دارای قرارداد سازمانی
             </p>
 
@@ -260,10 +260,10 @@ export const SubscriptionsView: React.FC = () => {
               <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">
                 تراکنش‌های اخیر اشتراک نرم‌افزار
               </h3>
-              <p className="text-xs text-zinc-500 mt-0.5">درگاه شاپرک (فقط شارژ پنل و اشتراک SaaS)</p>
+              <p className="text-xs text-text-muted mt-0.5">درگاه شاپرک (فقط شارژ پنل و اشتراک SaaS)</p>
             </div>
 
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-text-subtle">
               {toPersianDigits(filteredTransactions.length)} تراکنش
             </span>
           </div>
@@ -273,7 +273,7 @@ export const SubscriptionsView: React.FC = () => {
               <div key={tx.id} className="py-2.5 flex items-center justify-between">
                 <div>
                   <span className="font-bold text-zinc-900 dark:text-text-main block">{tx.salonName}</span>
-                  <span className="text-[11px] text-zinc-500">
+                  <span className="text-[11px] text-text-muted">
                     {tx.type === 'subscription' ? 'تمدید اشتراک سالن' : 'شارژ پیامک'}
                   </span>
                 </div>
@@ -282,7 +282,7 @@ export const SubscriptionsView: React.FC = () => {
                   <span className="font-bold text-emerald-600 dark:text-emerald-400 block tabular-nums">
                     {formatCurrency(tx.amount, 'toman')}
                   </span>
-                  <span className="text-[10px] text-zinc-400 block">{tx.date}</span>
+                  <span className="text-[11px] text-text-subtle block">{tx.date}</span>
                 </div>
               </div>
             ))}
@@ -298,7 +298,7 @@ export const SubscriptionsView: React.FC = () => {
           <div className="relative w-full max-w-sm bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-border-default">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">ویرایش تعرفه «{editingPlan.name}»</h3>
-              <button onClick={() => setEditingPlan(null)} className="p-1 text-zinc-400 hover:text-zinc-700">
+              <button onClick={() => setEditingPlan(null)} className="p-1 text-text-subtle hover:text-zinc-700">
                 <X className="w-4 h-4" />
               </button>
             </div>

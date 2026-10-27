@@ -139,7 +139,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
               <h2 className="text-xs font-black text-slate-900 dark:text-white leading-tight">
                 منوی کاربری و نوبت‌ها
               </h2>
-              <span className="text-[10px] text-slate-500 dark:text-text-muted">
+              <span className="text-[11px] text-text-muted dark:text-text-muted">
                 {currentSalon.name}
               </span>
             </div>
@@ -157,7 +157,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                 className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                   theme === 'light'
                     ? 'bg-white text-amber-500 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-text-subtle hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
                 aria-label="تم روز"
               >
@@ -169,7 +169,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                 className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                   theme === 'dark'
                     ? 'bg-dk-surface text-indigo-400 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-text-subtle hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
                 aria-label="تم شب"
               >
@@ -180,7 +180,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-text-subtle hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated transition-colors cursor-pointer"
               aria-label="بستن منو"
             >
               <X className="w-5 h-5" />
@@ -205,7 +205,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                     </span>
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                   </div>
-                  <span className="text-[11px] font-mono text-slate-500 dark:text-text-muted">
+                  <span className="text-[11px] font-mono text-text-muted dark:text-text-muted">
                     {clientSession.phone}
                   </span>
                 </div>
@@ -219,7 +219,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                     title: 'از حساب کاربری خارج شدید',
                   });
                 }}
-                className="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                className="p-2 text-text-subtle hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                 title="خروج از حساب"
               >
                 <LogOut className="w-4 h-4" />
@@ -235,7 +235,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                   <User className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                   مشخصات مشتری / ورود سریع
                 </span>
-                <span className="text-[10px] text-slate-400">جهت مشاهده نوبت‌ها</span>
+                <span className="text-[11px] text-text-subtle">جهت مشاهده نوبت‌ها</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -275,13 +275,13 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
             className={`py-2.5 px-3 rounded-xl transition-all cursor-pointer font-bold flex items-center justify-center gap-1.5 ${
               activeTab === 'bookings'
                 ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-text-muted hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
             <span>نوبت‌های من</span>
             {relevantBookings.length > 0 && (
-              <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-mono font-bold">
+              <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[11px] flex items-center justify-center font-mono font-bold">
                 {toPersianDigits(relevantBookings.length)}
               </span>
             )}
@@ -292,7 +292,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
             className={`py-2.5 px-3 rounded-xl transition-all cursor-pointer font-bold flex items-center justify-center gap-1.5 ${
               activeTab === 'profile'
                 ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400'
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-text-muted hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <QrCode className="w-3.5 h-3.5" />
@@ -309,11 +309,11 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
             <div className="space-y-3">
               {relevantBookings.length === 0 ? (
                 <div className="p-8 text-center bg-slate-50 dark:bg-canvas border border-slate-200 dark:border-border-default rounded-2xl space-y-2">
-                  <Calendar className="w-8 h-8 text-slate-400 mx-auto stroke-1" />
+                  <Calendar className="w-8 h-8 text-text-subtle mx-auto stroke-1" />
                   <p className="text-xs text-slate-600 dark:text-text-muted font-bold">
                     نوبتی برای نمایش یافت نشد
                   </p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-text-subtle">
                     می‌توانید از بخش کاتالوگ خدمات در صفحه، نوبت دلخواهتان را آنلاین رزرو کنید.
                   </p>
                 </div>
@@ -350,7 +350,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                           <div className="text-xs font-bold text-slate-900 dark:text-text-main">
                             {b.serviceName}
                           </div>
-                          <div className="text-[11px] text-slate-500 dark:text-text-muted flex items-center justify-between">
+                          <div className="text-[11px] text-text-muted dark:text-text-muted flex items-center justify-between">
                             <span>متخصص: <strong className="text-slate-700 dark:text-text-muted font-normal">{b.staffName}</strong></span>
                             <span>{b.salonName}</span>
                           </div>
@@ -428,7 +428,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white">
                     بارکد QR اختصاصی {currentSalon.name}
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-text-muted mt-0.5">
+                  <p className="text-[11px] text-text-muted dark:text-text-muted mt-0.5">
                     اسکن بارکد با دوربین گوشی جهت رزرو فوری نوبت در این سالن
                   </p>
                 </div>
@@ -439,7 +439,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                   </span>
                   <button
                     onClick={handleCopySalonUrl}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold transition-all shrink-0 cursor-pointer text-[10px]"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold transition-all shrink-0 cursor-pointer text-[11px]"
                   >
                     {copiedLink ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     <span>{copiedLink ? 'کپی شد' : 'کپی آدرس'}</span>
@@ -465,7 +465,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                   <span>{currentSalon.city} · {currentSalon.address}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-600 dark:text-text-muted">
-                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Clock className="w-3.5 h-3.5 text-text-subtle shrink-0" />
                   <span>
                     {typeof currentSalon.workingHours === 'string'
                       ? currentSalon.workingHours
@@ -486,7 +486,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
         {/* ========================================================= */}
         {/* FOOTER: SWITCH TO SALON ADMIN APP */}
         {/* ========================================================= */}
-        <div className="p-3 border-t border-slate-200 dark:border-border-default bg-slate-50/70 dark:bg-canvas/70 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="p-3 border-t border-slate-200 dark:border-border-default bg-slate-50/70 dark:bg-canvas/70 flex items-center justify-between text-[11px] text-text-muted">
           <button
             onClick={() => {
               if (!isDemoMode) {
@@ -506,7 +506,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
             <span>{isDemoMode ? '[پیش‌نمایش دمو] ورود به اپلیکیشن سالن' : 'ورود مدیر سالن (نیازمند احراز هویت)'}</span>
           </button>
 
-          <span className="font-mono text-slate-400 text-[10px]">
+          <span className="font-mono text-text-subtle text-[11px]">
             {isDemoMode ? 'سامانه نوبت‌آرا (نسخه آزمایشی)' : 'سامانه نوبت‌آرا'}
           </span>
         </div>

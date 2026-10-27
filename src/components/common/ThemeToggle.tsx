@@ -28,7 +28,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
             !isDark
               ? 'bg-white text-slate-900 shadow-xs font-bold border border-slate-200'
-              : 'text-slate-500 hover:text-slate-900 dark:text-text-muted dark:hover:text-text-main'
+              : 'text-text-muted hover:text-slate-900 dark:text-text-muted dark:hover:text-text-main'
           }`}
           title="حالت روز (روشن)"
         >
@@ -42,11 +42,11 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
             isDark
               ? 'bg-dk-surface text-[#FB7185] shadow-xs font-bold border border-dk-border'
-              : 'text-slate-500 hover:text-slate-900 dark:text-text-muted dark:hover:text-text-main'
+              : 'text-text-muted hover:text-slate-900 dark:text-text-muted dark:hover:text-text-main'
           }`}
           title="حالت شب (تیره)"
         >
-          <Moon className="w-3.5 h-3.5 text-brand" />
+          <Moon className="w-3.5 h-3.5 text-brand-accent" />
           {showLabels && <span>شب</span>}
         </button>
       </div>
@@ -63,7 +63,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
       >
         <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-text-main">
           {isDark ? (
-            <Moon className="w-4 h-4 text-brand" />
+            <Moon className="w-4 h-4 text-brand-accent" />
           ) : (
             <Sun className="w-4 h-4 text-amber-500" />
           )}
@@ -97,7 +97,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
           </>
         ) : (
           <>
-            <Moon className="w-3.5 h-3.5 text-brand" />
+            <Moon className="w-3.5 h-3.5 text-brand-accent" />
             <span>حالت شب</span>
           </>
         )}
@@ -117,7 +117,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
       {isDark ? (
         <Sun className="w-4 h-4 text-amber-400" />
       ) : (
-        <Moon className="w-4 h-4 text-brand dark:text-brand" />
+        <Moon className="w-4 h-4 text-brand-accent dark:text-brand-accent" />
       )}
     </button>
   );

@@ -273,7 +273,7 @@ export const SecurityView: React.FC = () => {
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span>{log.actor}</span>
                                 {log.isDemo && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] font-bold">
+                                  <span className="text-[11px] px-1.5 py-0.2 rounded bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] font-bold">
                                     داده آزمایشی
                                   </span>
                                 )}

@@ -45,14 +45,14 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 نوبت با موفقیت ثبت شد
               </h3>
-              <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5">
+              <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
                 زمان نوبت: <span className="font-bold text-rose-600 dark:text-rose-400">{booking.date} · ساعت {booking.time}</span>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 text-text-subtle hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-elevated rounded-lg transition-colors cursor-pointer"
             aria-label="بستن"
           >
             <X className="w-5 h-5" />
@@ -75,41 +75,41 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
           {/* Core Booking Details Grid */}
           <div className="bg-stone-50 dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-stone-200 dark:border-border-default">
-              <span className="text-zinc-500 dark:text-text-muted flex items-center gap-1.5">
+              <span className="text-text-muted dark:text-text-muted flex items-center gap-1.5">
                 <Building className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" /> سالن:
               </span>
               <span className="font-bold text-zinc-900 dark:text-text-main">{booking.salonName}</span>
             </div>
 
             <div className="flex items-center justify-between pb-2 border-b border-stone-200 dark:border-border-default">
-              <span className="text-zinc-500 dark:text-text-muted flex items-center gap-1.5">
-                <Scissors className="w-3.5 h-3.5 text-zinc-500" /> خدمت:
+              <span className="text-text-muted dark:text-text-muted flex items-center gap-1.5">
+                <Scissors className="w-3.5 h-3.5 text-text-muted" /> خدمت:
               </span>
               <span className="font-semibold text-zinc-800 dark:text-zinc-200">{booking.serviceName}</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pb-2 border-b border-stone-200 dark:border-border-default">
               <div className="flex items-center gap-1.5 text-zinc-700 dark:text-text-muted">
-                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="text-zinc-500 dark:text-text-muted">تاریخ:</span>
+                <Calendar className="w-3.5 h-3.5 text-text-subtle" />
+                <span className="text-text-muted dark:text-text-muted">تاریخ:</span>
                 <span className="font-semibold">{booking.date}</span>
               </div>
               <div className="flex items-center gap-1.5 text-zinc-700 dark:text-text-muted">
-                <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="text-zinc-500 dark:text-text-muted">ساعت:</span>
+                <Clock className="w-3.5 h-3.5 text-text-subtle" />
+                <span className="text-text-muted dark:text-text-muted">ساعت:</span>
                 <span className="font-semibold font-mono">{toPersianDigits(booking.time)}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pb-2 border-b border-stone-200 dark:border-border-default">
               <div className="flex items-center gap-1.5 text-zinc-700 dark:text-text-muted">
-                <User className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="text-zinc-500 dark:text-text-muted">متخصص:</span>
+                <User className="w-3.5 h-3.5 text-text-subtle" />
+                <span className="text-text-muted dark:text-text-muted">متخصص:</span>
                 <span className="font-semibold">{booking.staffName}</span>
               </div>
               <div className="flex items-center gap-1.5 text-zinc-700 dark:text-text-muted">
-                <Phone className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="text-zinc-500 dark:text-text-muted">تلفن شما:</span>
+                <Phone className="w-3.5 h-3.5 text-text-subtle" />
+                <span className="text-text-muted dark:text-text-muted">تلفن شما:</span>
                 <span className="font-mono font-semibold">{toPersianDigits(booking.clientPhone)}</span>
               </div>
             </div>
@@ -133,11 +133,11 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
 
           {/* SMS Notification Preview */}
           <div className="bg-stone-50 dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl p-3.5 space-y-2">
-            <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-text-muted border-b border-stone-200 dark:border-border-default/80 pb-1.5">
+            <div className="flex items-center justify-between text-[11px] text-text-muted dark:text-text-muted border-b border-stone-200 dark:border-border-default/80 pb-1.5">
               <span className="flex items-center gap-1.5 font-semibold text-zinc-700 dark:text-text-muted">
                 <MessageSquare className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" /> پیامک ارسال شده:
               </span>
-              <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <span className="text-[11px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
                 تایید شده
               </span>
             </div>
@@ -154,7 +154,7 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
             href={`tel:${salonPhone}`}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-zinc-700 dark:text-text-muted bg-white dark:bg-elevated hover:bg-stone-100 dark:hover:bg-elevated rounded-xl border border-stone-200 dark:border-border-default transition-colors"
           >
-            <Phone className="w-3.5 h-3.5 text-zinc-500" />
+            <Phone className="w-3.5 h-3.5 text-text-muted" />
             تماس با سالن
           </a>
 

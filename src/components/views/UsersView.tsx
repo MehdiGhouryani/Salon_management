@@ -270,7 +270,7 @@ export const UsersView: React.FC = () => {
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
+                  className={`px-1.5 py-0.2 rounded-full text-[11px] font-bold tabular-nums ${
                     isSelected ? 'bg-white/20 text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
                   }`}
                 >
@@ -359,7 +359,7 @@ export const UsersView: React.FC = () => {
                             </div>
                           </div>
 
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${roleBadge.color}`}>
+                          <span className={`px-2 py-0.5 text-[11px] rounded-md font-medium border shrink-0 ${roleBadge.color}`}>
                             {roleBadge.label}
                           </span>
                         </div>
@@ -507,7 +507,7 @@ export const UsersView: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 text-[var(--text-secondary)] hidden md:table-cell">{user.salonName || 'دفتر مرکزی'}</td>
                           <td className="py-3 px-4">
-                            <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${roleBadge.color}`}>
+                            <span className={`inline-block px-2 py-0.5 text-[11px] rounded-md font-medium border ${roleBadge.color}`}>
                               {roleBadge.label}
                             </span>
                           </td>

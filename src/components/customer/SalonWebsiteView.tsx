@@ -162,11 +162,11 @@ export const SalonWebsiteView: React.FC = () => {
                 <h1 className="text-xs sm:text-base font-black text-slate-900 dark:text-text-main tracking-tight truncate">
                   {currentSalon.name}
                 </h1>
-                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-status-success font-bold border border-emerald-200 dark:border-emerald-800/40 shrink-0">
+                <span className="text-[11px] sm:text-[11px] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-status-success font-bold border border-emerald-200 dark:border-emerald-800/40 shrink-0">
                   رزرو آنلاین
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-text-muted truncate">
+              <p className="text-[11px] sm:text-[11px] text-text-muted dark:text-text-muted truncate">
                 {currentSalon.city} · {currentSalon.address.split('،')[0]} · تسویه حضوری
               </p>
             </div>
@@ -188,10 +188,10 @@ export const SalonWebsiteView: React.FC = () => {
               className="relative p-2 sm:px-3.5 sm:py-2.5 rounded-xl border border-slate-200/90 dark:border-border-default bg-white dark:bg-elevated hover:bg-slate-50 dark:hover:bg-elevated text-slate-800 dark:text-text-main transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-xs"
               aria-label="باز کردن منوی کشویی"
             >
-              <Menu className="w-5 h-5 text-rose-600 dark:text-brand" />
+              <Menu className="w-5 h-5 text-rose-600 dark:text-brand-accent" />
               <span className="text-xs font-bold hidden md:inline">منوی کاربری و نوبت‌ها</span>
               {clientBookingsCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold font-mono flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[11px] font-bold font-mono flex items-center justify-center">
                   {toPersianDigits(clientBookingsCount)}
                 </span>
               )}
@@ -231,13 +231,13 @@ export const SalonWebsiteView: React.FC = () => {
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> دارای مجوز رسمی
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
-                  <span className="font-mono font-bold text-amber-500 dark:text-status-warning inline-flex items-center gap-1">
+                  <span className="font-mono font-bold text-amber-700 dark:text-status-warning inline-flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 fill-current shrink-0" />
                     {toPersianDigits(currentSalon.rating)} ({toPersianDigits(currentSalon.reviewsCount)} نظر مراجعین)
                   </span>
                   <span aria-hidden="true" className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
                   <span className="inline-flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-text-muted shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-text-subtle dark:text-text-muted shrink-0" />
                     {typeof currentSalon.workingHours === 'string'
                       ? currentSalon.workingHours
                       : Array.isArray(currentSalon.workingHours)
@@ -255,8 +255,8 @@ export const SalonWebsiteView: React.FC = () => {
                 </p>
 
                 {/* Location & Address */}
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-text-muted pt-0.5">
-                  <MapPin className="w-3.5 h-3.5 text-rose-600 dark:text-brand shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-text-muted dark:text-text-muted pt-0.5">
+                  <MapPin className="w-3.5 h-3.5 text-rose-600 dark:text-brand-accent shrink-0" />
                   <span>{currentSalon.city} · {currentSalon.address}</span>
                 </div>
 
@@ -285,7 +285,7 @@ export const SalonWebsiteView: React.FC = () => {
             </div>
 
             {/* Special Salon Features Line */}
-            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-border-default flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-text-muted">
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-border-default flex flex-wrap items-center gap-2 text-xs text-text-muted dark:text-text-muted">
               <span className="font-semibold text-slate-700 dark:text-text-muted">امکانات سالن:</span>
               {currentSalon.features.map((feat: string, idx: number) => (
                 <span
@@ -309,14 +309,14 @@ export const SalonWebsiteView: React.FC = () => {
                     <Scissors className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                     <span>کاتالوگ خدمات و رزرو سریع</span>
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5">
+                  <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
                     خدمت مورد نظرتان را انتخاب کنید و تاریخ و ساعت دلخواه را آنلاین رزرو نمایید.
                   </p>
                 </div>
 
                 {/* Service Search Input */}
                 <div className="relative w-full sm:w-64">
-                  <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+                  <Search className="w-4 h-4 text-text-subtle absolute right-3 top-2.5" />
                   <input
                     type="text"
                     value={searchTerm}
@@ -327,7 +327,7 @@ export const SalonWebsiteView: React.FC = () => {
                   {searchTerm && (
                     <button
                       onClick={() => setSearchTerm('')}
-                      className="absolute left-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                      className="absolute left-2.5 top-2.5 text-text-subtle hover:text-slate-600"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -374,14 +374,14 @@ export const SalonWebsiteView: React.FC = () => {
                         {service.duration}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-text-muted leading-relaxed line-clamp-2">
+                    <p className="text-xs text-text-muted dark:text-text-muted leading-relaxed line-clamp-2">
                       {service.description}
                     </p>
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-slate-100 dark:border-border-default flex items-center justify-between">
                     <div>
-                      <div className="text-[10px] text-slate-400">هزینه خدمت:</div>
+                      <div className="text-[11px] text-text-subtle">هزینه خدمت:</div>
                       <div className="text-base font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums">
                         {formatCurrency(service.price)}
                       </div>
@@ -406,7 +406,7 @@ export const SalonWebsiteView: React.FC = () => {
                   <User className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   <span>آرایشگران و متخصصین سالن</span>
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5">
+                <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
                   پرسنل و کادر فعال در این مجموعه
                 </p>
               </div>
@@ -424,13 +424,13 @@ export const SalonWebsiteView: React.FC = () => {
                       <div className="text-xs font-bold text-slate-900 dark:text-text-main truncate">
                         {member.name}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-text-muted truncate mt-0.5">
+                      <div className="text-[11px] text-text-muted dark:text-text-muted truncate mt-0.5">
                         {member.role}
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold mt-1 font-mono">
+                      <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-status-warning font-bold mt-1 font-mono">
                         <Star className="w-3 h-3 fill-current" />
                         <span>{toPersianDigits(member.rating)}</span>
-                        <span className="text-slate-400 font-sans mr-1 font-normal">({member.specialty})</span>
+                        <span className="text-text-subtle font-sans mr-1 font-normal">({member.specialty})</span>
                       </div>
                     </div>
                   </div>
@@ -446,7 +446,7 @@ export const SalonWebsiteView: React.FC = () => {
           <span className="text-xs font-bold text-slate-900 dark:text-text-main truncate">
             {currentSalon.name}
           </span>
-          <span className="text-[10px] text-emerald-600 dark:text-status-success flex items-center gap-1 font-medium truncate mt-0.5">
+          <span className="text-[11px] text-emerald-600 dark:text-status-success flex items-center gap-1 font-medium truncate mt-0.5">
             <CreditCard className="w-3 h-3 shrink-0" />
             تسویه حضوری در محل سالن
           </span>
