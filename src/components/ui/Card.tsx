@@ -15,10 +15,10 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variantClasses = {
-    default: 'bg-[var(--bg-surface)] border-[var(--border-subtle)] shadow-xs',
-    elevated: 'bg-[var(--bg-elevated)] border-[var(--border-subtle)] shadow-sm',
+    default: 'bg-[var(--bg-surface)] border-[var(--border-default)]',
+    elevated: 'bg-[var(--bg-elevated)] border-[var(--border-default)]',
     outlined: 'bg-transparent border-[var(--border-strong)]',
-    subtle: 'bg-[var(--bg-subsurface)] border-[var(--border-subtle)]',
+    subtle: 'bg-[var(--bg-subsurface)] border-[var(--border-default)]',
   };
 
   const paddingClasses = {
@@ -29,12 +29,12 @@ export const Card: React.FC<CardProps> = ({
   };
 
   const interactiveClasses = interactive
-    ? 'hover:border-[var(--brand-border)] hover:shadow-md cursor-pointer active:scale-[0.99] transition-all duration-150'
+    ? 'hover:border-[var(--border-strong)] cursor-pointer'
     : '';
 
   return (
     <div
-      className={`rounded-2xl border transition-all duration-150 text-[var(--text-primary)] ${variantClasses[variant]} ${paddingClasses[padding]} ${interactiveClasses} ${className}`}
+      className={`rounded-2xl border transition-colors duration-150 text-[var(--text-primary)] ${variantClasses[variant]} ${paddingClasses[padding]} ${interactiveClasses} ${className}`}
       {...props}
     >
       {children}
@@ -64,7 +64,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
 }) => {
   return (
     <h3
-      className={`text-sm sm:text-base font-bold text-[var(--text-primary)] tracking-tight ${className}`}
+      className={`text-base font-semibold text-[var(--text-primary)] ${className}`}
       {...props}
     >
       {children}
@@ -79,7 +79,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
 }) => {
   return (
     <p
-      className={`text-xs text-[var(--text-secondary)] mt-1 leading-relaxed ${className}`}
+      className={`text-sm text-[var(--text-secondary)] mt-1 ${className}`}
       {...props}
     >
       {children}

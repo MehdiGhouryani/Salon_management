@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-[var(--bg-overlay)] backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-[var(--bg-overlay)] transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -78,18 +78,18 @@ export const Modal: React.FC<ModalProps> = ({
           <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
             <div className="flex items-center gap-3">
               {icon && (
-                <div className="p-2 rounded-xl bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)] shrink-0">
+                <div className="text-[var(--text-muted)] shrink-0">
                   {icon}
                 </div>
               )}
               <div>
                 {title && (
-                  <h3 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight">
+                  <h3 className="text-base font-semibold text-[var(--text-primary)]">
                     {title}
                   </h3>
                 )}
                 {description && (
-                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                  <p className="text-sm text-[var(--text-secondary)] mt-0.5">
                     {description}
                   </p>
                 )}

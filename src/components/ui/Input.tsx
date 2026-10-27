@@ -37,9 +37,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const helperId = `${inputId}-helper`;
 
     const sizeClasses: Record<InputSize, string> = {
-      sm: 'min-h-[36px] py-1.5 text-xs rounded-lg',
-      md: 'min-h-[44px] py-2.5 text-xs sm:text-sm rounded-xl',
-      lg: 'min-h-[48px] py-3 text-sm sm:text-base rounded-xl',
+      sm: 'min-h-[36px] py-1.5 text-sm rounded-lg',
+      md: 'min-h-[44px] py-2.5 text-sm rounded-xl',
+      lg: 'min-h-[48px] py-3 text-base rounded-xl',
     };
 
     return (
@@ -47,7 +47,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold text-[var(--text-primary)] mb-1.5 select-none"
+            className="block text-sm font-medium text-[var(--text-primary)] mb-1.5 select-none"
           >
             {label}
           </label>
@@ -69,7 +69,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled || isLoading}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errorId : helperText ? helperId : undefined}
-            className={`w-full px-3.5 border transition-all duration-150 outline-none
+            className={`w-full px-3.5 border transition-colors duration-150 outline-none
               bg-[var(--bg-surface)]
               text-[var(--text-primary)]
               placeholder:text-[var(--text-muted)]
@@ -80,7 +80,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               ${
                 error
                   ? 'border-[var(--status-error)] focus:ring-2 focus:ring-[var(--status-error)]/20'
-                  : 'border-[var(--border-subtle)] focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15'
+                  : 'border-[var(--border-strong)] focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15'
               }
               ${tabularNums ? 'tabular-nums font-mono' : ''}
               ${className}`}
@@ -113,7 +113,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
 
         {!error && helperText && (
-          <p id={helperId} className="mt-1.5 text-[11px] text-[var(--text-secondary)]">
+          <p id={helperId} className="mt-1.5 text-xs text-[var(--text-muted)]">
             {helperText}
           </p>
         )}
