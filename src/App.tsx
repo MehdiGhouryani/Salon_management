@@ -542,7 +542,7 @@ const MainSwitcher: React.FC = () => {
       </Suspense>
 
       {/* MOBILE COLLAPSIBLE FLOATING BUTTON */}
-      <div className="sm:hidden fixed bottom-16 left-3.5 z-40">
+      <div className="sm:hidden fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-3.5 z-40">
         {isPillCollapsed ? (
           <button
             onClick={() => setMobilePersonaOpen(true)}
@@ -670,8 +670,18 @@ const MainSwitcher: React.FC = () => {
       )}
 
       {/* DESKTOP FLOATING THREE-PILLAR SWITCHER (Hidden on mobile screens) */}
-      <div className="hidden sm:block fixed bottom-4 left-4 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-        <div className="bg-[var(--bg-surface)] backdrop-blur-md border border-[var(--border-subtle)] shadow-xl rounded-2xl p-1.5 flex items-center gap-1.5 text-xs">
+      <div className="hidden sm:block fixed bottom-4 left-4 z-50">
+        {isPillCollapsed ? (
+          <button
+            onClick={() => setIsPillCollapsed(false)}
+            className="w-10 h-10 rounded-full bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center cursor-pointer"
+            aria-label="تغییر بخش نوبت‌آرا"
+            title={`بخش فعلی: ${getPersonaLabel()} (برای تغییر کلیک کنید)`}
+          >
+            <ActiveIcon className="w-4 h-4" />
+          </button>
+        ) : (
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-lg rounded-2xl p-1.5 flex items-center gap-1.5 text-xs">
           {/* Pillar 1: Salon Website for Clients */}
           <button
             onClick={() => setPersona('salon_website')}
@@ -723,7 +733,16 @@ const MainSwitcher: React.FC = () => {
 
           {/* Fast Theme Toggle Icon */}
           <ThemeToggle variant="icon" />
+          <button
+            onClick={() => setIsPillCollapsed(true)}
+            className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
+            title="جمع کردن"
+            aria-label="جمع کردن"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
+        )}
       </div>
     </div>
   );
