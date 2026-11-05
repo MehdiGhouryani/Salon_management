@@ -1,488 +1,333 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import {
-  Lock,
-  Copy,
-  Check,
-  Search,
-  MapPin,
-  Calendar,
-  Clock,
-  Star,
-  ShieldCheck,
-  Scissors,
-  Sparkles,
-  Phone,
-  CreditCard,
-  Building,
-  User,
-  ChevronLeft,
-  Smartphone,
-  X,
-  Menu,
-} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { useTheme } from '../../context/ThemeContext';
 import {
-  salonDirectoryDetails,
   getSalonBySlug,
-  SalonServiceItem,
-  SalonStaffItem,
   DetailedSalonData,
+  SalonServiceItem,
 } from '../../mock/salonDirectoryData';
+import { CustomerBooking } from '../../types/admin';
+import { toPersianDigits } from '../../utils/formatters';
+import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/Button';
+import { money } from '../salon/format';
 import { BookingModal } from './BookingModal';
 import { BookingReceiptModal } from './BookingReceiptModal';
 import { CustomerSiteDrawer } from './CustomerSiteDrawer';
-import { CustomerBooking } from '../../types/admin';
-import { toPersianDigits, formatCurrency } from '../../utils/formatters';
 
-const categoriesList = [
-  { id: 'all', label: 'همه خدمات', icon: Sparkles },
-  { id: 'hair', label: 'مو، رنگ و لایت', icon: Scissors },
-  { id: 'nail', label: 'ناخن و پدیکور', icon: Sparkles },
-  { id: 'skin', label: 'پوست و فیشیال', icon: Sparkles },
-  { id: 'makeup', label: 'میکاپ و عروس', icon: Sparkles },
-  { id: 'men', label: 'پیرایش آقایان', icon: User },
-  { id: 'spa', label: 'ماساژ و اسپا', icon: Sparkles },
-];
+const fa = (n: number) => toPersianDigits(String(n));
 
+/**
+ * The salon's own page. The service menu is the page: read it like a printed menu, with the
+ * salon's photograph beside it. One action ("رزرو نوبت") on a phone and in the first screen.
+ */
 export const SalonWebsiteView: React.FC = () => {
-  const {
-    salons,
-    currentSalonSlug,
-    setCurrentSalonSlug,
-    clientSession,
-    customerBookings,
-    addCustomerBooking,
-    setPersona,
-    addToast,
-  } = useAdmin();
+  const { salons, currentSalonSlug, clientSession, customerBookings, addCustomerBooking } = useAdmin();
 
-  const { theme } = useTheme();
-
-
-  // Live server salon data
+  // Live server data first, the static catalog as a fallback.
   const [liveSalon, setLiveSalon] = useState<DetailedSalonData | null>(null);
-
   useEffect(() => {
-    let isMounted = true;
+    let alive = true;
     fetch(`/api/public/salons/${encodeURIComponent(currentSalonSlug)}`)
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then((data) => {
-        if (!isMounted) return;
-        if (data.success && data.salon) {
-          setLiveSalon(data.salon);
-        }
+        if (alive && data.success && data.salon) setLiveSalon(data.salon);
       })
       .catch(() => {});
     return () => {
-      isMounted = false;
+      alive = false;
     };
   }, [currentSalonSlug]);
 
-  // Current active salon data (prioritizes live server data, falls back to static catalog)
-  const currentSalon = useMemo(() => {
-    if (liveSalon) return liveSalon;
-    return getSalonBySlug(currentSalonSlug, salons);
-  }, [liveSalon, currentSalonSlug, salons]);
+  const salon = useMemo(
+    () => liveSalon ?? getSalonBySlug(currentSalonSlug, salons),
+    [liveSalon, currentSalonSlug, salons]
+  );
 
-  // Search & Filter state for catalog / services
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [search, setSearch] = useState('');
+  const [imgOk, setImgOk] = useState(true);
+  useEffect(() => setImgOk(true), [salon.bannerImage]);
 
-  // Modals state
-  const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | undefined>(undefined);
-  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
-  const [activeReceiptBooking, setActiveReceiptBooking] = useState<CustomerBooking | null>(null);
-  const [sideMenuOpen, setSideMenuOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [serviceId, setServiceId] = useState<string | undefined>(undefined);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receipt, setReceipt] = useState<CustomerBooking | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
 
-  // Active bookings count: Only for the authenticated customer
-  const clientBookingsCount = useMemo(() => {
-    if (!clientSession.isLoggedIn || !clientSession.phone) {
-      return 0;
-    }
-    return customerBookings.filter((b) => b.clientPhone === clientSession.phone).length;
-  }, [customerBookings, clientSession]);
+  // Only the verified client's own bookings are counted.
+  const myCount = useMemo(
+    () =>
+      clientSession.isLoggedIn && clientSession.phone
+        ? customerBookings.filter((b) => b.clientPhone === clientSession.phone).length
+        : 0,
+    [customerBookings, clientSession]
+  );
 
-  // Services filtered for current salon
-  const filteredServices = useMemo(() => {
-    if (!currentSalon.services) return [];
-    return currentSalon.services.filter((s: SalonServiceItem) => {
-      const matchCat = activeCategory === 'all' || s.category === activeCategory;
-      const matchSearch =
-        !searchTerm.trim() ||
-        s.name.toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
-        s.description.toLowerCase().includes(searchTerm.trim().toLowerCase());
-      return matchCat && matchSearch;
+  const services = salon.services || [];
+  const showSearch = services.length > 12;
+  const shown = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return services;
+    return services.filter(
+      (s: SalonServiceItem) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
+    );
+  }, [services, search]);
+
+  const groups = useMemo(() => {
+    const map = new Map<string, { label: string; items: SalonServiceItem[] }>();
+    shown.forEach((s) => {
+      const g = map.get(s.category) ?? { label: s.categoryLabel, items: [] };
+      g.items.push(s);
+      map.set(s.category, g);
     });
-  }, [currentSalon, activeCategory, searchTerm]);
+    return [...map.values()];
+  }, [shown]);
 
-  // Handle URL Copy
-  const handleCopyUrl = () => {
-    const url = `https://nobatara.ir/${currentSalon.slug}`;
-    navigator.clipboard?.writeText(url);
-    setCopiedLink(true);
-    addToast({
-      type: 'success',
-      title: 'لینک اختصاصی سالن کپی شد',
-      message: url,
-    });
-    setTimeout(() => setCopiedLink(false), 2500);
+  const book = (id?: string) => {
+    setServiceId(id);
+    setBookingOpen(true);
   };
 
-  const handleBookingSuccess = (booking: CustomerBooking) => {
-    addCustomerBooking(booking);
-    setBookingModalOpen(false);
-    setActiveReceiptBooking(booking);
-    setReceiptModalOpen(true);
-  };
+  const hasImage = Boolean(salon.bannerImage) && imgOk;
+  const hasRating = salon.rating > 0 && salon.reviewsCount > 0;
 
-  const openBookingForService = (srvId?: string) => {
-    setSelectedServiceId(srvId);
-    setBookingModalOpen(true);
-  };
+  // With a photograph the name sits in the text column. Without one, the name becomes the
+  // dominant thing on the page: set large on a flat field where the photograph would be.
+  const titleBlock = (
+    <>
+      <h1
+        className={
+          hasImage
+            ? 'text-[28px] sm:text-4xl font-bold leading-[1.35]'
+            : 'text-[40px] sm:text-6xl lg:text-7xl font-bold leading-[1.25]'
+        }
+      >
+        {salon.name}
+      </h1>
+      {salon.tagline && (
+        <p
+          className={`text-[var(--text-secondary)] max-w-[40ch] ${
+            hasImage ? 'mt-3 text-base sm:text-lg' : 'mt-5 text-lg sm:text-xl lg:text-2xl'
+          }`}
+        >
+          {salon.tagline}
+        </p>
+      )}
+    </>
+  );
+
+  const header = (cls: string) => (
+    <header className={`items-center justify-between gap-4 px-5 sm:px-8 lg:px-14 h-16 ${cls}`}>
+      <p className="text-[17px] font-bold truncate">{salon.name}</p>
+      <button
+        type="button"
+        onClick={() => setAccountOpen(true)}
+        className="shrink-0 inline-flex items-center gap-2 h-11 px-4 rounded-full border border-[var(--border-strong)] text-sm text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer"
+      >
+        نوبت‌های من
+        {myCount > 0 && (
+          <span className="min-w-5 h-5 px-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-surface)] text-xs flex items-center justify-center">
+            {fa(myCount)}
+          </span>
+        )}
+      </button>
+    </header>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F4F4F5] dark:bg-canvas text-slate-900 dark:text-text-main font-sans antialiased pb-28 transition-colors duration-200" dir="rtl">
-      {/* 1. CLEAN LUXURY TOP NAVBAR WITH SIDE MENU TRIGGER */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-surface/95 backdrop-blur-md border-b border-slate-200/90 dark:border-border-default shadow-xs">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Brand & Salon Title */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center font-bold shadow-xs cursor-pointer active:scale-95 transition-all shrink-0"
-              title={currentSalon.name}
-            >
-              <Scissors className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div className="min-w-0 truncate">
-              <div className="flex items-center gap-1.5 truncate">
-                <h1 className="text-xs sm:text-base font-black text-slate-900 dark:text-text-main tracking-tight truncate">
-                  {currentSalon.name}
-                </h1>
-                <span className="text-[11px] sm:text-[11px] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-status-success font-bold border border-emerald-200 dark:border-emerald-800/40 shrink-0">
-                  رزرو آنلاین
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-[11px] text-text-muted dark:text-text-muted truncate">
-                {currentSalon.city} · {currentSalon.address.split('،')[0]} · تسویه حضوری
-              </p>
-            </div>
-          </div>
+    <div
+      dir="rtl"
+      className="min-h-dvh bg-[var(--bg-canvas)] text-[var(--text-primary)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-0"
+    >
+      {header('flex lg:hidden')}
 
-          {/* Left Actions: Fast booking CTA + Side Drawer Toggle Button */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => openBookingForService()}
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>رزرو آنلاین نوبت</span>
-            </button>
-
-            {/* Side Drawer Toggle Button (منوی کشویی کاربری: مشخصات، نوبت‌ها، QR و تم) */}
-            <button
-              onClick={() => setSideMenuOpen(true)}
-              className="relative p-2 sm:px-3.5 sm:py-2.5 rounded-xl border border-slate-200/90 dark:border-border-default bg-white dark:bg-elevated hover:bg-slate-50 dark:hover:bg-elevated text-slate-800 dark:text-text-main transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-xs"
-              aria-label="باز کردن منوی کشویی"
-            >
-              <Menu className="w-5 h-5 text-rose-600 dark:text-brand-accent" />
-              <span className="text-xs font-bold hidden md:inline">منوی کاربری و نوبت‌ها</span>
-              {clientBookingsCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[11px] font-bold font-mono flex items-center justify-center">
-                  {toPersianDigits(clientBookingsCount)}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* 2. DEDICATED SALON VIEW */}
-      <div>
-        {/* HERO BANNER */}
-        {currentSalon.bannerImage && (
-          <div className="relative h-44 sm:h-72 w-full overflow-hidden bg-slate-900 shadow-inner">
+      <div className="flex flex-col lg:grid lg:grid-cols-2">
+        {hasImage ? (
+          <div className="h-[36dvh] sm:h-[44dvh] lg:h-dvh lg:sticky lg:top-0 bg-[var(--bg-elevated)]">
             <img
-              src={currentSalon.bannerImage}
-              alt={currentSalon.name}
-              className="w-full h-full object-cover opacity-90 dark:opacity-75 transition-all duration-500"
+              src={salon.bannerImage}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={() => setImgOk(false)}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-            <div className="absolute bottom-4 sm:bottom-6 right-3 sm:right-8 flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-bold flex items-center gap-1.5 shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-                <span>سالن برگزیده با نشان تایید رسمی</span>
-              </span>
-            </div>
+          </div>
+        ) : (
+          <div className="min-h-[34dvh] lg:min-h-0 lg:h-dvh lg:sticky lg:top-0 bg-[var(--bg-elevated)] flex flex-col justify-end px-5 sm:px-8 lg:px-14 py-10 lg:py-16">
+            {titleBlock}
           </div>
         )}
+        <div className="min-w-0">
+          {header('hidden lg:flex')}
 
-        {/* A. ELEVATED SOFT SALON PROFILE CARD (ساده‌سازی شده و متناسب با موبایل) */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 -mt-8 sm:-mt-14 relative z-10 mb-6">
-          <div className="bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.07)] dark:shadow-none space-y-3 sm:space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
-              <div className="space-y-2.5">
-                {/* Clean unboxed metadata with separators (خوانا و بدون شکست نامناسب) */}
-                <div className="flex flex-wrap items-center gap-y-1 gap-x-2 text-xs text-slate-600 dark:text-text-muted">
-                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-status-success font-bold">
-                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" /> دارای مجوز رسمی
-                  </span>
-                  <span aria-hidden="true" className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
-                  <span className="font-mono font-bold text-amber-700 dark:text-status-warning inline-flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 fill-current shrink-0" />
-                    {toPersianDigits(currentSalon.rating)} ({toPersianDigits(currentSalon.reviewsCount)} نظر مراجعین)
-                  </span>
-                  <span aria-hidden="true" className="text-slate-300 dark:text-slate-600 hidden sm:inline">·</span>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-text-subtle dark:text-text-muted shrink-0" />
-                    {typeof currentSalon.workingHours === 'string'
-                      ? currentSalon.workingHours
-                      : Array.isArray(currentSalon.workingHours)
-                      ? 'همه روزه ۹:۳۰ الی ۲۰:۰۰'
-                      : String(currentSalon.workingHours || 'همه روزه ۹:۳۰ الی ۲۰:۰۰')}
-                  </span>
+          <div className="px-5 sm:px-8 lg:px-14">
+            <section className="pt-6 lg:pt-12">
+              {hasImage && titleBlock}
+              <dl className={`${hasImage ? 'mt-6' : 'mt-0'} space-y-2 text-base`}>
+                {hasRating && (
+                  <div className="flex gap-3">
+                    <dt className="w-20 shrink-0 text-[var(--text-secondary)]">امتیاز</dt>
+                    <dd>
+                      {fa(salon.rating)} از {fa(salon.reviewsCount)} نظر
+                    </dd>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <dt className="w-20 shrink-0 text-[var(--text-secondary)]">آدرس</dt>
+                  <dd>
+                    {salon.city}، {salon.address}
+                  </dd>
                 </div>
-
-                {/* Salon Title & Tagline */}
-                <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-text-main tracking-tight">
-                  {currentSalon.name}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-text-muted max-w-2xl leading-relaxed">
-                  {currentSalon.tagline}
+                <div className="flex gap-3">
+                  <dt className="w-20 shrink-0 text-[var(--text-secondary)]">ساعت کاری</dt>
+                  <dd>{toPersianDigits(salon.workingHours)}</dd>
+                </div>
+              </dl>
+              <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
+                <div className="hidden sm:block">
+                  <Button size="lg" className="rounded-full px-8" onClick={() => book()}>
+                    رزرو نوبت
+                  </Button>
+                </div>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  رزرو رایگان است؛ هزینه را حضوری در سالن می‌پردازید.
                 </p>
-
-                {/* Location & Address */}
-                <div className="flex items-center gap-2 text-xs text-text-muted dark:text-text-muted pt-0.5">
-                  <MapPin className="w-3.5 h-3.5 text-rose-600 dark:text-brand-accent shrink-0" />
-                  <span>{currentSalon.city} · {currentSalon.address}</span>
-                </div>
-
-                {/* Mobile-Only In-Person Settlement Badge (Simple & Calm) */}
-                <div className="md:hidden flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-status-success bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 px-2.5 py-1 rounded-lg w-fit mt-1">
-                  <CreditCard className="w-3.5 h-3.5 text-emerald-600 dark:text-status-success shrink-0" />
-                  <span>تسویه ۱۰۰٪ حضوری پس از دریافت خدمت در سالن</span>
-                </div>
               </div>
+            </section>
 
-              {/* Desktop-Only Booking CTA & Guarantee (Hidden on mobile to keep card simple; sticky bottom bar handles mobile booking) */}
-              <div className="hidden md:flex flex-col gap-2.5 shrink-0">
-                <button
-                  onClick={() => openBookingForService()}
-                  className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>رزرو نوبت آنلاین</span>
-                </button>
+            <section className="mt-14" aria-labelledby="services-title">
+              <h2 id="services-title" className="text-2xl font-bold">
+                خدمات و قیمت‌ها
+              </h2>
+              {showSearch && (
+                <label className="block mt-4">
+                  <span className="sr-only">جستجوی خدمت</span>
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="جستجوی خدمت"
+                    className="w-full sm:w-80 h-11 px-4 rounded-full bg-[var(--bg-surface)] border border-[var(--border-strong)] text-base placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </label>
+              )}
+              {groups.length === 0 ? (
+                <p className="mt-6 text-base text-[var(--text-secondary)]">
+                  {search ? 'خدمتی با این عنوان پیدا نشد.' : 'هنوز خدمتی ثبت نشده است.'}
+                </p>
+              ) : (
+                groups.map((g) => (
+                  <div key={g.label} className="mt-8">
+                    <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-1">{g.label}</h3>
+                    <ul>
+                      {g.items.map((s) => (
+                        <li
+                          key={s.id}
+                          className="flex items-start gap-4 -mx-3 px-3 py-4 rounded-2xl hover:bg-[var(--bg-surface)] transition-colors"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-base font-semibold">{s.name}</p>
+                            {s.description && (
+                              <p className="mt-1 text-base text-[var(--text-secondary)] line-clamp-2">
+                                {s.description}
+                              </p>
+                            )}
+                            <p className="mt-2 text-base text-[var(--text-secondary)]">
+                              {s.duration}،{' '}
+                              <span className="tabular-nums text-[var(--text-primary)]">
+                                {money(s.price)} تومان
+                              </span>
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => book(s.id)}
+                            aria-label={`رزرو ${s.name}`}
+                            className="shrink-0 h-10 px-5 rounded-full border border-[var(--border-strong)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer"
+                          >
+                            رزرو
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </section>
 
-                <div className="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-center text-xs text-emerald-800 dark:text-status-success flex items-center justify-center gap-1.5 font-medium">
-                  <CreditCard className="w-3.5 h-3.5 text-emerald-600 dark:text-status-success" />
-                  <span>تسویه حضوری در محل سالن</span>
-                </div>
-              </div>
-            </div>
+            {salon.staff.length > 0 && (
+              <section className="mt-14" aria-labelledby="team-title">
+                <h2 id="team-title" className="text-2xl font-bold">
+                  پرسنل
+                </h2>
+                <ul className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                  {salon.staff.map((m) => (
+                    <li key={m.id} className="flex items-center gap-3">
+                      <Avatar src={m.avatar} name={m.name} size={48} />
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold">{m.name}</p>
+                        <p className="text-base text-[var(--text-secondary)]">
+                          {m.role}
+                          {m.specialty ? `، ${m.specialty}` : ''}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
-            {/* Special Salon Features Line */}
-            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-border-default flex flex-wrap items-center gap-2 text-xs text-text-muted dark:text-text-muted">
-              <span className="font-semibold text-slate-700 dark:text-text-muted">امکانات سالن:</span>
-              {currentSalon.features.map((feat: string, idx: number) => (
-                <span
-                  key={idx}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-elevated text-slate-600 dark:text-text-muted text-[11px]"
-                >
-                  ✓ {feat}
-                </span>
-              ))}
-            </div>
+            {salon.features && salon.features.length > 0 && (
+              <section className="mt-14" aria-labelledby="features-title">
+                <h2 id="features-title" className="text-2xl font-bold">
+                  امکانات
+                </h2>
+                <p className="mt-3 text-base text-[var(--text-secondary)]">{salon.features.join('، ')}.</p>
+              </section>
+            )}
+
+            <footer className="mt-16 pb-14">
+              <p className="text-3xl sm:text-4xl font-bold leading-[1.35]">{salon.name}</p>
+              <Button size="lg" className="mt-6 rounded-full px-8" onClick={() => book()}>
+                رزرو نوبت
+              </Button>
+              <p className="mt-8 text-sm text-[var(--text-muted)]">این صفحه با نوبت‌آرا ساخته شده است.</p>
+            </footer>
           </div>
         </div>
 
-        {/* B. SERVICES CATALOG & FAST BOOKING SECTION */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 space-y-8">
-            {/* Category Filter & Search Bar */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-text-main flex items-center gap-2">
-                    <Scissors className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                    <span>کاتالوگ خدمات و رزرو سریع</span>
-                  </h2>
-                  <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
-                    خدمت مورد نظرتان را انتخاب کنید و تاریخ و ساعت دلخواه را آنلاین رزرو نمایید.
-                  </p>
-                </div>
-
-                {/* Service Search Input */}
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-4 h-4 text-text-subtle absolute right-3 top-2.5" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="جستجوی خدمت..."
-                    className="w-full pl-8 pr-9 py-2 text-xs bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-xl text-slate-900 dark:text-text-main placeholder-slate-400 focus:outline-none focus:border-rose-500 transition-colors"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute left-2.5 top-2.5 text-text-subtle hover:text-slate-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Category Segmented Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none select-none">
-                {categoriesList.map((cat) => {
-                  const Icon = cat.icon;
-                  const isActive = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-rose-600 text-white shadow-xs'
-                          : 'bg-white dark:bg-surface text-slate-600 dark:text-text-muted hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-border-default'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{cat.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Services Grid with Direct Booking CTA */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredServices.map((service: SalonServiceItem) => (
-                <div
-                  key={service.id}
-                  className="bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default rounded-2xl p-5 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_-4px_rgba(0,0,0,0.1)] group"
-                >
-                  <div className="space-y-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-text-main group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
-                        {service.name}
-                      </h3>
-                      <span className="text-[11px] px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-elevated text-slate-600 dark:text-text-muted shrink-0 font-medium border border-slate-200/60 dark:border-border-default/60">
-                        {service.duration}
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-muted dark:text-text-muted leading-relaxed line-clamp-2">
-                      {service.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-slate-100 dark:border-border-default flex items-center justify-between">
-                    <div>
-                      <div className="text-[11px] text-text-subtle">هزینه خدمت:</div>
-                      <div className="text-base font-black text-rose-600 dark:text-rose-400 font-mono tabular-nums">
-                        {formatCurrency(service.price)}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => openBookingForService(service.id)}
-                      className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                    >
-                      <span>رزرو این خدمت</span>
-                      <ChevronLeft className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* C. SALON SPECIALISTS & STAFF */}
-            <section className="space-y-4 pt-6 border-t border-slate-200/90 dark:border-border-default">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-text-main flex items-center gap-2">
-                  <User className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                  <span>آرایشگران و متخصصین سالن</span>
-                </h2>
-                <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
-                  پرسنل و کادر فعال در این مجموعه
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {currentSalon.staff.map((member: SalonStaffItem) => (
-                  <div
-                    key={member.id}
-                    className="p-4 bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default rounded-2xl flex items-center gap-3 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)]"
-                  >
-                    <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-elevated flex items-center justify-center font-bold text-sm text-slate-700 dark:text-text-muted shrink-0">
-                      {member.name.slice(0, 1)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-900 dark:text-text-main truncate">
-                        {member.name}
-                      </div>
-                      <div className="text-[11px] text-text-muted dark:text-text-muted truncate mt-0.5">
-                        {member.role}
-                      </div>
-                      <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-status-warning font-bold mt-1 font-mono">
-                        <Star className="w-3 h-3 fill-current" />
-                        <span>{toPersianDigits(member.rating)}</span>
-                        <span className="text-text-subtle font-sans mr-1 font-normal">({member.specialty})</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </main>
-        </div>
-
-      {/* MOBILE STICKY BOTTOM BOOKING BAR (دکمه رزرو چسبان پایین موبایل با ارتفاع لمسی استاندارد) */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-surface/95 backdrop-blur-md border-t border-slate-200/90 dark:border-border-default px-4 py-2.5 shadow-[0_-4px_16px_-4px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3">
-        <div className="flex flex-col text-right min-w-0 flex-1">
-          <span className="text-xs font-bold text-slate-900 dark:text-text-main truncate">
-            {currentSalon.name}
-          </span>
-          <span className="text-[11px] text-emerald-600 dark:text-status-success flex items-center gap-1 font-medium truncate mt-0.5">
-            <CreditCard className="w-3 h-3 shrink-0" />
-            تسویه حضوری در محل سالن
-          </span>
-        </div>
-
-        <button
-          onClick={() => openBookingForService()}
-          className="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 min-h-[44px]"
-        >
-          <Calendar className="w-4 h-4" />
-          <span>رزرو آنلاین نوبت</span>
-        </button>
       </div>
 
-      {/* 3. MODALS */}
+      <div className="sm:hidden fixed inset-x-0 bottom-0 z-30 bg-[var(--bg-surface)] shadow-[0_-6px_20px_rgb(0_0_0/0.06)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <Button size="lg" className="w-full rounded-full" onClick={() => book()}>
+          رزرو نوبت
+        </Button>
+      </div>
+
       <BookingModal
-        isOpen={bookingModalOpen}
-        onClose={() => setBookingModalOpen(false)}
-        salon={currentSalon}
-        initialServiceId={selectedServiceId}
-        onBookingSuccess={handleBookingSuccess}
+        isOpen={bookingOpen}
+        onClose={() => setBookingOpen(false)}
+        salon={salon}
+        initialServiceId={serviceId}
+        onBookingSuccess={(booking) => {
+          addCustomerBooking(booking);
+          setBookingOpen(false);
+          setReceipt(booking);
+          setReceiptOpen(true);
+        }}
       />
-
       <BookingReceiptModal
-        isOpen={receiptModalOpen}
-        onClose={() => setReceiptModalOpen(false)}
-        booking={activeReceiptBooking}
+        isOpen={receiptOpen}
+        onClose={() => setReceiptOpen(false)}
+        booking={receipt}
+        salonPhone={salon.phone}
+        salonAddress={salon.address ? `${salon.city}، ${salon.address}` : undefined}
       />
-
       <CustomerSiteDrawer
-        isOpen={sideMenuOpen}
-        onClose={() => setSideMenuOpen(false)}
-        currentSalon={currentSalon}
+        isOpen={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        currentSalon={salon}
         onOpenReceipt={(booking) => {
-          setActiveReceiptBooking(booking);
-          setReceiptModalOpen(true);
+          setReceipt(booking);
+          setReceiptOpen(true);
         }}
       />
     </div>
