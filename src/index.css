@@ -291,10 +291,9 @@
 }
 
 .nobat-table-header {
-  background-color: var(--bg-subsurface);
   border-bottom: 1px solid var(--border-default);
-  color: var(--text-secondary);
-  font-weight: 600;
+  color: var(--text-muted);
+  font-weight: 500;
   font-size: 0.75rem;
 }
 
