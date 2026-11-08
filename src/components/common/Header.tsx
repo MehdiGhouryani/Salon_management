@@ -51,7 +51,7 @@ export const Header: React.FC = React.memo(() => {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-2.5 sm:py-3 bg-[var(--bg-surface)] backdrop-blur-md border-b border-[var(--border-subtle)] text-[var(--text-primary)] transition-colors shadow-xs">
       {/* Zone 1: Contextual Breadcrumb & Title */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="flex flex-1 items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={() => setMobileSidebarOpen(true)}
           className="md:hidden flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subsurface)] text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors cursor-pointer shrink-0"
@@ -60,11 +60,11 @@ export const Header: React.FC = React.memo(() => {
         >
           <Menu className="w-4 h-4" />
         </button>
-        <div className="flex flex-col text-right truncate">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-xs">
-            <span className="font-bold text-[var(--text-secondary)]">پنل کل</span>
-            <span aria-hidden="true" className="text-[var(--text-muted)]">/</span>
-            <h1 className="text-base text-[var(--brand-primary)] font-bold truncate m-0">{currentInfo.title}</h1>
+        <div className="flex min-w-0 flex-1 flex-col text-right">
+          <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2 text-xs">
+            <span className="hidden sm:inline font-bold text-[var(--text-secondary)] shrink-0">پنل کل</span>
+            <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)] shrink-0">/</span>
+            <h1 className="min-w-0 flex-1 text-base text-[var(--brand-primary)] font-bold truncate m-0">{currentInfo.title}</h1>
           </div>
           <span className="hidden md:inline text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
             {currentInfo.subtitle}
@@ -93,8 +93,8 @@ export const Header: React.FC = React.memo(() => {
       {/* Zone 3: Actions, Theme Switcher & Profile */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Prominent Theme Toggle in Admin Header */}
-        <ThemeToggle variant="segmented" className="hidden sm:inline-flex" />
-        <ThemeToggle variant="icon" className="sm:hidden" />
+        <div className="hidden sm:block"><ThemeToggle variant="segmented" /></div>
+        
 
         {/* Keyboard Shortcuts Trigger Button */}
         <button
