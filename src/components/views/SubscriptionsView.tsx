@@ -82,7 +82,7 @@ export const SubscriptionsView: React.FC = () => {
 
       {/* Financial Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">درآمد ماهانه پایدار (MRR)</span>
             <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -95,7 +95,7 @@ export const SubscriptionsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">اشتراک‌های فعال</span>
             <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -108,7 +108,7 @@ export const SubscriptionsView: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">درگاه‌های بانکی متصل</span>
             <Shield className="w-4 h-4 text-rose-600 dark:text-rose-400" />
@@ -138,7 +138,7 @@ export const SubscriptionsView: React.FC = () => {
             return (
               <div
                 key={p.id}
-                className={`p-5 rounded-2xl bg-white dark:bg-elevated border shadow-xs flex flex-col justify-between transition-all ${
+                className={`p-5 rounded-2xl bg-white dark:bg-elevated border flex flex-col justify-between transition-colors ${
                   isVip
                     ? 'border-rose-500/50 dark:border-rose-500/40 ring-1 ring-rose-500/10'
                     : 'border-stone-200/90 dark:border-border-default'
@@ -205,7 +205,7 @@ export const SubscriptionsView: React.FC = () => {
       {/* Quick Salon Plan Assignment & Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Assignment Box */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main mb-1">
               تخصیص یا ارتقای پلن سالن
@@ -245,7 +245,7 @@ export const SubscriptionsView: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer mt-2"
+                className="w-full py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer mt-2"
               >
                 اعمال ارتقای پلن
               </button>
@@ -254,7 +254,7 @@ export const SubscriptionsView: React.FC = () => {
         </div>
 
         {/* Transactions Card */}
-        <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
           <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-border-default">
             <div>
               <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">
@@ -292,7 +292,7 @@ export const SubscriptionsView: React.FC = () => {
 
       {/* Plan Editor Modal */}
       {editingPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="fixed inset-0" onClick={() => setEditingPlan(null)}></div>
 
           <div className="relative w-full max-w-sm bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4">

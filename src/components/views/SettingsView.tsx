@@ -88,7 +88,7 @@ export const SettingsView: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form 1: API Keys & Gateways */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs space-y-4">
+        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-border-default">
             <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
               <Key className="w-4 h-4 text-amber-500" />
@@ -141,7 +141,7 @@ export const SettingsView: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer"
               >
                 ذخیره کلیدهای وب‌سرویس
               </button>
@@ -150,7 +150,7 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Form 2: System Broadcast Banner */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs space-y-4">
+        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default space-y-4">
           <div className="pb-3 border-b border-stone-100 dark:border-border-default">
             <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
               <Bell className="w-4 h-4 text-rose-500" />
@@ -188,7 +188,7 @@ export const SettingsView: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer"
               >
                 اعمال وضعیت اطلاعیه
               </button>

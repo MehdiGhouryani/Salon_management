@@ -59,7 +59,7 @@ export const OperationsView: React.FC = () => {
 
           <button
             onClick={runSystemDiagnostic}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer"
           >
             <Play className="w-3.5 h-3.5" />
             <span>تست سلامت سیستم</span>
@@ -69,7 +69,7 @@ export const OperationsView: React.FC = () => {
 
       {/* Hardware & Infrastructure KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span>پردازنده سرور (CPU)</span>
             <Cpu className="w-4 h-4 text-rose-600 dark:text-rose-400" />
@@ -85,7 +85,7 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span>حافظه RAM</span>
             <HardDrive className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -101,7 +101,7 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span>تاخیر پاسخگویی (Latency)</span>
             <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -112,7 +112,7 @@ export const OperationsView: React.FC = () => {
           <p className="text-[11px] text-text-subtle mt-2">عالی و در محدوده سبز</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span>کش Redis</span>
             <Database className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -125,7 +125,7 @@ export const OperationsView: React.FC = () => {
       </div>
 
       {/* Terminal / Live Server Log Card */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default shadow-xs">
+      <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
         <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-border-default text-xs">
           <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-text-main">
             <Terminal className="w-4 h-4 text-rose-600 dark:text-rose-400" />

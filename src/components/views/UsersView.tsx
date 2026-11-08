@@ -209,12 +209,12 @@ export const UsersView: React.FC = () => {
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xs">
+          <div className="flex items-center p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl">
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] shadow-xs'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش کارتی شبکه‌ای"
@@ -224,9 +224,9 @@ export const UsersView: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] shadow-xs'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش جدول فشرده"
@@ -248,7 +248,7 @@ export const UsersView: React.FC = () => {
       </div>
 
       {/* Role Filter Tabs & Result Count */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs">
         <div className="flex flex-wrap items-center gap-1">
           {[
             { id: 'all', label: 'همه کاربران', count: users.length },
@@ -262,9 +262,9 @@ export const UsersView: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setRoleFilter(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-medium ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-colors cursor-pointer font-medium ${
                   isSelected
-                    ? 'bg-[var(--brand-primary)] text-white font-bold shadow-xs'
+                    ? 'bg-[var(--brand-primary)] text-white font-bold'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                 }`}
               >
@@ -305,7 +305,7 @@ export const UsersView: React.FC = () => {
       </div>
 
       {/* Debounced Search Bar */}
-      <div className="p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+      <div className="p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
         <Input
           size="sm"
           value={search}
@@ -340,7 +340,7 @@ export const UsersView: React.FC = () => {
                   return (
                     <div
                       key={user.id}
-                      className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs hover:border-[var(--brand-border)] transition-all flex flex-col justify-between"
+                      className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:border-[var(--brand-border)] transition-colors flex flex-col justify-between"
                     >
                       <div>
                         {/* Top: Avatar, Name & Role Badge */}

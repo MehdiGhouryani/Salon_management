@@ -209,7 +209,7 @@ export const SalonSimulatorView: React.FC = () => {
           {/* Salon App Header */}
           <div className="p-4 bg-dk-surface border-b border-dk-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow">
+              <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white font-bold text-sm shadow">
                 {currentSalon?.name.slice(0, 1)}
               </div>
               <div>
@@ -279,7 +279,7 @@ export const SalonSimulatorView: React.FC = () => {
                   return (
                     <div
                       key={apt.id}
-                      className={`p-3 rounded-2xl border transition-all text-right space-y-2 ${
+                      className={`p-3 rounded-2xl border transition-colors text-right space-y-2 ${
                         isCompleted
                           ? 'bg-dk-elevated/40 border-dk-border/80 opacity-75'
                           : isInProgress
@@ -324,7 +324,7 @@ export const SalonSimulatorView: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => handleCompleteVisit(apt.id)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>تکمیل خدمت و ثبت تسویه</span>
@@ -452,7 +452,7 @@ export const SalonSimulatorView: React.FC = () => {
 
       {/* Add Appointment Simulator Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 animate-in fade-in duration-150">
           <div className="fixed inset-0" onClick={() => setIsAddModalOpen(false)}></div>
 
           <div className="relative w-full max-w-sm bg-dk-surface border border-dk-border rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4 text-xs text-dk-text">
@@ -538,7 +538,7 @@ export const SalonSimulatorView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-white font-semibold bg-brand hover:bg-brand/90 rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 text-white font-semibold bg-brand hover:bg-brand/90 rounded-xl cursor-pointer"
                 >
                   افزودن به تقویم
                 </button>

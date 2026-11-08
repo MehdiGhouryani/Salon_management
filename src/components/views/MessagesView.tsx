@@ -135,7 +135,7 @@ export const MessagesView: React.FC = () => {
 
       {/* KPI Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <span className="text-[var(--text-secondary)] block mb-1">پیامک‌های تحویل‌شده</span>
           <span className="text-xl font-bold text-[var(--status-success)] tabular-nums">
             {toPersianDigits(deliveredCount)} عدد
@@ -143,7 +143,7 @@ export const MessagesView: React.FC = () => {
           <p className="text-[11px] text-[var(--text-muted)] mt-1">نرخ تحویل ۹۸.۷٪ در شبکه</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <span className="text-[var(--text-secondary)] block mb-1">ناموفق / بلک‌لیست</span>
           <span className={`text-xl font-bold tabular-nums ${failedCount > 0 ? 'text-[var(--status-error)]' : 'text-[var(--text-muted)]'}`}>
             {toPersianDigits(failedCount)} عدد
@@ -151,7 +151,7 @@ export const MessagesView: React.FC = () => {
           <p className="text-[11px] text-[var(--text-muted)] mt-1">آماده تلاش مجدد</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <span className="text-[var(--text-secondary)] block mb-1">در صف دیسپچ</span>
           <span className="text-xl font-bold text-[var(--status-info)] tabular-nums">
             {toPersianDigits(queuedCount)} عدد
@@ -159,7 +159,7 @@ export const MessagesView: React.FC = () => {
           <p className="text-[11px] text-[var(--text-muted)] mt-1">سرعت: ۵۰ پیام در ثانیه</p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <span className="text-[var(--text-secondary)] block mb-1">درگاه ارتباطی</span>
           <span className="text-base sm:text-lg font-bold text-[var(--text-primary)]">
             کاوه‌نگار خدماتی
@@ -198,7 +198,7 @@ export const MessagesView: React.FC = () => {
       {activeSubTab === 'queue' ? (
         <div className="space-y-4">
           {/* Search & Filter Bar */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xs text-xs">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs">
             <div className="w-full md:w-80">
               <Input
                 size="sm"
@@ -337,7 +337,7 @@ export const MessagesView: React.FC = () => {
           {templates.map((tpl) => (
             <div
               key={tpl.id}
-              className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs flex flex-col justify-between"
+              className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">

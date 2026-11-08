@@ -184,7 +184,7 @@ export const SecurityView: React.FC = () => {
       {activeSubTab === 'audit' && (
         <div className="space-y-4">
           {/* Advanced Filter Bar with Debounce & Select Components */}
-          <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
             <div className="w-full md:w-80">
               <Input
                 size="sm"
@@ -363,7 +363,7 @@ export const SecurityView: React.FC = () => {
             {sessions.map((sess) => (
               <div
                 key={sess.id}
-                className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs flex items-center justify-between"
+                className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
@@ -404,7 +404,7 @@ export const SecurityView: React.FC = () => {
       {/* Tab 3: Firewall */}
       {activeSubTab === 'firewall' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">
               افزودن IP به لیست سیاه فایروال
             </h3>
@@ -432,7 +432,7 @@ export const SecurityView: React.FC = () => {
             </form>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs space-y-3">
+          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-3">
             <h4 className="text-xs font-bold text-[var(--text-primary)]">
               IPهای مسدود شده در سامانه ({toPersianDigits(securitySettings.ipBlacklist.length)})
             </h4>
