@@ -3,25 +3,16 @@ import {
   Store,
   Plus,
   Search,
-  Filter,
   Download,
   Eye,
   CheckCircle,
   AlertTriangle,
   X,
   Edit2,
-  Trash2,
   Check,
-  Phone,
-  MapPin,
-  Calendar,
-  Users,
-  DollarSign,
-  ShieldCheck,
   EyeOff,
   LayoutGrid,
   List,
-  Sparkles,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Salon, SalonStatus, PlanType } from '../../types/admin';
@@ -45,10 +36,8 @@ export const BusinessesView: React.FC = () => {
     salons,
     approveSalon,
     suspendSalon,
-    activateSalon,
     updateSalonPlan,
     saveSalon,
-    deleteSalon,
     inspectedSalon,
     setInspectedSalon,
     addToast,
@@ -343,7 +332,7 @@ export const BusinessesView: React.FC = () => {
               onClick={() => setStatusFilter(tab.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-medium ${
                 isSelected
-                  ? 'bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent font-bold border border-rose-300 dark:border-brand/30'
+                  ? 'bg-surface text-text-main font-semibold border border-border-default'
                   : 'text-slate-600 dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main hover:bg-slate-100 dark:hover:bg-elevated border border-transparent'
               }`}
             >
@@ -419,7 +408,7 @@ export const BusinessesView: React.FC = () => {
             <button
               onClick={() => setSortBy('revenue')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent font-semibold border border-rose-200 dark:border-brand/30' : 'hover:text-slate-800 dark:hover:text-text-main'
+                sortBy === 'revenue' ? 'bg-surface text-text-main font-semibold border border-border-default' : 'hover:text-slate-800 dark:hover:text-text-main'
               }`}
             >
               بیشترین درآمد
@@ -427,7 +416,7 @@ export const BusinessesView: React.FC = () => {
             <button
               onClick={() => setSortBy('appointments')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-brand/15 text-brand-accent dark:text-brand-accent font-semibold border border-rose-200 dark:border-brand/30' : 'hover:text-slate-800 dark:hover:text-text-main'
+                sortBy === 'appointments' ? 'bg-surface text-text-main font-semibold border border-border-default' : 'hover:text-slate-800 dark:hover:text-text-main'
               }`}
             >
               بیشترین نوبت
@@ -619,8 +608,8 @@ export const BusinessesView: React.FC = () => {
           {filteredSalons.length > 0 ? (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 dark:bg-subsurface border-b border-slate-200 dark:border-border-default text-text-muted dark:text-text-muted font-semibold">
+                <table className="w-full text-right text-sm">
+                  <thead className="border-b border-border-default text-xs font-medium text-text-muted">
                     <tr>
                       <th className="py-3 px-4">نام سالن و دسته‌بندی</th>
                       <th className="py-3 px-4">مدیر و تماس</th>
@@ -640,7 +629,7 @@ export const BusinessesView: React.FC = () => {
                         <tr key={salon.id} className="hover:bg-slate-50/60 dark:hover:bg-elevated/50 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-elevated flex items-center justify-center font-bold text-brand-accent dark:text-brand-accent shrink-0 border border-slate-200 dark:border-border-default">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-elevated flex items-center justify-center font-bold text-text-main shrink-0 border border-border-default">
                                 {salon.name.slice(0, 1)}
                               </div>
                               <div>
@@ -659,7 +648,7 @@ export const BusinessesView: React.FC = () => {
                               {salon.plan === 'gold_vip' ? 'VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-bold text-emerald-600 dark:text-status-success tabular-nums hidden lg:table-cell">
+                          <td className="py-3 px-4 tabular-nums text-text-main hidden lg:table-cell">
                             {formatCurrency(salon.monthlyRevenue, 'toman')}
                           </td>
                           <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-text-muted hidden xl:table-cell">
