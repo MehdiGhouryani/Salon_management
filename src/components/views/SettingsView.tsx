@@ -2,22 +2,15 @@ import React, { useState } from 'react';
 import {
   Settings,
   Key,
-  Database,
-  Radio,
   Eye,
   EyeOff,
-  Save,
-  CheckCircle2,
   AlertTriangle,
-  HardDrive,
-  RefreshCw,
   Bell,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { maskApiKey } from '../../utils/formatters';
 
 export const SettingsView: React.FC = () => {
-  const { isDemoMode, securitySettings, updateSecuritySettings, addToast } = useAdmin();
+  const { isDemoMode, addToast } = useAdmin();
 
   // API credentials state - Empty defaults for secure configuration state
   const [kavenegarKey, setKavenegarKey] = useState('');
@@ -84,6 +77,11 @@ export const SettingsView: React.FC = () => {
         <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
           پیکربندی کلیدهای وب‌سرویس پیامک، درگاه بانکی شاپرک و اطلاعیه‌های سراسری
         </p>
+        {isDemoMode && (
+          <p className="text-xs text-text-muted mt-1">
+            حالت پیش‌نمایش: کلیدها و اطلاعیه‌ها فقط در همین مرورگر ذخیره می‌شوند و به سرور نمی‌رسند.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -188,7 +186,7 @@ export const SettingsView: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-text-main border border-border-strong rounded-xl hover:bg-subsurface transition-colors cursor-pointer"
               >
                 اعمال وضعیت اطلاعیه
               </button>
