@@ -3,19 +3,14 @@ import {
   MessageSquare,
   RotateCcw,
   Send,
-  AlertTriangle,
-  CheckCircle2,
   Clock,
-  Filter,
   FileText,
   Search,
-  Check,
   X,
-  Radio,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { DispatchMessage, MessageTemplate } from '../../types/admin';
-import { toPersianDigits, getStatusBadge, maskPhone } from '../../utils/formatters';
+import { MessageTemplate } from '../../types/admin';
+import { toPersianDigits, maskPhone } from '../../utils/formatters';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../ui/EmptyState';
 import { Select } from '../ui/Select';
@@ -33,7 +28,6 @@ export const MessagesView: React.FC = () => {
     retryAllFailedMessages,
     sendBroadcastMessage,
     updateTemplate,
-    addToast,
   } = useAdmin();
 
   const [activeSubTab, setActiveSubTab] = useState<'queue' | 'templates'>('queue');
@@ -112,7 +106,7 @@ export const MessagesView: React.FC = () => {
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           <Button
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={() => setIsBroadcastModalOpen(true)}
             leftIcon={<Send className="w-3.5 h-3.5" />}
@@ -122,7 +116,7 @@ export const MessagesView: React.FC = () => {
 
           {failedCount > 0 && (
             <Button
-              variant="danger"
+              variant="outline"
               size="sm"
               onClick={retryAllFailedMessages}
               leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
@@ -174,7 +168,7 @@ export const MessagesView: React.FC = () => {
           onClick={() => setActiveSubTab('queue')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'queue'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-semibold border border-[var(--border-default)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -186,7 +180,7 @@ export const MessagesView: React.FC = () => {
           onClick={() => setActiveSubTab('templates')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'templates'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-semibold border border-[var(--border-default)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -285,7 +279,7 @@ export const MessagesView: React.FC = () => {
                             <td className="py-3 px-4 text-center">
                               {msg.status === 'failed' ? (
                                 <Button
-                                  variant="danger"
+                                  variant="outline"
                                   size="xs"
                                   onClick={() => retryFailedMessage(msg.id)}
                                 >

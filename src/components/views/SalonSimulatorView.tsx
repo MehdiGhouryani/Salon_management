@@ -6,15 +6,10 @@ import {
   User,
   Plus,
   CheckCircle2,
-  DollarSign,
   Scissors,
   Check,
   X,
-  Phone,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
   Star,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
@@ -171,7 +166,7 @@ export const SalonSimulatorView: React.FC = () => {
           <select
             value={currentSalon?.id}
             onChange={(e) => setSimulatorSalonId(e.target.value)}
-            className="px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 font-bold focus:outline-none focus:border-rose-500 cursor-pointer shadow"
+            className="px-3.5 py-2 bg-surface border border-border-default rounded-xl text-text-main font-semibold focus:outline-none focus:border-brand cursor-pointer"
           >
             {salons.map((s) => (
               <option key={s.id} value={s.id}>
