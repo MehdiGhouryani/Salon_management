@@ -2,10 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   Search,
-  Plus,
-  Shield,
-  Smartphone,
-  Mail,
   Lock,
   Unlock,
   CheckCircle2,
@@ -14,9 +10,7 @@ import {
   UserPlus,
   LayoutGrid,
   List,
-  Store,
   MoreVertical,
-  Filter,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { User, UserRole } from '../../types/admin';
@@ -476,7 +470,7 @@ export const UsersView: React.FC = () => {
           {filteredUsers.length > 0 ? (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
+                <table className="w-full text-right text-sm">
                   <thead className="nobat-table-header">
                     <tr>
                       <th className="py-3 px-4">نام کاربر</th>
@@ -507,14 +501,12 @@ export const UsersView: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 text-[var(--text-secondary)] hidden md:table-cell">{user.salonName || 'دفتر مرکزی'}</td>
                           <td className="py-3 px-4">
-                            <span className={`inline-block px-2 py-0.5 text-[11px] rounded-md font-medium border ${roleBadge.color}`}>
+                            <span className="text-xs text-[var(--text-secondary)]">
                               {roleBadge.label}
                             </span>
                           </td>
                           <td className="py-3 px-4 hidden lg:table-cell">
-                            <Badge variant={user.twoFactorEnabled ? 'success' : 'neutral'} size="sm">
-                              {user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}
-                            </Badge>
+                            <span className={`text-xs ${user.twoFactorEnabled ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
                           </td>
                           <td className="py-3 px-4">
                             <Badge variant={user.status === 'active' ? 'success' : 'error'} size="sm">
@@ -524,29 +516,11 @@ export const UsersView: React.FC = () => {
                           <td className="py-3 px-4 text-center">
                             {/* Desktop row action buttons */}
                             <div className="hidden sm:flex items-center justify-center gap-1.5">
-                              <Button
-                                variant="outline"
-                                size="xs"
-                                onClick={() => openRoleModal(user)}
-                              >
-                                نقش
-                              </Button>
+                              <button type="button" onClick={() => openRoleModal(user)} className="px-2 py-1 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline cursor-pointer">نقش</button>
                               {user.status === 'active' ? (
-                                <Button
-                                  variant="danger"
-                                  size="xs"
-                                  onClick={() => openStatusChangeModal(user, 'banned')}
-                                >
-                                  مسدود
-                                </Button>
+                                <button type="button" onClick={() => openStatusChangeModal(user, 'banned')} className="px-2 py-1 text-xs font-semibold text-[var(--status-error)] hover:underline cursor-pointer">مسدود</button>
                               ) : (
-                                <Button
-                                  variant="success"
-                                  size="xs"
-                                  onClick={() => openStatusChangeModal(user, 'active')}
-                                >
-                                  رفع مسدود
-                                </Button>
+                                <button type="button" onClick={() => openStatusChangeModal(user, 'active')} className="px-2 py-1 text-xs font-semibold text-[var(--status-success)] hover:underline cursor-pointer">رفع مسدود</button>
                               )}
                             </div>
 

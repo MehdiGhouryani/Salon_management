@@ -4,14 +4,8 @@ import {
   ShieldCheck,
   Lock,
   Globe,
-  Smartphone,
   Trash2,
-  Plus,
-  AlertTriangle,
-  Key,
-  Users,
   Search,
-  CheckCircle2,
   X,
   Laptop,
 } from 'lucide-react';
@@ -33,12 +27,10 @@ export const SecurityView: React.FC = () => {
     auditLogs,
     sessions,
     securitySettings,
-    updateSecuritySettings,
     terminateSession,
     terminateAllOtherSessions,
     addIpToBlacklist,
     removeIpFromBlacklist,
-    addToast,
   } = useAdmin();
 
   const [activeSubTab, setActiveSubTab] = useState<'audit' | 'sessions' | 'firewall'>('audit');
@@ -249,7 +241,7 @@ export const SecurityView: React.FC = () => {
             {filteredLogs.length > 0 ? (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-right text-xs">
+                  <table className="w-full text-right text-sm">
                     <thead className="nobat-table-header">
                       <tr>
                         <th className="py-3 px-4">زمان ثبت</th>
@@ -273,17 +265,13 @@ export const SecurityView: React.FC = () => {
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span>{log.actor}</span>
                                 {log.isDemo && (
-                                  <span className="text-[11px] px-1.5 py-0.2 rounded bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] font-bold">
-                                    داده آزمایشی
-                                  </span>
+                                  <span className="text-[11px] text-[var(--text-muted)]">داده‌ی نمونه</span>
                                 )}
                               </div>
                             </td>
                             <td className="py-3 px-4 font-medium">{log.action}</td>
                             <td className="py-3 px-4 hidden md:table-cell">
-                              <Badge variant={catBadge.variant} size="sm">
-                                {catBadge.label}
-                              </Badge>
+                              <span className="text-xs text-[var(--text-secondary)]">{catBadge.label}</span>
                             </td>
                             <td className="py-3 px-4 text-[var(--text-secondary)] hidden lg:table-cell">{log.target}</td>
                             <td className="py-3 px-4 font-mono text-[11px] text-[var(--text-muted)] hidden sm:table-cell" dir="ltr">{log.ipAddress}</td>
