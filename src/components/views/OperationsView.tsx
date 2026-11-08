@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import {
   Activity,
-  Server,
   Database,
   Cpu,
   HardDrive,
   RotateCcw,
   Zap,
-  CheckCircle2,
-  AlertTriangle,
   Play,
   Terminal,
 } from 'lucide-react';
@@ -16,7 +13,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { toPersianDigits } from '../../utils/formatters';
 
 export const OperationsView: React.FC = () => {
-  const { metrics, flushRedisCache, runSystemDiagnostic, addToast } = useAdmin();
+  const { metrics, flushRedisCache, runSystemDiagnostic, isDemoMode } = useAdmin();
   const [logFilter, setLogFilter] = useState<'all' | 'error' | 'cron'>('all');
 
   const simulatedLogs = [
@@ -139,7 +136,7 @@ export const OperationsView: React.FC = () => {
                 onClick={() => setLogFilter(filter as any)}
                 className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                   logFilter === filter
-                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold'
+                    ? 'bg-surface border border-border-default text-text-main font-semibold'
                     : 'text-text-muted hover:text-zinc-800'
                 }`}
               >
@@ -149,7 +146,12 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-3 bg-stone-50 dark:bg-elevated rounded-xl border border-stone-100 dark:border-border-default/80 my-3 font-mono text-xs space-y-2 max-h-72 overflow-y-auto" dir="ltr">
+        {isDemoMode && (
+             <p className="text-xs text-text-muted mt-3" dir="rtl">
+               گزارش‌های این فهرست نمونه‌اند و از سرور نیامده‌اند.
+             </p>
+           )}
+           <div className="p-3 bg-stone-50 dark:bg-elevated rounded-xl border border-stone-100 dark:border-border-default/80 my-3 font-mono text-xs space-y-2 max-h-72 overflow-y-auto" dir="ltr">
           {filteredLogs.map((log, i) => (
             <div key={i} className="flex items-start gap-2 text-left">
               <span className="text-text-subtle shrink-0">[{log.time}]</span>
