@@ -13,11 +13,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('nobatara_theme') as Theme | null;
-      if (saved === 'dark' || saved === 'light') {
-        return saved;
+    // Storage can be blocked (private modes, sandboxed frames). Blocked storage must not stop the app from starting.
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('nobatara_theme') as Theme | null;
+        if (saved === 'dark' || saved === 'light') {
+          return saved;
+        }
       }
+    } catch {
+      // storage unavailable: fall back to the default
     }
     return 'light'; // Light is the default; a saved choice always wins
   });
