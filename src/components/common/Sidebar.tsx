@@ -179,7 +179,7 @@ export const Sidebar: React.FC = React.memo(() => {
   return (
     <>
       <aside
-        className={`relative z-20 hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] transition-all duration-300 select-none shrink-0 ${
+        className={`relative z-20 hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] transition-[width] duration-300 select-none shrink-0 ${
           collapsed ? 'w-20' : 'w-60 md:w-64'
         }`}
       >
@@ -227,7 +227,7 @@ export const Sidebar: React.FC = React.memo(() => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer group relative ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer group relative ${
                     isActive
                       ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] font-bold border border-[var(--brand-border)] shadow-xs'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
@@ -335,7 +335,7 @@ export const Sidebar: React.FC = React.memo(() => {
                         setActiveTab(item.id);
                         setMobileSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                         isActive
                           ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] font-bold border border-[var(--brand-border)] shadow-xs'
                           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'

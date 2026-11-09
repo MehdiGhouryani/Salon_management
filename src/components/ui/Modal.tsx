@@ -108,7 +108,7 @@ export const Modal: React.FC<ModalProps> = ({
       <div
         ref={cardRef}
         tabIndex={-1}
-        className={`relative w-full ${sizeClasses[size]} bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl shadow-xl z-10 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200 ${className}`}
+        className={`relative w-full ${sizeClasses[size]} bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-3xl shadow-xl z-10 overflow-hidden transform transition-colors animate-in zoom-in-95 duration-200 ${className}`}
       >
         {/* Header */}
         {(title || showCloseButton) && (

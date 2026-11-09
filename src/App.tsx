@@ -364,7 +364,7 @@ const MainSwitcher: React.FC = () => {
                   setPersona('salon_website');
                   setMobilePersonaOpen(false);
                 }}
-                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-colors cursor-pointer ${
                   persona === 'salon_website'
                     ? 'bg-brand dark:bg-brand text-white shadow-xs'
                     : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
@@ -383,7 +383,7 @@ const MainSwitcher: React.FC = () => {
                   setPersona('salon_app');
                   setMobilePersonaOpen(false);
                 }}
-                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-colors cursor-pointer ${
                   persona === 'salon_app'
                     ? 'bg-brand dark:bg-brand text-white shadow-xs'
                     : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
@@ -402,7 +402,7 @@ const MainSwitcher: React.FC = () => {
                   setPersona('super_admin');
                   setMobilePersonaOpen(false);
                 }}
-                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-colors cursor-pointer ${
                   persona === 'super_admin'
                     ? 'bg-brand dark:bg-brand text-white shadow-xs'
                     : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'

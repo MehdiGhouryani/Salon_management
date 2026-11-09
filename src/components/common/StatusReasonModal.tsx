@@ -95,7 +95,7 @@ export const StatusReasonModal: React.FC<StatusReasonModalProps> = ({
               if (error) setError(null);
             }}
             placeholder={placeholder}
-            className="w-full px-3.5 py-2.5 bg-[var(--bg-subsurface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15 transition-all leading-relaxed"
+            className="w-full px-3.5 py-2.5 bg-[var(--bg-subsurface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15 transition-colors leading-relaxed"
             required
           />
           <p className="text-[11px] text-[var(--text-muted)] mt-1">
