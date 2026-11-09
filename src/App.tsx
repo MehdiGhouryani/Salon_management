@@ -101,10 +101,16 @@ const AdminLayout: React.FC = () => {
   );
 };
 
+// The three places of the platform, in the order the switch shows them.
+const PERSONA_OPTIONS: { key: 'salon_website' | 'salon_app' | 'super_admin'; label: string; title: string; icon: React.FC<{ className?: string }> }[] = [
+  { key: 'salon_website', label: 'وب‌سایت سالن', title: 'وب‌سایت اختصاصی رزرو سالن برای مشتریان', icon: Globe },
+  { key: 'salon_app', label: 'اپلیکیشن سالن', title: 'اپلیکیشن نوبت‌دهی مدیر سالن', icon: Smartphone },
+  { key: 'super_admin', label: 'پنل مدیریت کل', title: 'پنل مدیریت کل پلتفرم (پیش‌نمایش آزمایشی)', icon: Shield },
+];
+
 const MainSwitcher: React.FC = () => {
   const { persona, setPersona, isDemoMode, serverAuth, serverLogout } = useAdmin();
   const [mobilePersonaOpen, setMobilePersonaOpen] = useState(false);
-  const [isPillCollapsed, setIsPillCollapsed] = useState(true);
 
   const renderContent = () => {
     // SERVER AUTHENTICATION & RBAC GATE (Phase 5):
@@ -267,84 +273,70 @@ const MainSwitcher: React.FC = () => {
         adminShellActive ? 'h-screen flex flex-col overflow-hidden' : ''
       }`}
     >
-      {/* Top Governance / Security Environment Mode Indicator */}
+      {/* Environment strip: says where the data comes from and holds the only persona switch. It is part of the page, so it never covers content. */}
       <div
-        className={`px-3 py-1.5 text-[11px] flex items-center justify-between border-b transition-colors select-none ${
+        className={`px-3 py-1 text-[11px] flex items-center gap-3 border-b transition-colors select-none ${
           isDemoMode
             ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-300'
             : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-300'
         }`}
         dir="rtl"
       >
-        <div className="flex items-center gap-2 truncate">
-          <span
-            className={`w-2 h-2 rounded-full shrink-0 ${
-              isDemoMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
-            }`}
-          />
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${isDemoMode ? 'bg-amber-500' : 'bg-emerald-500'}`} />
           <span className="truncate">
             {isDemoMode ? (
-              <span>
-                <strong>محیط پیش‌نمایش آزمایشی (Demo Mode):</strong> داده‌ها و عملیات جنبه شبیه‌سازی دارند و سوئیچر نقش‌ها ابزار تست توسعه است.
-              </span>
+              <strong>پیش‌نمایش آزمایشی:</strong>
             ) : (
-              <span>
-                <strong>محیط عملیاتی سرور (Production Mode):</strong> دسترسی به ادمین منوط به احراز هویت سرور است.
-              </span>
-            )}
+              <strong>محیط عملیاتی:</strong>
+            )}{' '}
+            {isDemoMode ? 'داده‌ها نمونه‌اند و عملیات شبیه‌سازی می‌شوند.' : 'دسترسی به ادمین منوط به احراز هویت سرور است.'}
           </span>
         </div>
-        <div className="shrink-0 mr-2">
-          {isDemoMode ? (
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-              توسعه / Demo Preview
-            </span>
-          ) : (
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
-              عملیاتی / Production
-            </span>
-          )}
+
+        {/* Wide screens: the three places in one control */}
+        <div role="group" aria-label="بخش پلتفرم" className="hidden sm:flex items-center gap-0.5 p-px rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] shrink-0">
+          {PERSONA_OPTIONS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => setPersona(option.key)}
+              aria-pressed={persona === option.key}
+              title={option.key === 'super_admin' && !isDemoMode ? 'پنل مدیریت کل (نیازمند ورود به سرور)' : option.title}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold transition-colors cursor-pointer ${
+                persona === option.key
+                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-default)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <option.icon className="w-3 h-3" />
+              <span>{option.label}</span>
+              {option.key === 'super_admin' && !isDemoMode && (
+                <span className="text-[11px] text-[var(--status-error)]">مسدود</span>
+              )}
+            </button>
+          ))}
         </div>
+
+        {/* Phones: one button that opens the sheet with the same choices */}
+        <button
+          type="button"
+          onClick={() => setMobilePersonaOpen(true)}
+          aria-label="تغییر بخش نوبت‌آرا"
+          className="sm:hidden flex items-center gap-1.5 px-2 py-1 rounded-md font-semibold bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] shrink-0 cursor-pointer"
+        >
+          <ActiveIcon className="w-3 h-3" />
+          <span>{getPersonaLabel()}</span>
+        </button>
       </div>
 
       {adminShellActive ? <div className="flex-1 min-h-0">{content}</div> : content}
 
-      {/* MOBILE COLLAPSIBLE FLOATING BUTTON */}
-      <div className="sm:hidden fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-3.5 z-40">
-        {isPillCollapsed ? (
-          <button
-            onClick={() => setMobilePersonaOpen(true)}
-            className="w-10 h-10 rounded-full bg-white/95 dark:bg-surface/95 backdrop-blur-md border border-slate-200/90 dark:border-border-default shadow-lg text-slate-800 dark:text-text-main flex items-center justify-center active:scale-90 transition-all cursor-pointer ring-1 ring-black/5 dark:ring-white/5 relative group"
-            aria-label="تغییر بخش نوبت‌آرا"
-            title={`بخش فعلی: ${getPersonaLabel()} (برای تغییر کلیک کنید)`}
-          >
-            <ActiveIcon className="w-4 h-4 text-brand-accent" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand ring-2 ring-white dark:ring-dk-surface" />
-          </button>
-        ) : (
-          <div className="flex items-center gap-1 p-1 bg-white/95 dark:bg-surface/95 backdrop-blur-md border border-slate-200/90 dark:border-border-default shadow-xl rounded-full text-slate-800 dark:text-text-main text-xs font-bold ring-1 ring-black/5 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-150">
-            <button
-              onClick={() => setMobilePersonaOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-elevated transition-colors cursor-pointer"
-            >
-              <ActiveIcon className="w-3.5 h-3.5 text-brand-accent" />
-              <span className="text-[11px]">{getPersonaLabel()}</span>
-            </button>
-            <button
-              onClick={() => setIsPillCollapsed(true)}
-              className="p-1 rounded-full text-text-subtle hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              title="جمع کردن به دکمه کوچک"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* MOBILE PERSONA SELECTION MODAL SHEET */}
       {mobilePersonaOpen && (
         <div
-          className="sm:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+          className="sm:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 animate-in fade-in duration-150"
           onClick={() => setMobilePersonaOpen(false)}
         >
           <div
@@ -437,81 +429,6 @@ const MainSwitcher: React.FC = () => {
         </div>
       )}
 
-      {/* DESKTOP FLOATING THREE-PILLAR SWITCHER (Hidden on mobile screens) */}
-      <div className="hidden sm:block fixed bottom-4 left-4 z-50">
-        {isPillCollapsed ? (
-          <button
-            onClick={() => setIsPillCollapsed(false)}
-            className="w-10 h-10 rounded-full bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center justify-center cursor-pointer"
-            aria-label="تغییر بخش نوبت‌آرا"
-            title={`بخش فعلی: ${getPersonaLabel()} (برای تغییر کلیک کنید)`}
-          >
-            <ActiveIcon className="w-4 h-4" />
-          </button>
-        ) : (
-        <div className="bg-[var(--bg-surface)] border border-[var(--border-default)] shadow-lg rounded-2xl p-1.5 flex items-center gap-1.5 text-xs">
-          {/* Pillar 1: Salon Website for Clients */}
-          <button
-            onClick={() => setPersona('salon_website')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-              persona === 'salon_website'
-                ? 'bg-[var(--brand-primary)] text-white shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-            }`}
-            title="وب‌سایت اختصاصی رزرو سالن برای مشتریان"
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>وب‌سایت سالن</span>
-          </button>
-
-          {/* Pillar 2: Android App for Salon Manager */}
-          <button
-            onClick={() => setPersona('salon_app')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-              persona === 'salon_app'
-                ? 'bg-[var(--brand-primary)] text-white shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-            }`}
-            title="اپلیکیشن نوبت‌دهی مدیر سالن"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>اپلیکیشن سالن</span>
-          </button>
-
-          {/* Pillar 3: Super Admin Web Panel */}
-          <button
-            onClick={() => setPersona('super_admin')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-              persona === 'super_admin'
-                ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)] shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-            }`}
-            title={!isDemoMode ? 'پنل مدیریت کل (مسدود در محیط بدون سرور)' : 'پنل مدیریت کل پلتفرم (پیش‌نمایش آزمایشی)'}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>پنل مدیریت کل</span>
-            {!isDemoMode && (
-              <span className="text-[11px] px-1.5 py-0.2 rounded bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] font-bold">
-                مسدود
-              </span>
-            )}
-          </button>
-
-          <div className="w-px h-5 bg-[var(--border-subtle)] mx-1" />
-
-          {/* Fast Theme Toggle Icon */}
-          <ThemeToggle variant="icon" />
-          <button
-            onClick={() => setIsPillCollapsed(true)}
-            className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
-            title="جمع کردن"
-            aria-label="جمع کردن"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        )}
-      </div>
     </div>
   );
 };
