@@ -150,7 +150,7 @@ export const SalonQrModal: React.FC<SalonQrModalProps> = ({
       onClose={onClose}
       title="کد QR اختصاصی سالن"
       description="اشتراک‌گذاری مستقیم صفحه رزرو با مراجعین"
-      icon={<QrCode className="w-4 h-4 text-[var(--brand-primary)]" />}
+      icon={<QrCode className="w-4 h-4 text-[var(--brand-accent)]" />}
       size="sm"
     >
       <div className="space-y-4 text-center">
@@ -215,7 +215,7 @@ export const SalonQrModal: React.FC<SalonQrModalProps> = ({
             variant="secondary"
             size="sm"
             onClick={handleDownloadQr}
-            leftIcon={<Download className="w-3.5 h-3.5 text-[var(--brand-primary)]" />}
+            leftIcon={<Download className="w-3.5 h-3.5 text-[var(--brand-accent)]" />}
           >
             دانلود بارکد چاپ
           </Button>
@@ -224,7 +224,7 @@ export const SalonQrModal: React.FC<SalonQrModalProps> = ({
             variant="secondary"
             size="sm"
             onClick={handleShare}
-            leftIcon={<Share2 className="w-3.5 h-3.5 text-[var(--brand-primary)]" />}
+            leftIcon={<Share2 className="w-3.5 h-3.5 text-[var(--brand-accent)]" />}
           >
             {shareFeedback ? 'متن کپی شد' : 'اشتراک‌گذاری'}
           </Button>

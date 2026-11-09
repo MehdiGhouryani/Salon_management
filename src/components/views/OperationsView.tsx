@@ -37,7 +37,7 @@ export const OperationsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
-            <Activity className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            <Activity className="w-5 h-5 text-rose-700 dark:text-rose-400" />
             سلامت سیستم و پایش زیرساخت
           </h2>
           <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
@@ -69,7 +69,7 @@ export const OperationsView: React.FC = () => {
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span>پردازنده سرور (CPU)</span>
-            <Cpu className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <Cpu className="w-4 h-4 text-rose-700 dark:text-rose-400" />
           </div>
           <span className="text-2xl font-bold text-zinc-900 dark:text-text-main tabular-nums">
             {toPersianDigits(metrics.cpuLoadPercentage)}٪
@@ -125,7 +125,7 @@ export const OperationsView: React.FC = () => {
       <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
         <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-border-default text-xs">
           <div className="flex items-center gap-2 font-bold text-zinc-900 dark:text-text-main">
-            <Terminal className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <Terminal className="w-4 h-4 text-rose-700 dark:text-rose-400" />
             <span>لاگ‌های لحظه‌ای سرور</span>
           </div>
 
@@ -158,7 +158,7 @@ export const OperationsView: React.FC = () => {
               <span
                 className={`font-semibold shrink-0 ${
                   log.level === 'error'
-                    ? 'text-rose-500'
+                    ? 'text-rose-700 dark:text-rose-400'
                     : log.level === 'warn'
                     ? 'text-amber-700 dark:text-amber-400'
                     : 'text-emerald-700 dark:text-emerald-400'

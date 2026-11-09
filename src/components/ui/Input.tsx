@@ -93,7 +93,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               aria-hidden="true"
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-[var(--brand-primary)]" />
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--brand-accent)]" />
               ) : (
                 leadingIcon
               )}

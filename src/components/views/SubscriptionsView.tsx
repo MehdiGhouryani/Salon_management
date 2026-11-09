@@ -111,7 +111,7 @@ export const SubscriptionsView: React.FC = () => {
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default flex flex-col justify-between">
           <div className="flex items-center justify-between text-text-muted mb-2">
             <span className="font-semibold text-zinc-700 dark:text-text-muted">درگاه‌های بانکی متصل</span>
-            <Shield className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <Shield className="w-4 h-4 text-rose-700 dark:text-rose-400" />
           </div>
           <span className="text-2xl font-bold text-zinc-900 dark:text-text-main tabular-nums">
             زرین‌پال و بهپرداخت
@@ -148,7 +148,7 @@ export const SubscriptionsView: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-bold text-zinc-900 dark:text-text-main text-sm">{p.name}</h4>
                     {isVip && (
-                      <span className="px-2 py-0.5 text-[11px] rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
+                      <span className="px-2 py-0.5 text-[11px] rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 font-bold border border-rose-500/20">
                         محبوب‌ترین
                       </span>
                     )}
@@ -179,7 +179,7 @@ export const SubscriptionsView: React.FC = () => {
                       <span>نوبت‌دهی آنلاین و پیامکی</span>
                     </li>
                     {isVip && (
-                      <li className="flex items-center gap-2 font-medium text-rose-600 dark:text-rose-400">
+                      <li className="flex items-center gap-2 font-medium text-rose-700 dark:text-rose-400">
                         <Check className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                         <span>پشتیبانی تلفنی اختصاصی VIP</span>
                       </li>

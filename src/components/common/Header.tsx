@@ -64,7 +64,7 @@ export const Header: React.FC = React.memo(() => {
           <div className="flex w-full min-w-0 items-center gap-1.5 sm:gap-2 text-xs">
             <span className="hidden sm:inline font-bold text-[var(--text-secondary)] shrink-0">پنل کل</span>
             <span aria-hidden="true" className="hidden sm:inline text-[var(--text-muted)] shrink-0">/</span>
-            <h1 className="min-w-0 flex-1 text-base text-[var(--brand-primary)] font-bold truncate m-0">{currentInfo.title}</h1>
+            <h1 className="min-w-0 flex-1 text-base text-[var(--brand-accent)] font-bold truncate m-0">{currentInfo.title}</h1>
           </div>
           <span className="hidden md:inline text-[11px] text-[var(--text-secondary)] mt-0.5 truncate">
             {currentInfo.subtitle}
@@ -81,7 +81,7 @@ export const Header: React.FC = React.memo(() => {
           title="جستجو در بخش‌ها (Ctrl+K)"
         >
           <span className="flex items-center gap-2 min-w-0">
-            <Search className="w-3.5 h-3.5 shrink-0 text-[var(--text-muted)] group-hover:text-[var(--brand-primary)] transition-colors" />
+            <Search className="w-3.5 h-3.5 shrink-0 text-[var(--text-muted)] group-hover:text-[var(--brand-accent)] transition-colors" />
             <span className="hidden sm:inline truncate">جستجوی سالن، کاربر...</span>
           </span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[11px] bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md text-[var(--text-muted)] font-mono shadow-inner">
@@ -130,10 +130,10 @@ export const Header: React.FC = React.memo(() => {
               <div className="absolute left-0 mt-2 w-80 max-w-[92vw] z-50 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xl p-4 divide-y divide-[var(--border-subtle)] animate-in fade-in zoom-in-95 duration-150 text-right">
                 <div className="flex items-center justify-between pb-3">
                   <h4 className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[var(--brand-primary)]" />
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--brand-accent)]" />
                     رویدادهای نیازمند بررسی
                   </h4>
-                  <span className="text-[11px] text-[var(--brand-primary)] font-semibold tabular-nums">
+                  <span className="text-[11px] text-[var(--brand-accent)] font-semibold tabular-nums">
                     {toPersianDigits(totalAlerts)} مورد فعال
                   </span>
                 </div>

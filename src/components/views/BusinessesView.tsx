@@ -457,7 +457,7 @@ export const BusinessesView: React.FC = () => {
                                   {salon.name}
                                 </h3>
                                 {salon.verifiedBadge && (
-                                  <span className="text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
+                                  <span className="text-[#0369A1] dark:text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
                                 )}
                               </div>
                               <p className="text-[11px] text-text-muted dark:text-text-muted truncate mt-0.5">
@@ -538,7 +538,7 @@ export const BusinessesView: React.FC = () => {
                           {salon.status === 'pending' && (
                             <button
                               onClick={() => openStatusChangeModal(salon, 'active')}
-                              className="px-2.5 py-1 text-xs font-semibold bg-[#059669] hover:bg-[#047857] dark:bg-status-success dark:hover:bg-[#10B981] text-white dark:text-canvas rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                              className="px-2.5 py-1 text-xs font-semibold bg-[#047857] hover:bg-[#065F46] dark:bg-status-success dark:hover:bg-[#10B981] text-white dark:text-canvas rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                               title="تایید سالن"
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -747,7 +747,7 @@ export const BusinessesView: React.FC = () => {
               {inspectedSalon.status === 'pending' && (
                 <button
                   onClick={() => openStatusChangeModal(inspectedSalon, 'active')}
-                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 text-xs font-semibold bg-emerald-700 hover:bg-emerald-700 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>تایید سالن</span>
@@ -767,7 +767,7 @@ export const BusinessesView: React.FC = () => {
               {inspectedSalon.status === 'suspended' && (
                 <button
                   onClick={() => openStatusChangeModal(inspectedSalon, 'active')}
-                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 text-xs font-semibold bg-emerald-700 hover:bg-emerald-700 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle className="w-4 h-4" />
                   <span>رفع تعلیق</span>
@@ -877,7 +877,7 @@ export const BusinessesView: React.FC = () => {
           <div className="relative w-full max-w-lg bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-border-default">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
-                <Plus className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <Plus className="w-4 h-4 text-rose-700 dark:text-rose-400" />
                 ثبت سالن جدید
               </h3>
               <button
@@ -1054,7 +1054,7 @@ export const BusinessesView: React.FC = () => {
                 >
                   <div className="flex items-center justify-between font-bold text-zinc-900 dark:text-text-main">
                     <span>{p.title}</span>
-                    <span className="text-rose-600 dark:text-rose-400 text-[11px]">{p.price}</span>
+                    <span className="text-rose-700 dark:text-rose-400 text-[11px]">{p.price}</span>
                   </div>
                   <p className="text-[11px] text-text-muted mt-1">{p.desc}</p>
                 </div>

@@ -136,7 +136,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold truncate">{clientSession.name || 'کاربر گرامی'}</div>
                 <div dir="ltr" className="text-sm text-[var(--text-secondary)] tabular-nums text-end">
-                  {clientSession.phone}
+                  <span dir="ltr">{clientSession.phone}</span>
                 </div>
               </div>
             </div>

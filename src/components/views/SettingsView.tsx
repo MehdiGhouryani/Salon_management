@@ -71,7 +71,7 @@ export const SettingsView: React.FC = () => {
       {/* Header */}
       <div>
         <h2 className="text-base font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
-          <Settings className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+          <Settings className="w-5 h-5 text-rose-700 dark:text-rose-400" />
           تنظیمات هسته و اتصالات
         </h2>
         <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">

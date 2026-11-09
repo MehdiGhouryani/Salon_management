@@ -119,7 +119,7 @@ export const SecurityView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-[var(--brand-primary)]" />
+            <ShieldAlert className="w-5 h-5 text-[var(--brand-accent)]" />
             مرکز امنیت، لاگ‌ها و نشست‌های فعال
           </h2>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -139,7 +139,7 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('audit')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'audit'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -151,7 +151,7 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('sessions')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'sessions'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -163,7 +163,7 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('firewall')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'firewall'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -231,7 +231,7 @@ export const SecurityView: React.FC = () => {
 
               <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
                 <span>نمایش </span>
-                <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredLogs.length)}</strong>
+                <strong className="text-[var(--brand-accent)]">{toPersianDigits(filteredLogs.length)}</strong>
                 <span> از {toPersianDigits(auditLogs.length)}</span>
               </div>
             </div>
@@ -367,7 +367,7 @@ export const SecurityView: React.FC = () => {
                       )}
                     </div>
                     <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">
-                      {sess.device} · IP: <span className="font-mono">{sess.ipAddress}</span>
+                      {sess.device} · IP: <span className="font-mono" dir="ltr">{sess.ipAddress}</span>
                     </span>
                   </div>
                 </div>

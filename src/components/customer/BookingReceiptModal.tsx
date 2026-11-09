@@ -61,7 +61,7 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
       <p className="text-sm text-[var(--text-secondary)]">کد پیگیری</p>
       <div className="mt-1 flex items-center justify-between gap-3">
         <span dir="ltr" className="text-3xl font-bold tabular-nums">
-          {booking.trackingCode}
+          <span dir="ltr">{booking.trackingCode}</span>
         </span>
         <button
           type="button"

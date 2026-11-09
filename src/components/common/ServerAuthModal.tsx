@@ -162,7 +162,7 @@ export const ServerAuthModal: React.FC<ServerAuthModalProps> = ({
       onClose={onClose}
       title={title}
       description="احراز هویت سرور با رمز یکبار مصرف (OTP)"
-      icon={<ShieldCheck className="w-5 h-5 text-[var(--brand-primary)]" />}
+      icon={<ShieldCheck className="w-5 h-5 text-[var(--brand-accent)]" />}
       size="md"
     >
       <div className="space-y-4">
@@ -212,7 +212,7 @@ export const ServerAuthModal: React.FC<ServerAuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStage('input_phone')}
-                  className="text-[11px] text-[var(--brand-primary)] hover:underline"
+                  className="text-[11px] text-[var(--brand-accent)] hover:underline"
                 >
                   تغییر شماره ({phone})
                 </button>
@@ -241,7 +241,7 @@ export const ServerAuthModal: React.FC<ServerAuthModalProps> = ({
                   type="button"
                   onClick={handleRequestOtp}
                   disabled={isLoading}
-                  className="text-[var(--brand-primary)] font-medium hover:underline flex items-center gap-1"
+                  className="text-[var(--brand-accent)] font-medium hover:underline flex items-center gap-1"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>ارسال مجدد پیامک</span>

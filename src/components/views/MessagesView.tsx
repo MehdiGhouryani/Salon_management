@@ -96,7 +96,7 @@ export const MessagesView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[var(--brand-primary)]" />
+            <MessageSquare className="w-5 h-5 text-[var(--brand-accent)]" />
             مرکز پیامک و دیسپچ نوبت‌ها
           </h2>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -231,7 +231,7 @@ export const MessagesView: React.FC = () => {
 
               <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
                 <span>نمایش </span>
-                <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredMessages.length)}</strong>
+                <strong className="text-[var(--brand-accent)]">{toPersianDigits(filteredMessages.length)}</strong>
                 <span> از {toPersianDigits(messages.length)}</span>
               </div>
             </div>

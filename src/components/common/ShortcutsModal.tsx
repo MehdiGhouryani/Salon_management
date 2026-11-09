@@ -63,11 +63,11 @@ export const ShortcutsModal: React.FC = () => {
             }`}
           >
             <div className="flex items-center gap-2">
-              {sc.tab && <Zap className="w-3.5 h-3.5 text-[var(--brand-primary)] shrink-0" />}
+              {sc.tab && <Zap className="w-3.5 h-3.5 text-[var(--brand-accent)] shrink-0" />}
               <span className="font-medium">{sc.label}</span>
             </div>
             <kbd
-              className="px-2 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md font-mono text-[11px] text-[var(--brand-primary)] font-bold shrink-0 shadow-xs"
+              className="px-2 py-0.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-md font-mono text-[11px] text-[var(--brand-accent)] font-bold shrink-0 shadow-xs"
               dir="ltr"
             >
               {sc.key}

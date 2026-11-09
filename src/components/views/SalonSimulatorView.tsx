@@ -211,7 +211,7 @@ export const SalonSimulatorView: React.FC = () => {
                 <div className="flex items-center gap-1.5">
                   <h3 className="font-bold text-dk-text">{currentSalon?.name}</h3>
                   {currentSalon?.verifiedBadge && (
-                    <span className="text-sky-400 font-bold text-[11px]" title="تایید شده">
+                    <span className="text-sky-700 dark:text-sky-400 font-bold text-[11px]" title="تایید شده">
                       ✓
                     </span>
                   )}
@@ -262,7 +262,7 @@ export const SalonSimulatorView: React.FC = () => {
             {/* TAB 1: Calendar & Appointments */}
             {mobileTab === 'calendar' && (
               <>
-                <div className="flex items-center justify-between text-[11px] text-text-subtle px-1 mb-1">
+                <div className="flex items-center justify-between text-[11px] text-dk-muted px-1 mb-1">
                   <span className="font-bold text-slate-300">تقویم نوبت‌های رزرو شده</span>
                   <span>امروز</span>
                 </div>
@@ -352,7 +352,7 @@ export const SalonSimulatorView: React.FC = () => {
                         )}
                       </div>
                       <span className="text-[11px] text-dk-muted font-mono block mt-0.5" dir="ltr">
-                        {c.phone}
+                        <span dir="ltr">{c.phone}</span>
                       </span>
                       <span className="text-[11px] text-rose-400 block mt-0.5">
                         آخرین مراجعه: {c.lastService}

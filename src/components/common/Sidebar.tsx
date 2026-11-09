@@ -59,7 +59,7 @@ const AccountRow: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
   return (
     <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
       <div
-        className="w-8 h-8 shrink-0 rounded-full bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)] flex items-center justify-center text-xs font-bold"
+        className="w-8 h-8 shrink-0 rounded-full bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)] flex items-center justify-center text-xs font-bold"
         title={collapsed ? name : undefined}
       >
         {initials}
@@ -229,14 +229,14 @@ export const Sidebar: React.FC = React.memo(() => {
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer group relative ${
                     isActive
-                      ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] font-bold border border-[var(--brand-border)] shadow-xs'
+                      ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] font-bold border border-[var(--brand-border)] shadow-xs'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
                   } ${collapsed ? 'justify-center px-0' : ''}`}
                   title={collapsed ? item.title : undefined}
                 >
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
+                      isActive ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
                     }`}
                   />
                   {!collapsed && <span className="truncate flex-1 text-right">{item.title}</span>}
@@ -337,20 +337,20 @@ export const Sidebar: React.FC = React.memo(() => {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] font-bold border border-[var(--brand-border)] shadow-xs'
+                          ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] font-bold border border-[var(--brand-border)] shadow-xs'
                           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <Icon
                           className={`w-4 h-4 ${
-                            isActive ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'
+                            isActive ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)]'
                           }`}
                         />
                         <span>{item.title}</span>
                       </div>
                       {item.badge !== undefined && (
-                        <span className="px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums bg-[var(--brand-subdued)] text-[var(--brand-primary)] border-[var(--brand-border)]">
+                        <span className="px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums bg-[var(--brand-subdued)] text-[var(--brand-accent)] border-[var(--brand-border)]">
                           {toPersianDigits(item.badge)}
                         </span>
                       )}

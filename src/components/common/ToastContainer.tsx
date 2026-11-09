@@ -36,7 +36,7 @@ export const ToastContainer: React.FC = () => {
                   toast.undoAction?.();
                   removeToast(toast.id);
                 }}
-                className="flex items-center gap-1 text-[11px] font-semibold text-[var(--brand-primary)] hover:underline px-2 py-1 rounded bg-[var(--brand-subdued)] transition-colors shrink-0 cursor-pointer"
+                className="flex items-center gap-1 text-[11px] font-semibold text-[var(--brand-accent)] hover:underline px-2 py-1 rounded bg-[var(--brand-subdued)] transition-colors shrink-0 cursor-pointer"
               >
                 <Undo2 className="w-3 h-3" />
                 <span>بازگردانی</span>

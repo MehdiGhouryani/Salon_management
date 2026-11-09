@@ -193,7 +193,7 @@ export const UsersView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <Users className="w-5 h-5 text-[var(--brand-primary)]" />
+            <Users className="w-5 h-5 text-[var(--brand-accent)]" />
             مدیریت کاربران، مدیران و پرسنل
           </h2>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -208,7 +208,7 @@ export const UsersView: React.FC = () => {
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)]'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش کارتی شبکه‌ای"
@@ -220,7 +220,7 @@ export const UsersView: React.FC = () => {
               onClick={() => setViewMode('table')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)]'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش جدول فشرده"
@@ -292,7 +292,7 @@ export const UsersView: React.FC = () => {
 
           <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
             <span>نمایش </span>
-            <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredUsers.length)}</strong>
+            <strong className="text-[var(--brand-accent)]">{toPersianDigits(filteredUsers.length)}</strong>
             <span> از {toPersianDigits(users.length)}</span>
           </div>
         </div>
@@ -340,7 +340,7 @@ export const UsersView: React.FC = () => {
                         {/* Top: Avatar, Name & Role Badge */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[var(--brand-primary)] shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[var(--brand-accent)] shrink-0">
                               {user.name.slice(0, 1)}
                             </div>
                             <div className="min-w-0">
@@ -363,7 +363,7 @@ export const UsersView: React.FC = () => {
                           <div className="flex items-center justify-between text-[var(--text-secondary)]">
                             <span>ایمیل:</span>
                             <span className="font-mono text-[var(--text-primary)] truncate max-w-[170px]" dir="ltr">
-                              {user.email}
+                              <span dir="ltr">{user.email}</span>
                             </span>
                           </div>
 
@@ -489,7 +489,7 @@ export const UsersView: React.FC = () => {
                         <tr key={user.id} className="nobat-table-row">
                           <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
                             <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-lg bg-[var(--bg-elevated)] text-[var(--brand-primary)] flex items-center justify-center font-bold text-xs shrink-0">
+                              <div className="w-7 h-7 rounded-lg bg-[var(--bg-elevated)] text-[var(--brand-accent)] flex items-center justify-center font-bold text-xs shrink-0">
                                 {user.name.slice(0, 1)}
                               </div>
                               <span>{user.name}</span>

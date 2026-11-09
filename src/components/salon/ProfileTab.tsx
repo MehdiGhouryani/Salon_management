@@ -78,7 +78,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             </div>
             {salon.phone && (
               <div dir="ltr" className="text-[13px] text-[var(--text-muted)] mt-0.5 tabular-nums text-end">
-                {salon.phone}
+                <span dir="ltr">{salon.phone}</span>
               </div>
             )}
           </div>
