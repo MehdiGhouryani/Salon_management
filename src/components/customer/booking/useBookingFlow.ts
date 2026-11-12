@@ -77,6 +77,7 @@ export function useBookingFlow(
   const [clientPhone, setClientPhone] = useState(clientSession.phone || '');
   const [otpStage, setOtpStage] = useState<OtpStage>(clientSession.isLoggedIn ? 'verified' : 'input_phone');
   const [otpCode, setOtpCode] = useState('');
+  const [bookingGrant, setBookingGrant] = useState<string>('');
   const [resendIn, setResendIn] = useState(0);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
@@ -193,6 +194,9 @@ export function useBookingFlow(
         setError(data.message || 'کد وارد شده صحیح نیست.');
         return;
       }
+      // Phase 08: the server returns a short-lived, single-use booking grant
+      // (never a login session). It authorizes exactly one booking submission.
+      setBookingGrant(typeof data.bookingGrant === 'string' ? data.bookingGrant : '');
       setOtpStage('verified');
       setClientSession({
         isLoggedIn: true,
@@ -217,7 +221,10 @@ export function useBookingFlow(
     try {
       const res = await fetch('/api/public/bookings', {
         method: 'POST',
-        headers: JSON_HEADERS,
+        headers: {
+          ...JSON_HEADERS,
+          ...(bookingGrant ? { 'X-NobatAra-Booking-Grant': bookingGrant } : {}),
+        },
         credentials: 'include',
         body: JSON.stringify({
           salonId: salon.id,
@@ -268,7 +275,7 @@ export function useBookingFlow(
     } finally {
       setBusy(false);
     }
-  }, [service, otpStage, time, salon, staff, day, clientName, clientPhone, notes, staffLabel, onBookingSuccess]);
+  }, [service, otpStage, bookingGrant, time, salon, staff, day, clientName, clientPhone, notes, staffLabel, onBookingSuccess]);
 
   return {
     step, next, back,

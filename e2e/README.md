@@ -8,11 +8,14 @@ Run: `npm run test:e2e` (starts the dev server on port 3100 automatically via `w
 | Spec | Journey | Notes |
 |---|---|---|
 | `journey-storefront.spec.ts` | Public salon browsing | catalog, specialists, booking CTAs |
-| `journey-booking.spec.ts` | Full booking wizard with **real OTP** | real OTP generation + verification + session; OTP is read from the isolated `DevMockSmsProvider` via the dev-only `/api/dev/otp-peek` route (404 in production) |
+| `journey-booking.spec.ts` | Full booking wizard with **real OTP** + **guest booking grant** (Phase 08) | real OTP generation + verification + grant issuance; OTP read via the dev-only `/api/dev/otp-peek` route (404 in production) |
 | `journey-my-bookings.spec.ts` | Customer login (real OTP) + booking history | reads from real `/api/public/bookings/my` |
 
 ## Deliberately NOT implemented (blocked, not skipped silently)
 
+- ~~Booking completion~~ — **un-blocked in Phase 08**: the guest booking grant
+  contract made the full wizard journey (OTP → grant → booking → receipt) complete
+  for real; journey-booking.spec.ts now executes it.
 - **Salon dashboard workflows** — the Salon Manager console is still mock-driven
   (zero `/api/salon/*` call sites in the frontend, risk R10). An E2E run against
   mocked UI would prove nothing about integration. **Blocked until the console is

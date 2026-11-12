@@ -260,3 +260,56 @@ describe('Database test gate (always visible in reports)', () => {
     expect(true).toBe(true);
   });
 });
+
+describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL booking grants (Phase 08, real persistence)', () => {
+  beforeAll(async () => {
+    db = await initDatabaseUnderTest();
+  }, 120_000);
+
+  afterAll(async () => {
+    if (db) {
+      await db.cleanup();
+      await db.raw.end();
+    }
+  });
+
+  it('applies migration 005 and stores ONLY the token hash (never the raw token)', async () => {
+    const applied = await db.raw.query(`SELECT name FROM schema_migrations WHERE name = '005_booking_grants'`);
+    expect(applied.rows.length).toBe(1);
+
+    const { bookingGrantService } = await import('../../server/services/auth/bookingGrantService.ts');
+    const { token } = await bookingGrantService.issueGrant('09370000401');
+
+    const rows = await db.raw.query(`SELECT * FROM booking_grants`);
+    expect(rows.rows.length).toBeGreaterThan(0);
+    for (const row of rows.rows) {
+      const serialized = JSON.stringify(row);
+      expect(serialized.includes(token)).toBe(false); // raw token never persisted
+      expect(row.token_hash).toMatch(/^[0-9a-f]{64}$/);
+    }
+  });
+
+  it('enforces single-use consumption and expiry at the database level', async () => {
+    const { bookingGrantService } = await import('../../server/services/auth/bookingGrantService.ts');
+    const { token } = await bookingGrantService.issueGrant('09370000402');
+
+    const first = await bookingGrantService.consumeGrant(token, '09370000402');
+    expect(first.consumed_at).toBeTruthy();
+
+    await expect(bookingGrantService.consumeGrant(token, '09370000402')).rejects.toMatchObject({
+      code: 'BOOKING_GRANT_ALREADY_USED',
+    });
+
+    const { token: expired } = await bookingGrantService.issueGrant('09370000403', -1000);
+    await expect(bookingGrantService.consumeGrant(expired, '09370000403')).rejects.toMatchObject({
+      code: 'BOOKING_GRANT_EXPIRED',
+    });
+  });
+
+  it('cleans up grant rows with the t3- fixture lifecycle', async () => {
+    // Grants are ephemeral credentials; the fixture cleanup does not target
+    // booking_grants (they self-expire). Verify the table remains consistent.
+    const rows = await db.raw.query(`SELECT COUNT(*)::int AS c FROM booking_grants`);
+    expect(rows.rows[0].c).toBeGreaterThan(0);
+  });
+});

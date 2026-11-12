@@ -4,6 +4,7 @@ import { config } from '../../config.ts';
 import { withTransaction, isDatabaseConfigured, query } from '../../db/pool.ts';
 import { normalizeIranianPhone } from '../../utils/phone.ts';
 import { parseBookingDateInput } from '../../utils/jalali.ts';
+import { bookingGrantService, BookingGrantError } from '../auth/bookingGrantService.ts';
 import {
   timeToMinutes,
   minutesToTime,
@@ -293,6 +294,8 @@ export const bookingService = {
     clientPhone: string;
     notes?: string;
     user?: DbUser;
+    /** Phase 08: guest booking authorization token (booking_verification OTP). */
+    bookingGrant?: string;
     ipAddress: string;
     userAgent: string;
   }): Promise<{
@@ -515,6 +518,13 @@ export const bookingService = {
     // If PostgreSQL is configured, wrap in a database transaction with row locks
     if (isDatabaseConfigured()) {
       return await withTransaction(async (dbClient) => {
+        // Phase 08: consume the guest booking grant INSIDE the booking
+        // transaction — a failed booking rolls the consumption back and the
+        // customer keeps their grant. Phone binding is enforced atomically.
+        if (params.bookingGrant) {
+          await bookingGrantService.consumeGrant(params.bookingGrant, clientPhone, dbClient);
+        }
+
         // Concurrency hardening (R7): serialize all booking attempts for the same
         // salon + date via a transaction-scoped advisory lock. Without it, two
         // concurrent transactions could both pass the overlap check under READ
@@ -536,6 +546,9 @@ export const bookingService = {
       const lockKey = `${params.salonId}:${params.staffId || 'any'}:${canonicalDate}`;
       const release = await acquireLock(lockKey);
       try {
+        if (params.bookingGrant) {
+          await bookingGrantService.consumeGrant(params.bookingGrant, clientPhone);
+        }
         const appointment = await executeAtomicBooking();
         return {
           trackingCode: appointment.tracking_code,

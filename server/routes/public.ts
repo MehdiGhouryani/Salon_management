@@ -6,6 +6,7 @@ import { salonRepository } from '../repositories/salonRepository.ts';
 import { serviceRepository } from '../repositories/serviceRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
 import { bookingService, BookingError } from '../services/booking/bookingService.ts';
+import { bookingGrantService, BookingGrantError } from '../services/auth/bookingGrantService.ts';
 import { extractClientIp } from '../services/auth/sessionService.ts';
 import { normalizeIranianPhone } from '../utils/phone.ts';
 
@@ -190,13 +191,39 @@ publicRouter.post(
     keyFor: (req) => `${req.ip || 'unknown'}:${req.body?.clientPhone || 'nophone'}`,
   }),
   async (req: Request, res: Response): Promise<void> => {
-    // 1. Session Authentication Check
-    if (!req.isAuthenticated || !req.user) {
+    // Phase 08 — authorization is satisfied by EITHER:
+    //  (a) an ordinary authenticated customer session whose phone matches the
+    //      booking phone, OR
+    //  (b) a valid, unused, unexpired, phone-bound booking grant issued by a
+    //      successful booking_verification OTP (guest flow).
+    const grantToken = String(
+      req.headers['x-nobatara-booking-grant'] || req.body?.bookingGrant || ''
+    ).trim();
+
+    if ((!req.isAuthenticated || !req.user) && !grantToken) {
       res.status(401).json({
         error: 'AUTHENTICATION_REQUIRED',
-        message: 'ثبت قطعی نوبت نیازمند تایید هویت با رمز یکبار مصرف است. لطفاً ابتدا وارد شوید.',
+        message: 'ثبت قطعی نوبت نیازمند تایید شماره موبایل با رمز یکبار مصرف است.',
       });
       return;
+    }
+
+    // Early grant validation (read-only): precise error contract before any
+    // booking work. Final ATOMIC consumption happens inside the booking
+    // transaction, so a failed booking never burns the grant.
+    if (grantToken && (!req.isAuthenticated || !req.user)) {
+      try {
+        await bookingGrantService.validateGrant(grantToken, String(req.body?.clientPhone || ''));
+      } catch (err) {
+        if (err instanceof BookingGrantError) {
+          res.status(err.statusCode).json({
+            error: err.code,
+            message: err.message,
+          });
+          return;
+        }
+        throw err;
+      }
     }
 
     const {
@@ -218,20 +245,25 @@ publicRouter.post(
       return;
     }
 
-    // 2. Ownership check: Verified user phone must match clientPhone
-    const userNorm = normalizeIranianPhone(req.user.phone);
-    const bodyNorm = normalizeIranianPhone(clientPhone);
+    // 2. Ownership check — session path only: the verified session phone must
+    // match the booking phone. The grant path enforces phone binding inside
+    // the grant service (validate + atomic consume).
+    if (req.isAuthenticated && req.user) {
+      const userNorm = normalizeIranianPhone(req.user.phone);
+      const bodyNorm = normalizeIranianPhone(clientPhone);
 
-    if (!userNorm.isValid || !bodyNorm.isValid || userNorm.national !== bodyNorm.national) {
-      res.status(403).json({
-        error: 'PHONE_MISMATCH',
-        message: 'شماره موبایل وارد شده با حساب احراز هویت شده تطابق ندارد.',
-      });
-      return;
+      if (!userNorm.isValid || !bodyNorm.isValid || userNorm.national !== bodyNorm.national) {
+        res.status(403).json({
+          error: 'PHONE_MISMATCH',
+          message: 'شماره موبایل وارد شده با حساب احراز هویت شده تطابق ندارد.',
+        });
+        return;
+      }
     }
 
     try {
       const result = await bookingService.createBooking({
+        bookingGrant: grantToken || undefined,
         salonId: String(salonId),
         serviceId: String(serviceId),
         staffId: staffId ? String(staffId) : undefined,
@@ -253,6 +285,14 @@ publicRouter.post(
       });
     } catch (err: any) {
       if (err instanceof BookingError) {
+        res.status(err.statusCode).json({
+          error: err.code,
+          message: err.message,
+        });
+        return;
+      }
+      if (err instanceof BookingGrantError) {
+        // Consumed/raced/expired grants surface with the precise contract.
         res.status(err.statusCode).json({
           error: err.code,
           message: err.message,

@@ -5,6 +5,7 @@ import { sessionService, extractClientIp } from '../services/auth/sessionService
 import { requireAuth } from '../middleware/auth.ts';
 import type { NextFunction } from 'express';
 import { rateLimit } from '../middleware/rateLimit.ts';
+import { bookingGrantService } from '../services/auth/bookingGrantService.ts';
 import { normalizeIranianPhone } from '../utils/phone.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 
@@ -98,7 +99,9 @@ authRouter.post(
   const clientIp = extractClientIp(req);
   const result = await otpService.verifyOtp(phone, code, purpose as OtpPurpose, clientIp);
 
-  if (!result.success || !result.user) {
+  // Phase 08: booking_verification legitimately has no user — the grant is
+  // issued below. Login and other purposes still require a provisioned user.
+  if (!result.success || (purpose !== 'booking_verification' && !result.user)) {
     // Record failed login audit log
     await auditLogRepository.create({
       actor: phone,
@@ -119,7 +122,45 @@ authRouter.post(
     return;
   }
 
-  // Create persistent server session and attach HttpOnly cookie
+  // Phase 08 — purpose separation: a booking_verification OTP proves phone
+  // ownership and issues a short-lived single-use booking grant. It NEVER
+  // creates a user session, and a login OTP never becomes a booking grant.
+  if (purpose === 'booking_verification') {
+    if (!result.user && result.phoneNational) {
+      const grant = await bookingGrantService.issueGrant(result.phoneNational);
+      await auditLogRepository.create({
+        actor: result.phoneNational,
+        actorRole: 'anonymous_visitor',
+        action: 'تایید شماره موبایل برای ثبت نوبت مهمان',
+        target: 'Auth OTP:booking_verification',
+        ipAddress: clientIp,
+        userAgent: String(req.headers['user-agent'] || 'Unknown'),
+        severity: 'info',
+        category: 'auth',
+      }).catch(() => {});
+
+      res.status(200).json({
+        success: true,
+        message: 'شماره موبایل شما تایید شد. اکنون می‌توانید نوبت خود را ثبت کنید.',
+        bookingGrant: grant.token,
+        grantExpiresAt: grant.expiresAt.toISOString(),
+        phone: result.phoneNational,
+      });
+      return;
+    }
+  }
+
+  // Login flow requires a provisioned user (guard above ensures it; this
+  // narrow check keeps the type contract explicit).
+  if (!result.user) {
+    res.status(401).json({
+      error: 'AUTHENTICATION_REQUIRED',
+      message: 'احراز هویت الزامی است.',
+    });
+    return;
+  }
+
+  // Create persistent server session and attach HttpOnly cookie (login only)
   const { expiresAt, sessionId } = await sessionService.createSession(
     result.user,
     req,

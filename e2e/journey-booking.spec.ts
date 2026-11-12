@@ -15,6 +15,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const CUSTOMER_PHONE = '09364567890';
+const COMPLETION_PHONE = '09364567891';
 
 async function peekLastOtp(page: Page, phone: string): Promise<string> {
   const res = await page.request.get(`/api/dev/otp-peek?phone=${phone}`);
@@ -64,17 +65,46 @@ test('booking wizard reaches real availability and real server OTP issuance', as
   expect(code).toMatch(/^\d{6}$/);
 });
 
-test.fixme(
-  'customer completes booking through the wizard (BLOCKED by SECURITY-R2 until booking OTP verify is fixed)',
-  async ({ page }) => {
-    // Steps identical to the executed test above, then:
-    //  - fill the peeked OTP and click "تأیید کد"
-    //  - expect "ثبت نوبت" to become enabled, click it
-    //  - expect the confirmation receipt with the tracking code
-    //
-    // Today this is impossible: the correct booking OTP is rejected with
-    // OTP_VERIFICATION_FAILED because result.user is undefined for
-    // purpose=booking_verification. See e2e/README.md and the risk register R2.
-    expect(true).toBe(true);
+test('customer completes a REAL guest booking through the wizard (OTP grant, no account)', async ({ page }) => {
+  await page.goto('/');
+  const catalog = page.getByRole('region', { name: 'خدمات و قیمت‌ها' });
+  await expect(catalog).toBeVisible({ timeout: 15000 });
+
+  await catalog.getByRole('button', { name: /^رزرو/ }).first().click();
+  await expect(page.getByRole('list', { name: 'مراحل رزرو' })).toBeVisible({ timeout: 10000 });
+
+  await page.getByRole('button', { name: 'ادامه' }).click();
+
+  const dayChips = page.getByRole('radiogroup', { name: 'روز نوبت' }).getByRole('radio');
+  await expect(dayChips.first()).toBeVisible({ timeout: 10000 });
+  if ((await dayChips.count()) > 1) {
+    await dayChips.nth(1).click();
   }
-);
+
+  const availableSlot = page
+    .locator('button:not([disabled])')
+    .filter({ hasText: /([۰-۹]{2}:[۰-۹]{2})|(\d{2}:\d{2})/ })
+    .first();
+  await availableSlot.click();
+  await expect(page.getByRole('button', { name: 'ادامه' })).toBeEnabled();
+  await page.getByRole('button', { name: 'ادامه' }).click();
+
+  // Step 3: identity + phone → REAL server OTP request
+  await page.getByLabel('نام و نام خانوادگی').fill('کاربر سفر رزرو');
+  await page.getByLabel('شماره موبایل').fill(COMPLETION_PHONE);
+  await page.getByRole('button', { name: 'دریافت کد تأیید' }).click();
+  await expect(page.getByText('کد ۶ رقمی به شماره')).toBeVisible({ timeout: 15000 });
+
+  // Real OTP, real grant issuance (Phase 08 contract)
+  const code = await peekLastOtp(page, COMPLETION_PHONE);
+  await page.getByLabel('کد تأیید').fill(code);
+  await page.getByRole('button', { name: 'تأیید کد' }).click();
+
+  // Verification success → the wizard enables the final submission
+  const submitButton = page.getByRole('button', { name: 'ثبت نوبت' });
+  await expect(submitButton).toBeEnabled({ timeout: 15000 });
+  await submitButton.click();
+
+  // Confirmation receipt with the REAL tracking code from the booking API
+  await expect(page.getByText('کد پیگیری')).toBeVisible({ timeout: 15000 });
+});

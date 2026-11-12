@@ -20,6 +20,7 @@ import { otpService } from '../../server/services/auth/otpService.ts';
 import { getDevMockSmsProvider } from '../../server/services/sms/index.ts';
 import { bookingService } from '../../server/services/booking/bookingService.ts';
 import { clearRateLimitBuckets } from '../../server/middleware/rateLimit.ts';
+import { bookingGrantService } from '../../server/services/auth/bookingGrantService.ts';
 
 let server: http.Server;
 let baseUrl: string;
@@ -459,5 +460,237 @@ describe('Super admin self-protection (Phase 07, integration)', () => {
       expect([400, 429]).toContain(res.status);
     }
     expect(sawRateLimit).toBe(true);
+  });
+});
+
+describe('Guest booking grant flow (Phase 08, integration)', () => {
+  // Each test uses its own phone: the real resend-cooldown and per-IP request
+  // limits would (correctly) 429 repeated OTP requests for the same identity.
+  const GUEST_PHONE = '09362223344';
+  const GUEST_BOOKING = {
+    salonId: 'sal-101',
+    serviceId: 'srv-101',
+    staffId: 'stf-101',
+    bookingDate: '2026-11-21',
+    bookingTime: '14:00',
+    clientName: 'مشتری مهمان',
+    clientPhone: GUEST_PHONE,
+  };
+
+  beforeAll(async () => {
+    // Isolate this describe from OTP request budgets consumed by earlier tests
+    clearRateLimitBuckets();
+    const { otpService } = await import('../../server/services/auth/otpService.ts');
+    otpService.clearInMemory();
+  });
+
+  let grantProbeIpCounter = 0;
+  async function issueGuestGrantViaHttp(phone: string = GUEST_PHONE): Promise<string> {
+    // OTP request happens in-process with a fresh probe IP per call so the
+    // REAL 5-per-10-minute per-phone/IP service limit (which this suite would
+    // otherwise trip with its many OTP requests) stays honest. Verification
+    // and grant issuance still run over real HTTP.
+    const { otpService } = await import('../../server/services/auth/otpService.ts');
+    grantProbeIpCounter += 1;
+    const otpRes = await otpService.requestOtp(phone, 'booking_verification', `10.9.9.${grantProbeIpCounter}`);
+    expect(otpRes.success).toBe(true);
+    const sent = getDevMockSmsProvider()?.getLastSentOtp(phone);
+    expect(sent).toBeTruthy();
+
+    const verifyRes = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone, code: sent!.code, purpose: 'booking_verification' }),
+    });
+    expect(verifyRes.status).toBe(200);
+    const data = await verifyRes.json();
+    expect(data.bookingGrant).toMatch(/^[0-9a-f]{64}$/);
+    expect(data.success).toBe(true);
+    // CRITICAL: a booking grant must never create a login session
+    expect(verifyRes.headers.get('set-cookie')).toBeNull();
+    return data.bookingGrant as string;
+  }
+
+  it('successful guest verification issues a single-use grant WITHOUT a login session', async () => {
+    await issueGuestGrantViaHttp();
+  });
+
+  it('guest booking with a valid grant succeeds; the grant is then reusable-proof', async () => {
+    const guestPhone = '09362223355';
+    const grant = await issueGuestGrantViaHttp(guestPhone);
+
+    const res = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': grant,
+      },
+      body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: guestPhone }),
+    });
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.trackingCode).toMatch(/^GIS-\d{6}$/);
+
+    // The same grant can never authorize a second booking
+    const reuse = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': grant,
+      },
+      body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: guestPhone, bookingTime: '15:00' }),
+    });
+    expect(reuse.status).toBe(401);
+    expect((await reuse.json()).error).toBe('BOOKING_GRANT_ALREADY_USED');
+  });
+
+  it('an expired grant is rejected with BOOKING_GRANT_EXPIRED', async () => {
+    const { token } = await bookingGrantService.issueGrant(GUEST_PHONE, -1000);
+    const res = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': token,
+      },
+      body: JSON.stringify(GUEST_BOOKING),
+    });
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe('BOOKING_GRANT_EXPIRED');
+  });
+
+  it('a grant cannot be transferred to a different phone (GRANT_PHONE_MISMATCH)', async () => {
+    const grant = await issueGuestGrantViaHttp('09362223366');
+    const res = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': grant,
+      },
+      body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09368887766', clientName: 'سارق مجوز' }),
+    });
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toBe('GRANT_PHONE_MISMATCH');
+  });
+
+  it('an unknown grant token is rejected (BOOKING_GRANT_INVALID)', async () => {
+    const res = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': 'f'.repeat(64),
+      },
+      body: JSON.stringify(GUEST_BOOKING),
+    });
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe('BOOKING_GRANT_INVALID');
+  });
+
+  it('invalid OTP for booking purpose is rejected (no grant issued)', async () => {
+    const otpRes = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09363334455', purpose: 'booking_verification' }),
+    });
+    expect(otpRes.status).toBe(200);
+
+    const verifyRes = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09363334455', code: '000000', purpose: 'booking_verification' }),
+    });
+    expect(verifyRes.status).toBe(400);
+    const data = await verifyRes.json();
+    expect(data.error).toBe('OTP_VERIFICATION_FAILED');
+    expect(data.bookingGrant).toBeUndefined();
+  });
+
+  it('a booking OTP cannot be replayed (single verification)', async () => {
+    const otpRes = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09364445566', purpose: 'booking_verification' }),
+    });
+    expect(otpRes.status).toBe(200);
+    const sent = getDevMockSmsProvider()?.getLastSentOtp('09364445566');
+
+    const first = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09364445566', code: sent!.code, purpose: 'booking_verification' }),
+    });
+    expect(first.status).toBe(200);
+
+    const replay = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09364445566', code: sent!.code, purpose: 'booking_verification' }),
+    });
+    expect(replay.status).toBe(400);
+    expect((await replay.json()).message).toContain('قبلا استفاده شده');
+  });
+
+  it('a LOGIN OTP never becomes a booking grant (purpose separation)', async () => {
+    const otpRes = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09365556677', purpose: 'login' }),
+    });
+    expect(otpRes.status).toBe(200);
+    const sent = getDevMockSmsProvider()?.getLastSentOtp('09365556677');
+
+    const verifyRes = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: '09365556677', code: sent!.code, purpose: 'login' }),
+    });
+    expect(verifyRes.status).toBe(200);
+    const data = await verifyRes.json();
+    // Login issues a session, never a booking grant
+    expect(data.bookingGrant).toBeUndefined();
+    expect(verifyRes.headers.get('set-cookie')).toContain('nobatara_session=');
+  });
+
+  it('concurrent submissions with one grant: exactly one booking wins', async () => {
+    const grant = await issueGuestGrantViaHttp('09362223377');
+
+    const results = await Promise.allSettled([
+      fetch(`${baseUrl}/api/public/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-NobatAra-Client': 'test',
+          'X-NobatAra-Booking-Grant': grant,
+        },
+        body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09362223377', staffId: 'stf-102', bookingTime: '16:00' }),
+      }),
+      fetch(`${baseUrl}/api/public/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-NobatAra-Client': 'test',
+          'X-NobatAra-Booking-Grant': grant,
+        },
+        body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09362223377', staffId: 'stf-102', bookingTime: '16:00' }),
+      }),
+    ]);
+
+    const outcomes = await Promise.all(
+      results.map(async (r) => {
+        if (r.status === 'fulfilled') {
+          return { status: r.value.status, code: (await r.value.json()).error as string | undefined };
+        }
+        return { status: (r as PromiseRejectedResult).reason?.statusCode ?? 0, code: (r as PromiseRejectedResult).reason?.code };
+      })
+    );
+    const successes = outcomes.filter((o) => o.status === 201);
+    const grantRejections = outcomes.filter((o) => o.status === 401 && o.code === 'BOOKING_GRANT_ALREADY_USED');
+    expect(successes.length).toBe(1);
+    expect(grantRejections.length).toBe(1);
   });
 });

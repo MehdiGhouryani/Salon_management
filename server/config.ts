@@ -31,6 +31,8 @@ export interface AuthConfig {
   readonly otpTtlSeconds: number;
   readonly otpResendCooldownSeconds: number;
   readonly otpMaxAttempts: number;
+  /** Guest booking authorization grant lifetime (Phase 08). */
+  readonly bookingGrantTtlMinutes: number;
   readonly kavenegarApiKey?: string;
   readonly isSmsConfigured: boolean;
 }
@@ -179,6 +181,7 @@ function parseAndValidateConfig(): ServerConfig {
   const otpTtlSeconds = parseInt(process.env.OTP_TTL_SECONDS || '120', 10); // 2 minutes
   const otpResendCooldownSeconds = parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS || '60', 10); // 1 minute
   const otpMaxAttempts = parseInt(process.env.OTP_MAX_ATTEMPTS || '3', 10);
+  const bookingGrantTtlMinutes = parseInt(process.env.BOOKING_GRANT_TTL_MINUTES || '15', 10);
 
   const kavenegarApiKey = process.env.KAVENEGAR_API_KEY ? process.env.KAVENEGAR_API_KEY.trim() : undefined;
   const isSmsConfigured = Boolean(kavenegarApiKey);
@@ -191,6 +194,7 @@ function parseAndValidateConfig(): ServerConfig {
     otpTtlSeconds: isNaN(otpTtlSeconds) ? 120 : otpTtlSeconds,
     otpResendCooldownSeconds: isNaN(otpResendCooldownSeconds) ? 60 : otpResendCooldownSeconds,
     otpMaxAttempts: isNaN(otpMaxAttempts) ? 3 : otpMaxAttempts,
+    bookingGrantTtlMinutes: isNaN(bookingGrantTtlMinutes) || bookingGrantTtlMinutes <= 0 ? 15 : bookingGrantTtlMinutes,
     kavenegarApiKey,
     isSmsConfigured,
   });
