@@ -507,6 +507,16 @@ export const bookingService = {
     // If PostgreSQL is configured, wrap in a database transaction with row locks
     if (isDatabaseConfigured()) {
       return await withTransaction(async (dbClient) => {
+        // Concurrency hardening (R7): serialize all booking attempts for the same
+        // salon + date via a transaction-scoped advisory lock. Without it, two
+        // concurrent transactions could both pass the overlap check under READ
+        // COMMITTED (snapshot race) for overlapping-but-different start times,
+        // which the exact-slot unique constraint does not catch. The lock is
+        // released automatically at COMMIT/ROLLBACK.
+        await dbClient.query(
+          `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`,
+          [params.salonId, params.bookingDate]
+        );
         const appointment = await executeAtomicBooking(dbClient);
         return {
           trackingCode: appointment.tracking_code,

@@ -315,12 +315,15 @@ export const appointmentRepository = {
       values.push(excludeAppointmentId);
     }
 
-    const res = await query<{ count: string }>(
-      `SELECT COUNT(*) as count FROM appointments WHERE ${conditions.join(' AND ')}`,
+    // Row-level lock (R7 defense in depth): conflicting appointment rows are
+    // locked FOR UPDATE inside the caller's transaction, so a concurrent
+    // transaction checking the same slot blocks until the first commits/rolls back.
+    const res = await query<{ id: string }>(
+      `SELECT id FROM appointments WHERE ${conditions.join(' AND ')} FOR UPDATE`,
       values,
       client
     );
-    return parseInt(res.rows[0]?.count || '0', 10) === 0;
+    return res.rows.length === 0;
   },
 
   async create(dto: CreateAppointmentDto, client?: PoolClient): Promise<DbAppointment> {

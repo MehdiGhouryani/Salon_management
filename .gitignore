@@ -2,6 +2,10 @@ node_modules/
 build/
 dist/
 coverage/
+# Test artifacts and reports
+reports/
+test-results/
+playwright-report/
 .DS_Store
 *.log
 # Environment files with real secrets are never committed; templates are.

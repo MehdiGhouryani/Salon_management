@@ -1,62 +1,38 @@
 /**
- * NobatAra Phase 8 — Automated Test Suite: Salon Manager Operations & Security
- * Validates Tenant Isolation, RBAC Permissions, Service/Staff Management,
- * Appointment Transitions, Rescheduling Overlap, Working Hours & Exceptions, and Audit Logging.
+ * NobatAra Unit Tests — Salon operations & repository contracts (CATEGORY: unit/in-memory)
+ *
+ * Migrated 1:1 from the legacy hand-rolled `tests/salon_manager.test.ts` (9 cases).
+ * Repository logic is exercised with the isolated in-memory adapter. PostgreSQL
+ * query behavior (constraints, transactions, real persistence) is proven by
+ * tests/db/postgres-repositories.test.ts.
  */
+import { describe, it, expect } from 'vitest';
+import { salonRepository } from '../../server/repositories/salonRepository.ts';
+import { appointmentRepository } from '../../server/repositories/appointmentRepository.ts';
+import { serviceRepository } from '../../server/repositories/serviceRepository.ts';
+import { staffRepository } from '../../server/repositories/staffRepository.ts';
 
-import { assert } from 'node:console';
-import { salonRepository } from '../server/repositories/salonRepository.ts';
-import { appointmentRepository } from '../server/repositories/appointmentRepository.ts';
-import { serviceRepository } from '../server/repositories/serviceRepository.ts';
-import { staffRepository } from '../server/repositories/staffRepository.ts';
-import { userRepository } from '../server/repositories/userRepository.ts';
-import { sessionService } from '../server/services/auth/sessionService.ts';
-import { auditLogRepository } from '../server/repositories/auditLogRepository.ts';
-
-console.log('====================================================');
-console.log('   NobatAra Phase 8 Salon Operations Test Suite     ');
-console.log('====================================================\n');
-
-let passCount = 0;
-let failCount = 0;
-
-function test(name: string, fn: () => void | Promise<void>) {
-  return (async () => {
-    try {
-      await fn();
-      console.log(`  ✅ PASS: ${name}`);
-      passCount++;
-    } catch (err: any) {
-      console.error(`  ❌ FAIL: ${name}`);
-      console.error(`     Reason: ${err.message}`);
-      failCount++;
-    }
-  })();
-}
-
-async function runAllTests() {
-  console.log('--- 1. Tenant Isolation & RBAC Membership Tests ---');
-
-  await test('Salon manager can access profile and dashboard of their own salon', async () => {
+describe('Tenant isolation (unit, in-memory)', () => {
+  it('Salon manager can access profile and dashboard of their own salon', async () => {
     const salon = await salonRepository.findById('sal-101');
-    assert(salon !== null, 'Salon sal-101 should exist');
-    assert(salon?.id === 'sal-101', 'Should match salon id');
+    expect(salon !== null).toBe(true);
+    expect(salon?.id).toBe('sal-101');
   });
 
-  await test('Cross-tenant isolation: staff of salon A cannot query salon B data', async () => {
+  it('Cross-tenant isolation: staff of salon A cannot query salon B data', async () => {
     const salonA = 'sal-101';
     const salonB = 'sal-102';
-    
+
     const apptsA = await appointmentRepository.findBySalonId(salonA);
     for (const a of apptsA) {
-      assert(a.salon_id === salonA, `Appointment ${a.id} should belong to salon A`);
-      assert(a.salon_id !== salonB, `Appointment ${a.id} must NOT leak to salon B`);
+      expect(a.salon_id).toBe(salonA);
+      expect(a.salon_id !== salonB).toBe(true);
     }
   });
+});
 
-  console.log('\n--- 2. Service Management & Constraint Validation Tests ---');
-
-  await test('Creates a new salon service with valid price and duration', async () => {
+describe('Service management & constraint validation (unit, in-memory)', () => {
+  it('Creates a new salon service with valid price and duration', async () => {
     const serviceId = `srv-test-${Date.now()}`;
     const created = await serviceRepository.create({
       id: serviceId,
@@ -70,15 +46,15 @@ async function runAllTests() {
       isActive: true,
     });
 
-    assert(created.id === serviceId, 'Service ID should match');
-    assert(Number(created.price) === 850000, 'Price should match');
-    assert(created.duration_minutes === 90, 'Duration should match 90 mins');
+    expect(created.id).toBe(serviceId);
+    expect(Number(created.price)).toBe(850000);
+    expect(created.duration_minutes).toBe(90);
 
     const fetched = await serviceRepository.findById(serviceId);
-    assert(fetched !== null, 'Service should be retrievable from repository');
+    expect(fetched !== null).toBe(true);
   });
 
-  await test('Updates service details and toggles active status', async () => {
+  it('Updates service details and toggles active status', async () => {
     const serviceId = `srv-test-edit-${Date.now()}`;
     await serviceRepository.create({
       id: serviceId,
@@ -97,14 +73,14 @@ async function runAllTests() {
       isActive: false,
     });
 
-    assert(updated?.name === 'خدمت آزمایشی بروزرسانی‌شده', 'Name should be updated');
-    assert(Number(updated?.price) === 650000, 'Price should be updated to 650000');
-    assert(updated?.is_active === false, 'Service should be deactivated');
+    expect(updated?.name).toBe('خدمت آزمایشی بروزرسانی‌شده');
+    expect(Number(updated?.price)).toBe(650000);
+    expect(updated?.is_active).toBe(false);
   });
+});
 
-  console.log('\n--- 3. Staff & Service Assignment Tests ---');
-
-  await test('Creates new specialist and assigns catalog services', async () => {
+describe('Staff & service assignment (unit, in-memory)', () => {
+  it('Creates new specialist and assigns catalog services', async () => {
     const staffId = `stf-test-${Date.now()}`;
     const createdStaff = await staffRepository.create({
       id: staffId,
@@ -117,18 +93,18 @@ async function runAllTests() {
       isActive: true,
     });
 
-    assert(createdStaff.id === staffId, 'Staff ID should match');
-    assert(createdStaff.name === 'پریسا خسروی', 'Name should match');
+    expect(createdStaff.id).toBe(staffId);
+    expect(createdStaff.name).toBe('پریسا خسروی');
 
     await staffRepository.assignService(staffId, 'srv-101', 2500000, 180, true);
     const assigned = await staffRepository.getAssignedServices(staffId);
-    assert(assigned.length === 1, 'Staff should have 1 assigned service');
-    assert(assigned[0].service_id === 'srv-101', 'Assigned service ID should be srv-101');
+    expect(assigned.length).toBe(1);
+    expect(assigned[0].service_id).toBe('srv-101');
   });
+});
 
-  console.log('\n--- 4. Appointment Status Transitions & Settlement Tests ---');
-
-  await test('Transitions appointment from confirmed to completed and marks paid', async () => {
+describe('Appointment status transitions & settlement (unit, in-memory)', () => {
+  it('Transitions appointment from confirmed to completed and marks paid', async () => {
     const apptId = `apt-status-${Date.now()}`;
     await appointmentRepository.create({
       id: apptId,
@@ -152,15 +128,15 @@ async function runAllTests() {
       'تسویه کامل با کارتخوان در سالن'
     );
 
-    assert(updated?.status === 'completed', 'Status should be completed');
+    expect(updated?.status).toBe('completed');
 
     const fetched = await appointmentRepository.findById(apptId);
-    assert(fetched?.status === 'completed', 'Repository status should persist completed state');
+    expect(fetched?.status).toBe('completed');
   });
+});
 
-  console.log('\n--- 5. Appointment Rescheduling & Conflict Validation Tests ---');
-
-  await test('Reschedules appointment to a free time slot', async () => {
+describe('Rescheduling & conflict validation (unit, in-memory)', () => {
+  it('Reschedules appointment to a free time slot', async () => {
     const apptId = `apt-resched-${Date.now()}`;
     await appointmentRepository.create({
       id: apptId,
@@ -185,7 +161,7 @@ async function runAllTests() {
       '20:00',
       apptId
     );
-    assert(isSlotAvailable === true, 'Target slot 17:00-20:00 should be free');
+    expect(isSlotAvailable).toBe(true);
 
     const rescheduled = await appointmentRepository.reschedule(
       apptId,
@@ -196,11 +172,11 @@ async function runAllTests() {
       'مدیر سالن'
     );
 
-    assert(rescheduled?.booking_time === '17:00', 'New booking time should be 17:00');
-    assert(rescheduled?.end_time === '20:00', 'New end time should be 20:00');
+    expect(rescheduled?.booking_time).toBe('17:00');
+    expect(rescheduled?.end_time).toBe('20:00');
   });
 
-  await test('Rejects rescheduling to an already occupied overlapping slot', async () => {
+  it('Rejects rescheduling to an already occupied overlapping slot', async () => {
     const appt1Id = `apt-conflict-1-${Date.now()}`;
     const appt2Id = `apt-conflict-2-${Date.now()}`;
 
@@ -246,19 +222,19 @@ async function runAllTests() {
       appt2Id
     );
 
-    assert(isSlotAvailable === false, 'Slot 11:00-14:00 MUST be detected as occupied/overlapping');
+    expect(isSlotAvailable).toBe(false);
   });
+});
 
-  console.log('\n--- 6. Working Hours & Calendar Exceptions Tests ---');
-
-  await test('Updates salon operating hours and adds holiday exception', async () => {
+describe('Working hours & calendar exceptions (unit, in-memory)', () => {
+  it('Updates salon operating hours and adds holiday exception', async () => {
     await salonRepository.setWorkingHours('sal-101', [
       { dayOfWeek: 0, startTime: '09:00', endTime: '20:00', isClosed: false },
       { dayOfWeek: 6, startTime: '00:00', endTime: '00:00', isClosed: true }, // Friday closed
     ]);
 
     const hours = await salonRepository.getWorkingHours('sal-101');
-    assert(hours.length > 0, 'Working hours should be returned');
+    expect(hours.length > 0).toBe(true);
 
     const addedException = await salonRepository.addAvailabilityException({
       salonId: 'sal-101',
@@ -269,25 +245,12 @@ async function runAllTests() {
       isAvailable: false,
     });
 
-    assert(addedException.reason.includes('بازسازی'), 'Reason should match');
+    expect(addedException.reason.includes('بازسازی')).toBe(true);
 
     const allExceptions = await salonRepository.getAllAvailabilityExceptions('sal-101');
-    assert(allExceptions.some((e) => e.id === addedException.id), 'Exception should be in list');
+    expect(allExceptions.some((e) => e.id === addedException.id)).toBe(true);
 
     const deleted = await salonRepository.deleteAvailabilityException('sal-101', addedException.id);
-    assert(deleted === true, 'Exception should be deleted successfully');
+    expect(deleted).toBe(true);
   });
-
-  console.log('\n====================================================');
-  console.log(`Test Execution Finished: ${passCount} Passed, ${failCount} Failed`);
-  console.log('====================================================\n');
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
-}
-
-runAllTests().catch((err) => {
-  console.error('Fatal error during test execution:', err);
-  process.exit(1);
 });

@@ -70,16 +70,17 @@ npm start
 
 ## 7. Tests
 
-| Command | Scope | Harness |
-|---|---|---|
-| `npm run test:unit` | `tests/auth.test.ts` (32), `tests/booking.test.ts` (16) | service-level, in-memory |
-| `npm run test:integration` | `tests/salon_manager.test.ts` (9), `tests/super_admin.test.ts` (7) | repo-level + **real HTTP** (Express on ephemeral port) |
-| `npm test` | all 64 | sequential |
-| `npm run typecheck` | `tsc --noEmit` | — |
-| `npm run lint` | alias of `typecheck` (no ESLint yet) | — |
-| `npm run audit` | `npm audit --omit=dev` (production deps) | — |
+Framework: **Vitest** (single framework, same pipeline as Vite) + **Playwright** for browser E2E.
 
-All 64 tests run against in-memory stores; **none require PostgreSQL**. Database-backed and browser E2E suites are not yet integrated (tracked as follow-up work).
+| Command | Layer | What it proves |
+|---|---|---|
+| `npm run test:unit` | `tests/unit/` — pure domain logic & services (in-memory adapters, explicitly labeled) | OTP lifecycle, sessions, RBAC/CSRF middleware, booking domain rules, repo contracts |
+| `npm run test:integration` | `tests/integration/` — **real Express app** (`createApp()`) over HTTP + spawned production servers | auth, cookie flags, OTP rate limits, admin/salon authorization, CSRF prod posture, JSON error contracts |
+| `npm run test:db` | `tests/db/` — **real PostgreSQL** (set `TEST_DATABASE_URL`) | migrations, real persistence, transaction rollback, unique constraints, booking concurrency races |
+| `npm test` | all Vitest layers | DB suite reports **skipped/blocked** when `TEST_DATABASE_URL` is unset — never silently passes |
+| `npm run test:e2e` | `e2e/` — Playwright journeys against the real dev server | storefront, full booking wizard with real OTP, customer booking history |
+
+Database test rules: `TEST_DATABASE_URL` must point at an isolated database (a URL containing `prod` is refused); a configured-but-unreachable database makes the suite **fail**, not skip; fixtures use the `t3-` prefix and clean up only their own rows. See [e2e/README.md](../e2e/README.md) for which E2E journeys are implemented and which are blocked (mock-driven console surfaces).
 
 ## 8. Common Troubleshooting
 

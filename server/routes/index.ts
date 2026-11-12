@@ -4,6 +4,7 @@ import { authRouter } from './auth.ts';
 import { adminRouter } from './admin.ts';
 import { salonRouter } from './salon.ts';
 import { publicRouter } from './public.ts';
+import { devRouter } from './dev.ts';
 import { config } from '../config.ts';
 
 export const apiRouter = express.Router();
@@ -22,6 +23,11 @@ apiRouter.use('/admin', adminRouter);
 
 // Mount Salon Tenant Operations Subsystem (Tenant Membership Protected)
 apiRouter.use('/salon/:salonId', salonRouter);
+
+// Mount Dev/Test Tools Subsystem — strictly excluded from production
+if (!config.isProduction) {
+  apiRouter.use('/dev', devRouter);
+}
 
 // Base API Metadata (Public, non-sensitive)
 apiRouter.get('/', (_req, res) => {
