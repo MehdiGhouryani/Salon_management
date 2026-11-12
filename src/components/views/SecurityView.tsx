@@ -129,7 +129,7 @@ export const SecurityView: React.FC = () => {
 
         <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-xl text-xs text-[var(--status-success)] font-semibold">
           <ShieldCheck className="w-4 h-4 text-[var(--status-success)]" />
-          <span>امنیت هسته: فعال و پایدار</span>
+          <span className="text-emerald-800 dark:text-emerald-300">امنیت هسته: فعال و پایدار</span>
         </div>
       </div>
 

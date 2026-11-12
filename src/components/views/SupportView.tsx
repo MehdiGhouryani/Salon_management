@@ -50,9 +50,9 @@ export const SupportView: React.FC = () => {
   const getPriorityBadge = (p: TicketPriority) => {
     switch (p) {
       case 'critical':
-        return { label: 'بحرانی', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-500/20' };
+        return { label: 'بحرانی', color: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-500/20' };
       case 'high':
-        return { label: 'بالا', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-500/20' };
+        return { label: 'بالا', color: 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-500/20' };
       case 'medium':
         return { label: 'معمولی', color: 'text-sky-600 bg-sky-50 dark:bg-sky-950/40 border-sky-500/20' };
       case 'low':
@@ -163,7 +163,7 @@ export const SupportView: React.FC = () => {
                   {selectedTicket.status !== 'resolved' && (
                     <button
                       onClick={() => resolveTicket(selectedTicket.id)}
-                      className="px-3 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
+                      className="px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                     >
                       حل تیکت
                     </button>

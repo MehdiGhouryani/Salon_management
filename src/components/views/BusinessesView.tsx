@@ -807,7 +807,7 @@ export const BusinessesView: React.FC = () => {
 
               <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
                 <span className="text-text-muted block mb-1">پلن اشتراک</span>
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                <span className="text-sm font-bold text-amber-800 dark:text-amber-300">
                   {inspectedSalon.plan === 'gold_vip' ? 'ویژه VIP' : inspectedSalon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
                 </span>
               </div>

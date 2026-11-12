@@ -245,7 +245,7 @@ export const Sidebar: React.FC = React.memo(() => {
                     <span
                       className={`px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums ${
                         item.badgeType === 'error'
-                          ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]'
+                          ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] dark:text-[#FF9A9C] border-[var(--status-error-border)]'
                           : item.badgeType === 'warning'
                           ? 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]'
                           : 'bg-[var(--status-info-bg)] text-[var(--status-info)] border-[var(--status-info-border)]'
