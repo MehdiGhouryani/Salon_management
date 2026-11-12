@@ -29,6 +29,8 @@ const prodEnv = (extra: Record<string, string> = {}): NodeJS.ProcessEnv => ({
   PORT: String(PROD_PORT),
   HOST: '127.0.0.1',
   SESSION_SECRET: TEST_SESSION_SECRET,
+  // Exact-origin allowlist for the CSRF matrix (Phase 07)
+  CORS_ORIGIN: 'https://app.nobatara.ir',
   ...extra,
 });
 
@@ -136,5 +138,43 @@ describe('Production HTTP posture (spawned node server.ts, unreachable probe DB)
     const notFound = await fetch(`${BASE}/api/does-not-exist`);
     expect(notFound.status).toBe(404);
     expect(notFound.headers.get('content-type')).toContain('application/json');
+
+    // 8. CSRF exact-origin matrix (Phase 07): lookalike, subdomain-swap,
+    //    null, and malformed origins must all be rejected; only the exact
+    //    configured origin passes.
+    const csrfCases: Array<[string, string | undefined, string]> = [
+      ['https://app.nobatara.ir.evil.io', 'CSRF_ORIGIN_FORBIDDEN', 'lookalike suffix'],
+      ['https://evil.io/app.nobatara.ir', 'CSRF_ORIGIN_FORBIDDEN', 'path mimicry'],
+      ['https://nobatara.ir', 'CSRF_ORIGIN_FORBIDDEN', 'subdomain swap'],
+      ['null', 'CSRF_ORIGIN_INVALID', 'null origin'],
+      ['not-a-url', 'CSRF_ORIGIN_INVALID', 'malformed origin'],
+    ];
+    for (const [originHeader, expectedCode, label] of csrfCases) {
+      const evil = await fetch(`${BASE}/api/auth/otp/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: originHeader,
+        },
+        body: JSON.stringify({ phone: '09121234567', purpose: 'login' }),
+      });
+      expect(evil.status, label).toBe(403);
+      expect((await evil.json()).error, label).toBe(expectedCode);
+    }
+
+    // Exact configured origin passes CSRF (reaches auth: 401 on admin stats)
+    const allowed = await fetch(`${BASE}/api/admin/stats`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://app.nobatara.ir',
+      },
+      body: JSON.stringify({ status: 'suspended' }),
+    });
+    expect(allowed.status).toBe(401);
+    expect((await allowed.json()).error).toBe('AUTHENTICATION_REQUIRED');
+
+    // 9. HSTS is present in production
+    expect(indexRes.headers.get('strict-transport-security')).toContain('max-age=31536000');
   }, 60000);
 });

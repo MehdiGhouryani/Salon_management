@@ -38,15 +38,15 @@ export function hashSessionToken(rawToken: string): string {
 }
 
 /**
- * Extracts client IP address respecting trusted reverse proxy configuration
+ * Extracts the client IP address strictly through Express's trust-proxy
+ * policy (Phase 07). Express computes req.ip from the socket address and —
+ * only for explicitly trusted proxy hops — from X-Forwarded-For. The previous
+ * implementation trusted the LEFTMOST X-Forwarded-For entry, which is fully
+ * client-controlled and defeated IP-based rate limiting and poisoned audit
+ * records.
  */
 export function extractClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    const ips = (Array.isArray(forwarded) ? forwarded[0] : forwarded).split(',');
-    return ips[0].trim();
-  }
-  return req.socket.remoteAddress || '127.0.0.1';
+  return req.ip || req.socket.remoteAddress || '127.0.0.1';
 }
 
 export const sessionService = {

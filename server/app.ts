@@ -23,8 +23,10 @@ import { apiRouter } from './routes/index.ts';
 export function createApp(): Express {
   const app = express();
 
-  // Trust reverse proxy (Cloud Run, Cloudflare, etc.)
-  app.set('trust proxy', 1);
+  // Explicit reverse-proxy trust policy (Phase 07): set TRUST_PROXY_COUNT in
+  // the deployment environment when running behind a known proxy. Default:
+  // trust nothing — client-supplied X-Forwarded-For cannot influence req.ip.
+  app.set('trust proxy', config.trustProxy);
 
   // Security & Logging Middlewares
   app.use(securityHeadersMiddleware);

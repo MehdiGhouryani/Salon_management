@@ -19,6 +19,7 @@ import { sessionService } from '../../server/services/auth/sessionService.ts';
 import { otpService } from '../../server/services/auth/otpService.ts';
 import { getDevMockSmsProvider } from '../../server/services/sms/index.ts';
 import { bookingService } from '../../server/services/booking/bookingService.ts';
+import { clearRateLimitBuckets } from '../../server/middleware/rateLimit.ts';
 
 let server: http.Server;
 let baseUrl: string;
@@ -304,23 +305,18 @@ describe('Public routes & error contracts over HTTP (integration)', () => {
     expect(res.status).toBe(401);
   });
 
-  it.fails('SECURITY-R1 (expected failure until fixed): tracking without verified phone must NOT expose the appointment', async () => {
+  it('SECURITY-R1 (fixed): anonymous code-only tracking returns operational status WITHOUT customer PII', async () => {
     // The admin-suite test above suspends sal-101 (in-memory state persists for
-    // this file); the R1 probe needs an ACTIVE salon to create its booking.
+    // this file); the R1 probes need an ACTIVE salon.
     const { salonRepository } = await import('../../server/repositories/salonRepository.ts');
     await salonRepository.updateStatus('sal-101', 'active');
 
-    // Desired behavior: unauthenticated tracking by tracking code alone must be
-    // rejected, because the code space is small (4 digits) and the payload
-    // contains customer PII (name, phone, notes). Current code returns the
-    // appointment (200). This test is marked `fails` intentionally so the
-    // defect stays visible until R1 is fixed; flip to `it()` when fixed.
     const created = await bookingService.createBooking({
       salonId: 'sal-101',
       serviceId: 'srv-101',
       staffId: 'stf-101',
-      bookingDate: '2026-11-20',
-      bookingTime: '09:00',
+      bookingDate: '2026-11-21',
+      bookingTime: '09:30',
       clientName: 'قربانی ریسک R1',
       clientPhone: '09370001122',
       ipAddress: '127.0.0.1',
@@ -328,7 +324,63 @@ describe('Public routes & error contracts over HTTP (integration)', () => {
     });
 
     const res = await fetch(`${baseUrl}/api/public/bookings/track/${created.trackingCode}`);
-    expect(res.status).toBe(403); // ← desired; currently 200, so this test is expected to fail
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    // Operational subset is present
+    expect(data.appointment.status).toBe('confirmed');
+    expect(data.appointment.trackingCode).toBe(created.trackingCode);
+    // Customer PII must be absent for code-only lookups
+    expect(data.appointment).not.toHaveProperty('clientName');
+    expect(data.appointment).not.toHaveProperty('clientPhone');
+    expect(data.appointment).not.toHaveProperty('notes');
+  });
+
+  it('SECURITY-R1 (fixed): matching phone unlocks full PII; mismatch is rejected; invalid phone rejected', async () => {
+    const created = await bookingService.createBooking({
+      salonId: 'sal-101',
+      serviceId: 'srv-101',
+      staffId: 'stf-102',
+      bookingDate: '2026-11-21',
+      bookingTime: '10:00',
+      clientName: 'مالک نوبت',
+      clientPhone: '09370001233',
+      ipAddress: '127.0.0.1',
+      userAgent: 'R1Probe2',
+    });
+
+    // Matching phone → full data
+    const ok = await fetch(`${baseUrl}/api/public/bookings/track/${created.trackingCode}?phone=09370001233`);
+    expect(ok.status).toBe(200);
+    const okData = await ok.json();
+    expect(okData.appointment.clientName).toBe('مالک نوبت');
+    expect(okData.appointment.clientPhone).toBe('09370001233');
+
+    // Wrong-but-valid phone → 403
+    const wrong = await fetch(`${baseUrl}/api/public/bookings/track/${created.trackingCode}?phone=09370001299`);
+    expect(wrong.status).toBe(403);
+    expect((await wrong.json()).error).toBe('PHONE_MISMATCH');
+
+    // Malformed phone → 400 (the old code silently skipped the check)
+    const bad = await fetch(`${baseUrl}/api/public/bookings/track/${created.trackingCode}?phone=abc`);
+    expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toBe('INVALID_PHONE');
+  });
+
+  it('SECURITY-R1 (fixed): tracking codes are high-entropy (6-digit suffix, not 4)', async () => {
+    const created = await bookingService.createBooking({
+      salonId: 'sal-101',
+      serviceId: 'srv-101',
+      staffId: 'stf-103',
+      bookingDate: '2026-11-21',
+      bookingTime: '11:00',
+      clientName: 'آنتریپ کد',
+      clientPhone: '09370001344',
+      ipAddress: '127.0.0.1',
+      userAgent: 'EntropyProbe',
+    });
+    // GIS-XXXXXX (6 digits) — the old 4-digit space had only 9,000 codes/salon
+    expect(created.trackingCode).toMatch(/^GIS-\d{6}$/);
   });
 });
 
@@ -347,5 +399,65 @@ describe('Tenant boundaries over HTTP (integration)', () => {
     expect(res.status).toBe(401);
     const data = await res.json();
     expect(data.error).toBe('AUTHENTICATION_REQUIRED');
+  });
+});
+
+describe('Super admin self-protection (Phase 07, integration)', () => {
+  it('an administrator cannot suspend their own account', async () => {
+    const { userRepository } = await import('../../server/repositories/userRepository.ts');
+    const admin = await userRepository.findByPhone('09120000000');
+    expect(admin).toBeTruthy();
+
+    const res = await fetch(`${baseUrl}/api/admin/users/${admin!.id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'test',
+      },
+      body: JSON.stringify({ status: 'suspended', reason: 'تست حفاظت از مدیر ارشد' }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('SELF_SUSPENSION_FORBIDDEN');
+  });
+
+  it('an administrator cannot change their own role', async () => {
+    const { userRepository } = await import('../../server/repositories/userRepository.ts');
+    const admin = await userRepository.findByPhone('09120000000');
+
+    const res = await fetch(`${baseUrl}/api/admin/users/${admin!.id}/role`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'test',
+      },
+      body: JSON.stringify({ role: 'user' }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('SELF_ROLE_CHANGE_FORBIDDEN');
+  });
+
+  it('rate limiting on OTP verification is enforced server-side (429 after the window cap)', async () => {
+    clearRateLimitBuckets();
+    // Hammer the verify endpoint beyond the 12-per-10-minute IP cap; the
+    // per-challenge attempt cap returns 400s first, but the middleware must
+    // eventually return a structured 429 RATE_LIMITED.
+    let sawRateLimit = false;
+    for (let i = 0; i < 20; i++) {
+      const res = await fetch(`${baseUrl}/api/auth/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+        body: JSON.stringify({ phone: '09365550000', code: '000000', purpose: 'login' }),
+      });
+      if (res.status === 429) {
+        const data = await res.json();
+        expect(data.error).toBe('RATE_LIMITED');
+        sawRateLimit = true;
+        break;
+      }
+      expect([400, 429]).toContain(res.status);
+    }
+    expect(sawRateLimit).toBe(true);
   });
 });

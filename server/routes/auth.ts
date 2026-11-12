@@ -3,6 +3,9 @@ import type { Request, Response } from 'express';
 import { otpService, type OtpPurpose } from '../services/auth/otpService.ts';
 import { sessionService, extractClientIp } from '../services/auth/sessionService.ts';
 import { requireAuth } from '../middleware/auth.ts';
+import type { NextFunction } from 'express';
+import { rateLimit } from '../middleware/rateLimit.ts';
+import { normalizeIranianPhone } from '../utils/phone.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 
 import { config } from '../config.ts';
@@ -13,8 +16,15 @@ export const authRouter = express.Router();
  * POST /api/auth/otp/request
  * Initiates phone OTP challenge
  */
-authRouter.post('/otp/request', async (req: Request, res: Response): Promise<void> => {
-  const { phone, purpose = 'login' } = req.body || {};
+authRouter.post(
+  '/otp/request',
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 10, keyFor: (req) => String(req.ip || 'unknown') }),
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Phase 07: fail-closed database errors surface as controlled 503s —
+    // never as process-killing unhandled rejections (Express 4 does not
+    // catch async throws).
+    try {
+      const { phone, purpose = 'login' } = req.body || {};
 
   if (!phone || typeof phone !== 'string') {
     res.status(400).json({
@@ -45,21 +55,37 @@ authRouter.post('/otp/request', async (req: Request, res: Response): Promise<voi
     return;
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'کد تایید پیامک شد.',
-    phone: result.phoneNational,
-    resendAvailableInSeconds: result.resendAvailableInSeconds,
-    expiresInSeconds: result.expiresInSeconds,
-  });
-});
+      res.status(200).json({
+        success: true,
+        message: 'کد تایید پیامک شد.',
+        phone: result.phoneNational,
+        resendAvailableInSeconds: result.resendAvailableInSeconds,
+        expiresInSeconds: result.expiresInSeconds,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /**
  * POST /api/auth/otp/verify
  * Verifies phone OTP challenge, issues persistent session and sets HttpOnly cookie
  */
-authRouter.post('/otp/verify', async (req: Request, res: Response): Promise<void> => {
-  const { phone, code, purpose = 'login' } = req.body || {};
+authRouter.post(
+  '/otp/verify',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 12,
+    keyFor: (req) => {
+      const ip = String(req.ip || 'unknown');
+      const phone = req.body?.phone ? normalizeIranianPhone(String(req.body.phone)).national : 'nophone';
+      return `${ip}:${phone}`;
+    },
+  }),
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { phone, code, purpose = 'login' } = req.body || {};
 
   if (!phone || !code) {
     res.status(400).json({
@@ -114,19 +140,23 @@ authRouter.post('/otp/verify', async (req: Request, res: Response): Promise<void
     details: { phone: result.user.phone, sessionId },
   }).catch(() => {});
 
-  res.status(200).json({
-    success: true,
-    message: 'ورود با موفقیت انجام شد.',
-    user: {
-      id: result.user.id,
-      phone: result.user.phone,
-      fullName: result.user.full_name,
-      platformRole: result.user.platform_role,
-      status: result.user.status,
-    },
-    sessionExpiresAt: expiresAt.toISOString(),
-  });
-});
+      res.status(200).json({
+        success: true,
+        message: 'ورود با موفقیت انجام شد.',
+        user: {
+          id: result.user.id,
+          phone: result.user.phone,
+          fullName: result.user.full_name,
+          platformRole: result.user.platform_role,
+          status: result.user.status,
+        },
+        sessionExpiresAt: expiresAt.toISOString(),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /**
  * GET /api/auth/me

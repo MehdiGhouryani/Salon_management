@@ -459,7 +459,8 @@ export const bookingService = {
 
       // 6. Generate Secure Tracking Code (e.g. GIS-XXXX or NB-XXXXXX)
       const prefix = salon.slug ? salon.slug.slice(0, 3).toUpperCase() : 'NB';
-      const randomCode = crypto.randomInt(1000, 9999);
+      // Phase 07 (R1): 6-digit suffix — 900,000 combinations per salon instead of 9,000.
+      const randomCode = crypto.randomInt(100000, 1000000);
       const trackingCode = `${prefix}-${randomCode}`;
       const appointmentId = `apt-${Date.now()}-${crypto.randomInt(100, 999)}`;
 
@@ -569,9 +570,14 @@ export const bookingService = {
     const appt = await appointmentRepository.findByTrackingCode(trackingCode);
     if (!appt) return null;
 
-    if (phone) {
-      const norm = normalizeIranianPhone(phone);
-      if (norm.isValid && appt.client_phone !== norm.national) {
+    // Phase 07 (R1): a supplied phone must be VALID and MATCHING — the old
+    // code silently skipped the mismatch check for malformed input.
+    if (phone !== undefined && phone !== null && String(phone).trim() !== '') {
+      const norm = normalizeIranianPhone(String(phone));
+      if (!norm.isValid) {
+        throw new BookingError('شماره همراه وارد شده معتبر نیست.', 400, 'INVALID_PHONE');
+      }
+      if (appt.client_phone !== norm.national) {
         throw new BookingError('شماره همراه با مشخصات نوبت تطابق ندارد.', 403, 'PHONE_MISMATCH');
       }
     }

@@ -71,7 +71,9 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     return next();
   }
 
-  // 1. Allow custom anti-CSRF header
+  // 1. Allow custom anti-CSRF header (browsers cannot set custom headers on
+  // cross-origin requests without passing a CORS preflight; non-browser
+  // clients are not CSRF-relevant by definition).
   const clientHeader = req.headers['x-nobatara-client'] || req.headers['x-requested-with'];
   if (clientHeader) {
     return next();
@@ -95,13 +97,26 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     const originUrl = new URL(String(origin));
     const host = req.headers.host;
 
-    // Same origin match
+    // Same-origin match: exact host string equality
     if (host && originUrl.host === host) {
       return next();
     }
 
-    // Explicit CORS origins match
-    if (config.corsOrigins.some((allowed) => allowed.includes(originUrl.host))) {
+    // Configured allowlist: EXACT parsed-origin comparison (Phase 07).
+    // The previous substring check (`allowed.includes(originUrl.host)`) made
+    // lookalike hosts such as `nobatara.ir.evil.io` match `nobatara.ir`.
+    const normalizedOrigin = originUrl.origin.toLowerCase();
+    const allowedOrigins = config.corsOrigins
+      .map((allowed) => {
+        try {
+          return new URL(allowed.trim()).origin.toLowerCase();
+        } catch {
+          return null; // misconfigured entries never match anything
+        }
+      })
+      .filter((o): o is string => o !== null);
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
       return next();
     }
 

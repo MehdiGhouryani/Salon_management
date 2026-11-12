@@ -234,8 +234,36 @@ export const otpService = {
       };
     }
 
-    // Increment attempts count
-    await this.incrementAttempts(challenge.id);
+    // ATOMIC attempt registration (Phase 07): the guard conditions live in the
+    // UPDATE statement itself, so parallel verifies can no longer all read
+    // attempts=0 and bypass the max-attempts cap. If the guard fails, the
+    // challenge raced to a terminal state — re-read for the accurate error.
+    const registeredAttempts = await this.atomicRegisterAttempt(challenge.id);
+    if (registeredAttempts === null) {
+      const raced = await this.findLatestChallenge(phoneKey, purpose);
+      if (raced?.consumed_at) {
+        return {
+          success: false,
+          phoneNational: phoneNorm.national,
+          error: 'این کد قبلا استفاده شده است. لطفا کد جدید دریافت کنید.',
+          statusCode: 400,
+        };
+      }
+      if (raced && raced.expires_at < new Date()) {
+        return {
+          success: false,
+          phoneNational: phoneNorm.national,
+          error: 'کد تایید منقضی شده است. لطفا مجددا کد دریافت فرمایید.',
+          statusCode: 400,
+        };
+      }
+      return {
+        success: false,
+        phoneNational: phoneNorm.national,
+        error: 'تعداد دفعات تلاش مجاز به پایان رسیده است. لطفا کد جدید دریافت نمایید.',
+        statusCode: 429,
+      };
+    }
 
     // Compute hash of entered code and compare in constant time
     const expectedHash = challenge.code_hash;
@@ -246,7 +274,7 @@ export const otpService = {
       crypto.timingSafeEqual(Buffer.from(expectedHash, 'hex'), Buffer.from(actualHash, 'hex'));
 
     if (!isMatch) {
-      const remainingAttempts = challenge.max_attempts - (challenge.attempts + 1);
+      const remainingAttempts = challenge.max_attempts - registeredAttempts;
       return {
         success: false,
         phoneNational: phoneNorm.national,
@@ -258,8 +286,17 @@ export const otpService = {
       };
     }
 
-    // Atomically consume challenge
-    await this.consumeChallenge(challenge.id);
+    // ATOMIC consume (Phase 07): only one verify can win the consumption —
+    // a parallel replay loses and is rejected here.
+    const consumed = await this.atomicConsume(challenge.id);
+    if (!consumed) {
+      return {
+        success: false,
+        phoneNational: phoneNorm.national,
+        error: 'این کد قبلا استفاده شده است. لطفا کد جدید دریافت کنید.',
+        statusCode: 400,
+      };
+    }
 
     // If purpose is 'login', find or provision the verified user
     let user: DbUser | undefined;
@@ -391,6 +428,62 @@ export const otpService = {
         break;
       }
     }
+  },
+
+  /**
+   * ATOMIC attempt registration (Phase 07): increments attempts only if the
+   * challenge is still unconsumed, unexpired, and under the attempt cap.
+   * Returns the new attempts count, or null when the guard failed (raced).
+   */
+  async atomicRegisterAttempt(challengeId: string): Promise<number | null> {
+    if (isDatabaseConfigured()) {
+      const res = await query<{ attempts: number }>(
+        `UPDATE otp_challenges
+         SET attempts = attempts + 1
+         WHERE id = $1
+           AND consumed_at IS NULL
+           AND expires_at > NOW()
+           AND attempts < max_attempts
+         RETURNING attempts`,
+        [challengeId]
+      );
+      return res.rows.length > 0 ? Number(res.rows[0].attempts) : null;
+    }
+
+    // In-memory adapter is single-threaded per process: the equivalent guard
+    // is enforced synchronously.
+    const challenge = [...inMemoryChallenges.values()].find((c) => c.id === challengeId);
+    if (
+      !challenge ||
+      challenge.consumed_at ||
+      challenge.expires_at < new Date() ||
+      challenge.attempts >= challenge.max_attempts
+    ) {
+      return null;
+    }
+    challenge.attempts += 1;
+    return challenge.attempts;
+  },
+
+  /**
+   * ATOMIC consumption (Phase 07): only the first verifier wins; a parallel
+   * replay loses the race and is rejected.
+   */
+  async atomicConsume(challengeId: string): Promise<boolean> {
+    if (isDatabaseConfigured()) {
+      const res = await query(
+        `UPDATE otp_challenges SET consumed_at = NOW()
+         WHERE id = $1 AND consumed_at IS NULL
+         RETURNING id`,
+        [challengeId]
+      );
+      return res.rows.length > 0;
+    }
+
+    const challenge = [...inMemoryChallenges.values()].find((c) => c.id === challengeId);
+    if (!challenge || challenge.consumed_at) return false;
+    challenge.consumed_at = new Date();
+    return true;
   },
 
   async consumeChallenge(challengeId: string): Promise<void> {

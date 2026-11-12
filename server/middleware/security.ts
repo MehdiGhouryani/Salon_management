@@ -26,6 +26,8 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   // We do not set restrictive X-Frame-Options in development to ensure AI Studio preview displays cleanly.
   if (config.isProduction) {
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // Phase 07: force TLS for browsers that have ever seen the site over HTTPS.
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
 
   next();

@@ -44,6 +44,12 @@ export interface ServerConfig {
   readonly host: string;
   readonly corsOrigins: string[];
   readonly bodyLimit: string;
+  /**
+   * Explicit reverse-proxy trust policy (Phase 07). Number of trusted proxy
+   * hops, or 0/false to trust no proxy (client IP = socket address). Default 0:
+   * X-Forwarded-For from unknown proxies is never trusted.
+   */
+  readonly trustProxy: number | false;
   readonly database: DatabaseConfig;
   readonly auth: AuthConfig;
 }
@@ -88,6 +94,21 @@ function parseAndValidateConfig(): ServerConfig {
     : [];
 
   const bodyLimit = (process.env.BODY_LIMIT || '1mb').trim();
+
+  // 5b. Explicit reverse-proxy trust (Phase 07): TRUST_PROXY_COUNT must be set
+  // deliberately by the operator when running behind a known proxy. Unsafe
+  // default: trust nothing, so client-supplied forwarding headers cannot
+  // influence rate limiting, audit records, or session metadata.
+  let trustProxy: number | false = false;
+  const rawTrustProxy = (process.env.TRUST_PROXY_COUNT || '').trim();
+  if (rawTrustProxy) {
+    const parsedTrust = parseInt(rawTrustProxy, 10);
+    if (isNaN(parsedTrust) || parsedTrust < 0 || parsedTrust > 5) {
+      throw new Error(`[ServerConfig] Invalid TRUST_PROXY_COUNT: "${rawTrustProxy}". Must be an integer between 0 and 5.`);
+    }
+    trustProxy = parsedTrust === 0 ? false : parsedTrust;
+  }
+
   const isProduction = nodeEnv === 'production' || appMode === 'production';
   const isDevelopment = !isProduction;
 
@@ -191,6 +212,7 @@ function parseAndValidateConfig(): ServerConfig {
     host,
     corsOrigins,
     bodyLimit,
+    trustProxy,
     database,
     auth,
   });

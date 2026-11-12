@@ -572,6 +572,19 @@ salonRouter.patch(
 
       const targetStaffId = staffId || appt.staff_id;
 
+      // Phase 07 (tenant integrity): a reschedule may never move an
+      // appointment to a specialist of a DIFFERENT salon.
+      if (staffId && staffId !== appt.staff_id) {
+        const targetStaff = await staffRepository.findById(staffId);
+        if (!targetStaff || targetStaff.salon_id !== salonId || !targetStaff.is_active) {
+          res.status(404).json({
+            error: 'STAFF_NOT_FOUND',
+            message: 'متخصص انتخابی در این سالن یافت نشد یا غیرفعال است.',
+          });
+          return;
+        }
+      }
+
       // Determine duration
       const service = await serviceRepository.findById(appt.service_id);
       const duration = service?.duration_minutes || 60;
@@ -595,27 +608,34 @@ salonRouter.patch(
         return;
       }
 
-      const updated = await appointmentRepository.reschedule(
-        appointmentId,
-        canonicalDate,
-        bookingTime,
-        endTime,
-        targetStaffId,
-        req.user?.full_name,
-        req.user?.id
-      );
+      // Phase 07 (audit consistency): the move and its audit record commit or
+      // roll back together.
+      const updated = await withTransaction(async (txClient) => {
+        const moved = await appointmentRepository.reschedule(
+          appointmentId,
+          canonicalDate,
+          bookingTime,
+          endTime,
+          targetStaffId,
+          req.user?.full_name,
+          req.user?.id,
+          txClient
+        );
 
-      await auditLogRepository.create({
-        actor: req.user?.full_name || 'مدیر سالن',
-        actorRole: req.user?.platform_role || 'staff',
-        action: `جابجایی زمان نوبت به ${bookingDate} ${bookingTime}`,
-        target: `Appointment:${appointmentId}`,
-        ipAddress: extractClientIp(req),
-        userAgent: String(req.headers['user-agent'] || 'Unknown'),
-        severity: 'info',
-        category: 'business',
-        details: { salonId, oldDate: appt.booking_date, oldTime: appt.booking_time, newDate: bookingDate, newTime: bookingTime },
-      }).catch(() => {});
+        await auditLogRepository.create({
+          actor: req.user?.full_name || 'مدیر سالن',
+          actorRole: req.user?.platform_role || 'staff',
+          action: `جابجایی زمان نوبت به ${canonicalDate} ${bookingTime}`,
+          target: `Appointment:${appointmentId}`,
+          ipAddress: extractClientIp(req),
+          userAgent: String(req.headers['user-agent'] || 'Unknown'),
+          severity: 'info',
+          category: 'business',
+          details: { salonId, oldDate: appt.booking_date, oldTime: appt.booking_time, newDate: canonicalDate, newTime: bookingTime },
+        }, txClient);
+
+        return moved;
+      });
 
       res.status(200).json({
         success: true,

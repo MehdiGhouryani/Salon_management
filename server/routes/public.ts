@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { requireAuth, csrfProtection } from '../middleware/auth.ts';
+import { rateLimit } from '../middleware/rateLimit.ts';
 import { salonRepository } from '../repositories/salonRepository.ts';
 import { serviceRepository } from '../repositories/serviceRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
@@ -183,6 +184,11 @@ publicRouter.get('/salons/:salonId/availability', async (req: Request, res: Resp
 publicRouter.post(
   '/bookings',
   csrfProtection,
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 8,
+    keyFor: (req) => `${req.ip || 'unknown'}:${req.body?.clientPhone || 'nophone'}`,
+  }),
   async (req: Request, res: Response): Promise<void> => {
     // 1. Session Authentication Check
     if (!req.isAuthenticated || !req.user) {
@@ -266,7 +272,11 @@ publicRouter.post(
  * GET /api/public/bookings/my
  * Lists appointments for the authenticated customer
  */
-publicRouter.get('/bookings/my', requireAuth, async (req: Request, res: Response): Promise<void> => {
+publicRouter.get(
+  '/bookings/my',
+  requireAuth,
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 30, keyFor: (req) => String(req.ip || 'unknown') }),
+  async (req: Request, res: Response): Promise<void> => {
   try {
     const userPhone = req.user!.phone;
     const bookings = await bookingService.getMyBookings(userPhone);
@@ -305,14 +315,22 @@ publicRouter.get('/bookings/my', requireAuth, async (req: Request, res: Response
 
 /**
  * GET /api/public/bookings/track/:trackingCode
- * Tracks a specific appointment with phone verification
+ * Tracks a specific appointment with phone verification.
+ * Phase 07 (R1): customer PII (name, phone, notes) is returned ONLY to a
+ * verified owner — an authenticated session whose phone matches the booking,
+ * or a supplied matching phone. Anonymous code-only lookups receive a
+ * PII-free operational subset (tracking codes alone are not sufficient proof
+ * of identity, and high-entropy codes still allow a status check).
  */
-publicRouter.get('/bookings/track/:trackingCode', async (req: Request, res: Response): Promise<void> => {
+publicRouter.get(
+  '/bookings/track/:trackingCode',
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 30, keyFor: (req) => String(req.ip || 'unknown') }),
+  async (req: Request, res: Response): Promise<void> => {
   const { trackingCode } = req.params;
-  const phone = req.query.phone ? String(req.query.phone) : (req.user?.phone || undefined);
+  const queryPhone = req.query.phone ? String(req.query.phone) : undefined;
 
   try {
-    const appointment = await bookingService.trackBooking(trackingCode, phone);
+    const appointment = await bookingService.trackBooking(trackingCode, queryPhone);
     if (!appointment) {
       res.status(404).json({
         error: 'APPOINTMENT_NOT_FOUND',
@@ -321,25 +339,42 @@ publicRouter.get('/bookings/track/:trackingCode', async (req: Request, res: Resp
       return;
     }
 
+    // Identity resolution: session phone (server-verified) or the query phone
+    // (matched inside trackBooking). Code alone never unlocks PII.
+    let verifiedOwner = false;
+    if (req.isAuthenticated && req.user) {
+      const sessionNorm = normalizeIranianPhone(req.user.phone);
+      verifiedOwner = sessionNorm.isValid && sessionNorm.national === appointment.client_phone;
+    } else if (queryPhone) {
+      const queryNorm = normalizeIranianPhone(queryPhone);
+      verifiedOwner = queryNorm.isValid && queryNorm.national === appointment.client_phone;
+    }
+
+    const baseAppointment = {
+      id: appointment.id,
+      trackingCode: appointment.tracking_code,
+      salonId: appointment.salon_id,
+      serviceId: appointment.service_id,
+      staffId: appointment.staff_id,
+      bookingDate: appointment.booking_date,
+      bookingTime: appointment.booking_time,
+      endTime: appointment.end_time,
+      price: typeof appointment.price === 'string' ? parseInt(appointment.price, 10) : appointment.price,
+      status: appointment.status,
+      paymentStatus: appointment.payment_status,
+      paymentMethod: appointment.payment_method,
+    };
+
     res.status(200).json({
       success: true,
-      appointment: {
-        id: appointment.id,
-        trackingCode: appointment.tracking_code,
-        salonId: appointment.salon_id,
-        serviceId: appointment.service_id,
-        staffId: appointment.staff_id,
-        clientName: appointment.client_name,
-        clientPhone: appointment.client_phone,
-        bookingDate: appointment.booking_date,
-        bookingTime: appointment.booking_time,
-        endTime: appointment.end_time,
-        price: typeof appointment.price === 'string' ? parseInt(appointment.price, 10) : appointment.price,
-        status: appointment.status,
-        paymentStatus: appointment.payment_status,
-        paymentMethod: appointment.payment_method,
-        notes: appointment.notes,
-      },
+      appointment: verifiedOwner
+        ? {
+            ...baseAppointment,
+            clientName: appointment.client_name,
+            clientPhone: appointment.client_phone,
+            notes: appointment.notes,
+          }
+        : baseAppointment,
     });
   } catch (err: any) {
     if (err instanceof BookingError) {

@@ -37,6 +37,8 @@ export class KavenegarSmsProvider implements SmsProvider {
       const response = await fetch(`${url}?${params.toString()}`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' },
+        // Phase 07: never hang the request thread on an unresponsive SMS gateway.
+        signal: AbortSignal.timeout(10_000),
       });
 
       if (!response.ok) {

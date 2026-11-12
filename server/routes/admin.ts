@@ -2,6 +2,8 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import { authenticateSession, requireAuth, requirePlatformRole } from '../middleware/auth.ts';
 import { withTransaction } from '../db/pool.ts';
+import { rateLimit } from '../middleware/rateLimit.ts';
+import { normalizeIranianPhone } from '../utils/phone.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 import { salonRepository } from '../repositories/salonRepository.ts';
 import { userRepository } from '../repositories/userRepository.ts';
@@ -86,7 +88,13 @@ adminRouter.get('/salons', async (req: Request, res: Response) => {
  * PUT /api/admin/salons/:id/status
  * Approve, suspend, or reject salon with compulsory reason & audit log
  */
-adminRouter.put('/salons/:id/status', async (req: Request, res: Response) => {
+adminRouter.put('/salons/:id/status',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 20,
+    keyFor: (req) => String(req.user?.id || req.ip || 'unknown'),
+  }),
+  async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status, reason } = req.body;
 
@@ -195,7 +203,13 @@ adminRouter.get('/users', async (req: Request, res: Response) => {
  * PUT /api/admin/users/:id/status
  * Suspend or activate a platform user with compulsory reason
  */
-adminRouter.put('/users/:id/status', async (req: Request, res: Response) => {
+adminRouter.put('/users/:id/status',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 20,
+    keyFor: (req) => String(req.user?.id || req.ip || 'unknown'),
+  }),
+  async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status, reason } = req.body;
 
@@ -220,6 +234,24 @@ adminRouter.put('/users/:id/status', async (req: Request, res: Response) => {
         error: 'USER_NOT_FOUND',
         message: 'کاربر مورد نظر یافت نشد.',
       });
+    }
+
+    // Phase 07: administrators cannot suspend themselves, and the last active
+    // super admin can never be suspended.
+    if (id === req.user?.id && status === 'suspended') {
+      return res.status(400).json({
+        error: 'SELF_SUSPENSION_FORBIDDEN',
+        message: 'امکان تعلیق حساب کاربری خودتان وجود ندارد.',
+      });
+    }
+    if (user.platform_role === 'super_admin' && status === 'suspended') {
+      const activeSuperAdmins = (await userRepository.findAll({ role: 'super_admin', status: 'active' })).length;
+      if (activeSuperAdmins <= 1) {
+        return res.status(400).json({
+          error: 'LAST_SUPER_ADMIN_PROTECTED',
+          message: 'حداقل یک مدیر ارشد فعال باید در سامانه باقی بماند.',
+        });
+      }
     }
 
     const oldStatus = user.status;
@@ -265,7 +297,13 @@ adminRouter.put('/users/:id/status', async (req: Request, res: Response) => {
  * PUT /api/admin/users/:id/role
  * Update user platform role — strictly prevents assigning super_admin via standard API
  */
-adminRouter.put('/users/:id/role', async (req: Request, res: Response) => {
+adminRouter.put('/users/:id/role',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 20,
+    keyFor: (req) => String(req.user?.id || req.ip || 'unknown'),
+  }),
+  async (req: Request, res: Response) => {
   const { id } = req.params;
   const { role } = req.body;
 
@@ -290,6 +328,24 @@ adminRouter.put('/users/:id/role', async (req: Request, res: Response) => {
         error: 'USER_NOT_FOUND',
         message: 'کاربر مورد نظر یافت نشد.',
       });
+    }
+
+    // Phase 07: administrators cannot change their own role, and the last
+    // active super admin can never be demoted.
+    if (id === req.user?.id) {
+      return res.status(400).json({
+        error: 'SELF_ROLE_CHANGE_FORBIDDEN',
+        message: 'تغییر نقش کاربری توسط خود کاربر مجاز نیست.',
+      });
+    }
+    if (user.platform_role === 'super_admin' && role !== 'super_admin') {
+      const activeSuperAdmins = (await userRepository.findAll({ role: 'super_admin', status: 'active' })).length;
+      if (activeSuperAdmins <= 1) {
+        return res.status(400).json({
+          error: 'LAST_SUPER_ADMIN_PROTECTED',
+          message: 'حداقل یک مدیر ارشد فعال باید در سامانه باقی بماند.',
+        });
+      }
     }
 
     const oldRole = user.platform_role;
