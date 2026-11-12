@@ -4,6 +4,18 @@ import { config } from '../../config.ts';
 import { withTransaction, isDatabaseConfigured, query } from '../../db/pool.ts';
 import { normalizeIranianPhone } from '../../utils/phone.ts';
 import { parseBookingDateInput } from '../../utils/jalali.ts';
+import {
+  resolveBookingScheduleContext,
+  assertNotPast,
+  isValidHHMM,
+  assertScheduleOpen,
+  assertStaffEligibleForService,
+  filterEligibleStaff,
+  effectiveWorkingHours,
+  findBlockingException,
+  tehranTodayIso,
+  timeToMinutes as rulesTimeToMinutes,
+} from './bookingRules.ts';
 import { bookingGrantService, BookingGrantError } from '../auth/bookingGrantService.ts';
 import {
   timeToMinutes,
@@ -85,6 +97,12 @@ async function acquireLock(key: string): Promise<() => void> {
   return await mutex.acquire();
 }
 
+function assertBookingTimeValidityPublic(bookingTime: string, endTime: string): void {
+  if (!isValidHHMM(bookingTime) || !isValidHHMM(endTime)) {
+    throw new BookingError('ساعت نوبت معتبر نیست. قالب صحیح: HH:MM (۲۴ ساعته).', 400, 'INVALID_BOOKING_TIME');
+  }
+}
+
 export const bookingService = {
   /**
    * Calculates live, real available slots for a given salon, service, and date
@@ -141,71 +159,66 @@ export const bookingService = {
     const dayOfWeek = parsedDay.weekday;
     const dayName = IRANIAN_DAY_NAMES[dayOfWeek] || 'نامشخص';
 
-    // 4. Retrieve Working Hours
-    const workingHours = await salonRepository.getWorkingHours(salonId);
-    const dayHours = workingHours.find((h) => h.day_of_week === dayOfWeek);
+    const closedResponse = (reason: string) => ({
+      isOpen: false,
+      reason,
+      date: canonicalDate,
+      dayOfWeek,
+      dayName,
+      serviceDurationMinutes: duration,
+      serviceName: service.name,
+      servicePrice: price,
+      slots: [],
+    });
 
-    if (!dayHours || dayHours.is_closed) {
-      return {
-        isOpen: false,
-        reason: `سالن در روز ${dayName} تعطیل می‌باشد.`,
-        date: canonicalDate,
-        dayOfWeek,
-        dayName,
-        serviceDurationMinutes: duration,
-        serviceName: service.name,
-        servicePrice: price,
-        slots: [],
-      };
-    }
-
-    // 5. Check Availability Exceptions
-    const exceptions = await salonRepository.getAvailabilityExceptions(salonId, canonicalDate, staffId);
-    const activeException = exceptions.find((e) => !e.is_available);
-    if (activeException) {
-      return {
-        isOpen: false,
-        reason: activeException.reason || 'تعطیلی کاری در این تاریخ ثبت شده است.',
-        date: canonicalDate,
-        dayOfWeek,
-        dayName,
-        serviceDurationMinutes: duration,
-        serviceName: service.name,
-        servicePrice: price,
-        slots: [],
-      };
-    }
-
-    // 6. Determine eligible staff
     const allStaff = await staffRepository.findBySalonId(salonId, true);
     if (allStaff.length === 0) {
-      return {
-        isOpen: false,
-        reason: 'هیچ متخصصی در حال حاضر در این سالن فعال نمی‌باشد.',
-        date: canonicalDate,
-        dayOfWeek,
-        dayName,
-        serviceDurationMinutes: duration,
-        serviceName: service.name,
-        servicePrice: price,
-        slots: [],
-      };
+      return closedResponse('هیچ متخصصی در حال حاضر در این سالن فعال نمی‌باشد.');
     }
 
-    let targetStaffList: DbStaff[] = [];
+    // Staff-service eligibility (Phase 09): only specialists assigned to this
+    // service can appear in availability.
+    let targetStaffList: DbStaff[];
     if (staffId && staffId !== 'any') {
       const specificStaff = allStaff.find((s) => s.id === staffId);
       if (!specificStaff) {
         throw new BookingError('متخصص انتخاب شده یافت نشد.', 404, 'STAFF_NOT_FOUND');
       }
+      await assertStaffEligibleForService(specificStaff.id, serviceId);
       targetStaffList = [specificStaff];
     } else {
-      targetStaffList = allStaff;
+      targetStaffList = await filterEligibleStaff(allStaff, serviceId);
+      if (targetStaffList.length === 0) {
+        return closedResponse('هیچ متخصص واجد شرایطی برای این خدمت یافت نشد.');
+      }
     }
 
-    // 7. Generate Time Intervals
-    const dayStartMinutes = timeToMinutes(dayHours.start_time);
-    const dayEndMinutes = timeToMinutes(dayHours.end_time);
+    // Shared rules engine context (Phase 09): identical schedule data to the
+    // creation paths.
+    const ctx = await resolveBookingScheduleContext(salonId, serviceId, canonicalDate);
+
+    // Fail-safe: missing working-hours configuration closes the day.
+    const salonHours = effectiveWorkingHours(ctx);
+    if ('unconfigured' in salonHours) {
+      return closedResponse('ساعات کاری این روز برای سالن تنظیم نشده است.');
+    }
+    if ('closed' in salonHours) {
+      return closedResponse(`سالن در روز ${dayName} تعطیل می‌باشد.`);
+    }
+
+    // Past slots for Tehran-today are not bookable and must not appear open.
+    const todayIso = tehranTodayIso();
+    const nowMinutes = rulesTimeToMinutes(
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Tehran',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date())
+    );
+
+    const dayStartMinutes = timeToMinutes(salonHours.start);
+    const dayEndMinutes = timeToMinutes(salonHours.end);
     const maxStartMinutes = dayEndMinutes - duration;
 
     // Fetch all existing appointments for this salon and date
@@ -230,10 +243,29 @@ export const bookingService = {
       const slotStart = minutesToTime(current);
       const slotEnd = addMinutesToTime(slotStart, duration);
 
-      // Find an available staff member who is free for this interval
+      // Past slot policy (Asia/Tehran)
+      if (canonicalDate < todayIso || (canonicalDate === todayIso && current < nowMinutes)) {
+        resultSlots.push({
+          time: slotStart,
+          endTime: slotEnd,
+          available: false,
+          conflictReason: 'این زمان گذشته است',
+        });
+        continue;
+      }
+
+      // Find an eligible staff member who is working and free for this interval
       let freeStaff: DbStaff | null = null;
 
       for (const staff of targetStaffList) {
+        // Staff-specific hours override salon hours; staff-specific exceptions
+        // and breaks block the interval.
+        const staffHours = effectiveWorkingHours(ctx, staff.id);
+        if ('unconfigured' in staffHours || 'closed' in staffHours) continue;
+        if (current < timeToMinutes(staffHours.start)) continue;
+        if (current + duration > timeToMinutes(staffHours.end)) continue;
+        if (findBlockingException(ctx, staff.id, slotStart, slotEnd)) continue;
+
         const staffAppts = activeAppointments.filter((a) => a.staff_id === staff.id);
         let hasConflict = false;
 
@@ -296,6 +328,8 @@ export const bookingService = {
     user?: DbUser;
     /** Phase 08: guest booking authorization token (booking_verification OTP). */
     bookingGrant?: string;
+    /** Phase 09: 'manual' = salon-staff creation path (no grant required). */
+    source?: 'public' | 'manual';
     ipAddress: string;
     userAgent: string;
   }): Promise<{
@@ -325,55 +359,50 @@ export const bookingService = {
       throw new BookingError('نام و نام‌خانوادگی مشتری معتبر نیست.', 400, 'INVALID_CLIENT_NAME');
     }
 
-    // 2. Authoritative Salon & Service Resolution
-    const salon = await salonRepository.findById(params.salonId);
-    if (!salon || salon.status !== 'active') {
-      throw new BookingError('سالن مورد نظر یافت نشد یا در وضعیت فعال نمی‌باشد.', 404, 'SALON_NOT_FOUND');
-    }
-
-    const service = await serviceRepository.findById(params.serviceId);
-    if (!service || service.salon_id !== params.salonId || !service.is_active) {
-      throw new BookingError('خدمت مورد نظر یافت نشد یا غیرفعال است.', 404, 'SERVICE_NOT_FOUND');
-    }
+    // 2-3. Shared rules engine (Phase 09): authoritative salon/service
+    // resolution, canonical date, working hours (fail-safe on missing config),
+    // exceptions, past-date policy, time validity — identical for every path.
+    const ctx = await resolveBookingScheduleContext(
+      params.salonId,
+      params.serviceId,
+      params.bookingDate
+    );
+    const service = ctx.service;
 
     // Authoritative duration and price from database/repo (NEVER trust client values)
     const durationMinutes = service.duration_minutes || 60;
     const price = typeof service.price === 'string' ? parseInt(service.price, 10) : service.price;
     const endTime = addMinutesToTime(params.bookingTime, durationMinutes);
 
-    // 3. Canonical date resolution (Phase 06) — rejects unparseable dates
-    // instead of silently assuming Saturday/"today".
-    const parsedDay = parseBookingDateInput(params.bookingDate);
-    if (!parsedDay) {
+    // Staff-service eligibility (Phase 09)
+    if (params.staffId && params.staffId !== 'any') {
+      await assertStaffEligibleForService(params.staffId, params.serviceId);
+    }
+
+    // Schedule rules: salon-level check first (fail-safe), staff-level hours
+    // and exceptions verified inside staff selection below.
+    const salonHours = effectiveWorkingHours(ctx);
+    if ('unconfigured' in salonHours) {
       throw new BookingError(
-        'تاریخ نوبت معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
+        'ساعات کاری این روز برای سالن تنظیم نشده است. امکان ثبت نوبت وجود ندارد.',
         400,
-        'INVALID_DATE'
+        'WORKING_HOURS_NOT_CONFIGURED'
       );
     }
-    const canonicalDate = parsedDay.canonical;
-    const dayOfWeek = parsedDay.weekday;
-    const workingHours = await salonRepository.getWorkingHours(params.salonId);
-    const dayHours = workingHours.find((h) => h.day_of_week === dayOfWeek);
-
-    if (dayHours && dayHours.is_closed) {
+    if ('closed' in salonHours) {
       throw new BookingError('سالن در این روز تعطیل است و امکان رزرو وجود ندارد.', 400, 'SALON_CLOSED');
     }
-
-    if (dayHours) {
-      const reqStart = timeToMinutes(params.bookingTime);
-      const reqEnd = timeToMinutes(endTime);
-      const openStart = timeToMinutes(dayHours.start_time);
-      const openEnd = timeToMinutes(dayHours.end_time);
-
-      if (reqStart < openStart || reqEnd > openEnd) {
-        throw new BookingError(
-          `زمان درخواستی خارج از ساعات کاری سالن (${dayHours.start_time} الی ${dayHours.end_time}) می‌باشد.`,
-          400,
-          'OUTSIDE_WORKING_HOURS'
-        );
-      }
+    const salonException = findBlockingException(ctx, params.staffId && params.staffId !== 'any' ? params.staffId : undefined, params.bookingTime, endTime);
+    if (salonException) {
+      throw new BookingError(
+        `در این تاریخ امکان پذیرش نوبت وجود ندارد (${salonException.reason || 'تعطیلی یا مرخصی ثبت شده'}).`,
+        400,
+        'SCHEDULE_EXCEPTION_BLOCKED'
+      );
     }
+    assertNotPast(ctx.canonicalDate, params.bookingTime);
+    assertBookingTimeValidityPublic(params.bookingTime, endTime);
+    const canonicalDate = ctx.canonicalDate;
 
     // 4. Concurrency Protection & Overlap Prevention Execution
     let selectedStaffId = params.staffId;
@@ -383,9 +412,23 @@ export const bookingService = {
       // If staffId is 'any' or omitted, select an available qualified specialist
       if (!selectedStaffId || selectedStaffId === 'any') {
         const staffList = await staffRepository.findBySalonId(params.salonId, true, client);
+        // Phase 09: only specialists assigned to this service are candidates,
+        // and their own working hours / exceptions must cover the interval.
+        const eligible: DbStaff[] = [];
+        for (const st of staffList) {
+          const assigned = await staffRepository.getAssignedServices(st.id, client);
+          if (!assigned.some((m) => m.service_id === params.serviceId)) continue;
+          const stHours = effectiveWorkingHours(ctx, st.id);
+          if ('unconfigured' in stHours || 'closed' in stHours) continue;
+          if (timeToMinutes(params.bookingTime) < timeToMinutes(stHours.start)) continue;
+          if (timeToMinutes(endTime) > timeToMinutes(stHours.end)) continue;
+          if (findBlockingException(ctx, st.id, params.bookingTime, endTime)) continue;
+          eligible.push(st);
+        }
+
         let foundStaff: DbStaff | null = null;
 
-        for (const st of staffList) {
+        for (const st of eligible) {
           const isFree = await appointmentRepository.checkSlotOverlap(
             params.salonId,
             st.id,
@@ -461,7 +504,7 @@ export const bookingService = {
       await clientRepository.recordBookingVisit(params.salonId, clientRecord.id, price, client);
 
       // 6. Generate Secure Tracking Code (e.g. GIS-XXXX or NB-XXXXXX)
-      const prefix = salon.slug ? salon.slug.slice(0, 3).toUpperCase() : 'NB';
+      const prefix = ctx.salon.slug ? ctx.salon.slug.slice(0, 3).toUpperCase() : 'NB';
       // Phase 07 (R1): 6-digit suffix — 900,000 combinations per salon instead of 9,000.
       const randomCode = crypto.randomInt(100000, 1000000);
       const trackingCode = `${prefix}-${randomCode}`;
@@ -494,8 +537,8 @@ export const bookingService = {
       // 8. Record Audit Log (Omit sensitive data / OTP)
       await auditLogRepository.create({
         actor: clientName,
-        actorRole: 'customer',
-        action: 'ثبت قطعی نوبت حضوری توسط مشتری',
+        actorRole: params.source === 'manual' ? 'salon_staff' : 'customer',
+        action: params.source === 'manual' ? 'ثبت نوبت حضوری توسط پرسنل سالن' : 'ثبت قطعی نوبت حضوری توسط مشتری',
         target: `Appointment:${createdAppt.id}`,
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
@@ -557,6 +600,123 @@ export const bookingService = {
       } finally {
         release();
       }
+    }
+  },
+
+  /**
+   * Phase 09 — SINGLE reschedule engine used by the salon route.
+   * Runs schedule rules (canonical date, working hours for the TARGET staff,
+   * exceptions, past-date policy, staff eligibility) and the overlap check
+   * INSIDE the same transaction as the move, under the (salon, date) advisory
+   * lock — closing the check-then-move TOCTOU the old route had.
+   */
+  async rescheduleAppointment(params: {
+    salonId: string;
+    appointmentId: string;
+    newDate: string;
+    newTime: string;
+    newStaffId?: string;
+    actorName?: string;
+    actorUserId?: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }): Promise<DbAppointment> {
+    const appt = await appointmentRepository.findById(params.appointmentId);
+    if (!appt || appt.salon_id !== params.salonId) {
+      throw new BookingError('نوبت مورد نظر یافت نشد.', 404, 'APPOINTMENT_NOT_FOUND');
+    }
+    if (['cancelled', 'completed'].includes(appt.status)) {
+      throw new BookingError('امکان جابجایی نوبت‌های تکمیل‌شده یا لغو‌شده وجود ندارد.', 409, 'RESCHEDULE_NOT_ALLOWED');
+    }
+
+    const ctx = await resolveBookingScheduleContext(params.salonId, appt.service_id, params.newDate);
+    const targetStaffId = params.newStaffId || appt.staff_id;
+
+    if (params.newStaffId && params.newStaffId !== appt.staff_id) {
+      const staff = await staffRepository.findById(params.newStaffId);
+      if (!staff || staff.salon_id !== params.salonId || !staff.is_active) {
+        throw new BookingError('متخصص انتخابی در این سالن یافت نشد یا غیرفعال است.', 404, 'STAFF_NOT_FOUND');
+      }
+      await assertStaffEligibleForService(params.newStaffId, appt.service_id);
+    }
+
+    const service = ctx.service;
+    const duration = service.duration_minutes || 60;
+    const endTime = addMinutesToTime(params.newTime, duration);
+
+    assertBookingTimeValidityPublic(params.newTime, endTime);
+    assertNotPast(ctx.canonicalDate, params.newTime);
+    assertScheduleOpen(ctx, { staffId: targetStaffId, bookingTime: params.newTime, endTime });
+
+    const moveAndAudit = async (txClient?: PoolClient): Promise<DbAppointment> => {
+      const free = await appointmentRepository.checkSlotOverlap(
+        params.salonId,
+        targetStaffId,
+        ctx.canonicalDate,
+        params.newTime,
+        endTime,
+        params.appointmentId,
+        txClient
+      );
+      if (!free) {
+        throw new BookingError('زمان جدید انتخابی با نوبت دیگری تداخل دارد.', 409, 'SLOT_ALREADY_TAKEN');
+      }
+
+      const moved = await appointmentRepository.reschedule(
+        params.appointmentId,
+        ctx.canonicalDate,
+        params.newTime,
+        endTime,
+        targetStaffId,
+        params.actorName,
+        params.actorUserId,
+        txClient
+      );
+      if (!moved) {
+        throw new BookingError('خطا در جابجایی نوبت.', 500, 'RESCHEDULE_FAILED');
+      }
+
+      await auditLogRepository.create({
+        actor: params.actorName || 'مدیر سالن',
+        actorRole: 'salon_staff',
+        action: `جابجایی زمان نوبت به ${ctx.canonicalDate} ${params.newTime}`,
+        target: `Appointment:${params.appointmentId}`,
+        ipAddress: params.ipAddress || 'internal',
+        userAgent: params.userAgent || 'internal',
+        severity: 'info',
+        category: 'business',
+        details: {
+          salonId: params.salonId,
+          oldDate: appt.booking_date,
+          oldTime: appt.booking_time,
+          newDate: ctx.canonicalDate,
+          newTime: params.newTime,
+        },
+      }, txClient).catch(() => {});
+
+      return moved;
+    };
+
+    if (isDatabaseConfigured()) {
+      return await withTransaction(async (txClient) => {
+        // Same (salon, date) advisory lock scope as createBooking: the
+        // overlap check and the move are serialized against every other
+        // booking or reschedule for the same salon-day.
+        await txClient.query(
+          `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`,
+          [params.salonId, ctx.canonicalDate]
+        );
+        return await moveAndAudit(txClient);
+      });
+    }
+
+    // In-memory dev path: mutex + overlap + move under the same scope.
+    const lockKey = `${params.salonId}:${params.newStaffId || 'any'}:${ctx.canonicalDate}`;
+    const release = await acquireLock(lockKey);
+    try {
+      return await moveAndAudit();
+    } finally {
+      release();
     }
   },
 
@@ -623,6 +783,16 @@ export const bookingService = {
 
     if (appt.status === 'cancelled') {
       return appt;
+    }
+
+    // Phase 09: completed / no_show appointments are not cancellable by the
+    // customer (documented safe rule; no commercial window invented).
+    if (!['pending', 'confirmed'].includes(appt.status)) {
+      throw new BookingError(
+        'امکان لغو این نوبت وجود ندارد (نوبت تکمیل یا بدون حضور ثبت شده است).',
+        409,
+        'APPOINTMENT_NOT_CANCELLABLE'
+      );
     }
 
     const updated = await appointmentRepository.updateStatus(

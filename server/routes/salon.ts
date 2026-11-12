@@ -8,6 +8,7 @@ import { staffRepository } from '../repositories/staffRepository.ts';
 import { clientRepository } from '../repositories/clientRepository.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 import { withTransaction } from '../db/pool.ts';
+import { bookingService } from '../services/booking/bookingService.ts';
 import { extractClientIp } from '../services/auth/sessionService.ts';
 import { normalizeIranianPhone } from '../utils/phone.ts';
 import { parseBookingDateInput } from '../utils/jalali.ts';
@@ -322,125 +323,37 @@ salonRouter.post(
       return;
     }
 
-    const phoneRes = normalizeIranianPhone(String(clientPhone));
-    if (!phoneRes.isValid) {
-      res.status(400).json({
-        error: 'INVALID_PHONE_NUMBER',
-        message: 'شماره موبایل وارد شده معتبر نیست.',
-      });
-      return;
-    }
-    const normalizedPhone = phoneRes.national;
-
-    // Canonical date resolution (Phase 06): accepts Gregorian ISO or Jalali
-    // input; stores and queries only the canonical Gregorian value.
-    const canonicalBookingDay = parseBookingDateInput(String(bookingDate));
-    if (!canonicalBookingDay) {
-      res.status(400).json({
-        error: 'INVALID_BOOKING_DATE',
-        message: 'تاریخ نوبت معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
-      });
-      return;
-    }
-    const canonicalDate = canonicalBookingDay.canonical;
-
+    // Phase 09: the manual path uses the SAME booking engine as the public
+    // path — schedule rules, eligibility, past-date policy, concurrency and
+    // transactionality are identical; only the authorization differs
+    // (staff session instead of customer grant/session).
     try {
-      // 1. Verify service belongs to salon
-      const service = await serviceRepository.findById(serviceId);
-      if (!service || service.salon_id !== salonId || !service.is_active) {
-        res.status(404).json({
-          error: 'SERVICE_NOT_FOUND',
-          message: 'خدمت انتخابی در این سالن یافت نشد یا غیرفعال است.',
-        });
-        return;
-      }
-
-      // 2. Verify staff belongs to salon
-      const staff = await staffRepository.findById(staffId);
-      if (!staff || staff.salon_id !== salonId || !staff.is_active) {
-        res.status(404).json({
-          error: 'STAFF_NOT_FOUND',
-          message: 'متخصص انتخابی در این سالن یافت نشد یا غیرفعال است.',
-        });
-        return;
-      }
-
-      // 3. Compute duration and end_time
-      const duration = service.duration_minutes || 60;
-      const endTime = addMinutesToTimeString(bookingTime, duration);
-
-      // 4. Check slot overlap
-      const isSlotFree = await appointmentRepository.checkSlotOverlap(
+      const created = await bookingService.createBooking({
+        source: 'manual',
         salonId,
-        staffId,
-        canonicalDate,
-        bookingTime,
-        endTime
-      );
-
-      if (!isSlotFree) {
-        res.status(409).json({
-          error: 'SLOT_ALREADY_TAKEN',
-          message: 'این بازه زمانی برای متخصص انتخابی قبلاً رزرو شده است. لطفاً زمان دیگری انتخاب فرمایید.',
-        });
-        return;
-      }
-
-      // 5-7. Client upsert, visit counter and appointment creation commit or
-      // roll back together (Phase 06 transactional write).
-      const trackingSuffix = Math.floor(1000 + Math.random() * 9000);
-      const trackingCode = `MAN-${trackingSuffix}`;
-      const appointmentId = `apt-${Date.now()}-${trackingSuffix}`;
-
-      const created = await withTransaction(async (txClient) => {
-        const txClientRecord = await clientRepository.createOrUpdate({
-          phone: normalizedPhone,
-          fullName: String(clientName).trim(),
-        }, txClient);
-        await clientRepository.recordBookingVisit(salonId, txClientRecord.id, Number(service.price), txClient);
-
-        return await appointmentRepository.create({
-          id: appointmentId,
-          trackingCode,
-          salonId,
-          serviceId: service.id,
-          staffId: staff.id,
-          clientId: txClientRecord.id,
-          clientName: String(clientName).trim(),
-          clientPhone: normalizedPhone,
-          bookingDate: canonicalDate,
-          bookingTime,
-          endTime,
-          price: Number(service.price),
-          status: 'confirmed',
-          paymentMethod: 'in_person',
-          paymentStatus: 'pending',
-          notes: notes ? String(notes).trim() : 'ثبت مستقیم توسط پرسنل سالن',
-        }, txClient);
-      });
-
-      // 8. Record audit log
-      await auditLogRepository.create({
-        actor: req.user?.full_name || 'مدیر سالن',
-        actorRole: req.user?.platform_role || 'staff',
-        action: `ثبت نوبت حضوری جدید (کد: ${trackingCode})`,
-        target: `Appointment:${appointmentId}`,
+        serviceId: String(serviceId),
+        staffId: String(staffId),
+        bookingDate: String(bookingDate),
+        bookingTime: String(bookingTime),
+        clientName: String(clientName),
+        clientPhone: String(clientPhone),
+        notes: notes ? `${String(notes).trim()} (ثبت توسط پرسنل سالن)` : undefined,
         ipAddress: extractClientIp(req),
         userAgent: String(req.headers['user-agent'] || 'Unknown'),
-        severity: 'info',
-        category: 'business',
-        details: { salonId, appointmentId, trackingCode, price: service.price, staffId },
-      }).catch(() => {});
+      });
 
       res.status(201).json({
         success: true,
         message: 'نوبت حضوری با موفقیت در سیستم ثبت گردید.',
-        appointment: created,
+        appointment: created.appointment,
+        trackingCode: created.trackingCode,
       });
     } catch (err: any) {
-      res.status(500).json({
-        error: 'MANUAL_BOOKING_ERROR',
-        message: err.message,
+      const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+      const code = err?.code || 'MANUAL_BOOKING_ERROR';
+      res.status(statusCode).json({
+        error: code,
+        message: err.message || 'خطا در ثبت نوبت.',
       });
     }
   }
@@ -541,100 +454,21 @@ salonRouter.patch(
       return;
     }
 
-    // Canonical date resolution (Phase 06)
-    const canonicalRescheduleDay = parseBookingDateInput(String(bookingDate));
-    if (!canonicalRescheduleDay) {
-      res.status(400).json({
-        error: 'INVALID_BOOKING_DATE',
-        message: 'تاریخ جدید نوبت معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
-      });
-      return;
-    }
-    const canonicalDate = canonicalRescheduleDay.canonical;
-
+    // Phase 09: single reschedule engine — schedule rules, staff ownership and
+    // eligibility, past-date policy, the (salon, date) advisory lock and the
+    // overlap check all run INSIDE the move transaction (closing the old
+    // check-then-move TOCTOU).
     try {
-      const appt = await appointmentRepository.findById(appointmentId);
-      if (!appt || appt.salon_id !== salonId) {
-        res.status(404).json({
-          error: 'APPOINTMENT_NOT_FOUND',
-          message: 'نوبت مورد نظر یافت نشد.',
-        });
-        return;
-      }
-
-      if (appt.status === 'cancelled' || appt.status === 'completed') {
-        res.status(400).json({
-          error: 'RESCHEDULE_NOT_ALLOWED',
-          message: 'امکان جابجایی نوبت‌های تکمیل‌شده یا لغو‌شده وجود ندارد.',
-        });
-        return;
-      }
-
-      const targetStaffId = staffId || appt.staff_id;
-
-      // Phase 07 (tenant integrity): a reschedule may never move an
-      // appointment to a specialist of a DIFFERENT salon.
-      if (staffId && staffId !== appt.staff_id) {
-        const targetStaff = await staffRepository.findById(staffId);
-        if (!targetStaff || targetStaff.salon_id !== salonId || !targetStaff.is_active) {
-          res.status(404).json({
-            error: 'STAFF_NOT_FOUND',
-            message: 'متخصص انتخابی در این سالن یافت نشد یا غیرفعال است.',
-          });
-          return;
-        }
-      }
-
-      // Determine duration
-      const service = await serviceRepository.findById(appt.service_id);
-      const duration = service?.duration_minutes || 60;
-      const endTime = addMinutesToTimeString(bookingTime, duration);
-
-      // Verify no conflict at new time
-      const isSlotFree = await appointmentRepository.checkSlotOverlap(
+      const updated = await bookingService.rescheduleAppointment({
         salonId,
-        targetStaffId,
-        canonicalDate,
-        bookingTime,
-        endTime,
-        appointmentId // Exclude current appointment
-      );
-
-      if (!isSlotFree) {
-        res.status(409).json({
-          error: 'SLOT_ALREADY_TAKEN',
-          message: 'زمان جدید انتخابی با نوبت دیگری تداخل دارد.',
-        });
-        return;
-      }
-
-      // Phase 07 (audit consistency): the move and its audit record commit or
-      // roll back together.
-      const updated = await withTransaction(async (txClient) => {
-        const moved = await appointmentRepository.reschedule(
-          appointmentId,
-          canonicalDate,
-          bookingTime,
-          endTime,
-          targetStaffId,
-          req.user?.full_name,
-          req.user?.id,
-          txClient
-        );
-
-        await auditLogRepository.create({
-          actor: req.user?.full_name || 'مدیر سالن',
-          actorRole: req.user?.platform_role || 'staff',
-          action: `جابجایی زمان نوبت به ${canonicalDate} ${bookingTime}`,
-          target: `Appointment:${appointmentId}`,
-          ipAddress: extractClientIp(req),
-          userAgent: String(req.headers['user-agent'] || 'Unknown'),
-          severity: 'info',
-          category: 'business',
-          details: { salonId, oldDate: appt.booking_date, oldTime: appt.booking_time, newDate: canonicalDate, newTime: bookingTime },
-        }, txClient);
-
-        return moved;
+        appointmentId,
+        newDate: String(bookingDate),
+        newTime: String(bookingTime),
+        newStaffId: staffId ? String(staffId) : undefined,
+        actorName: req.user?.full_name,
+        actorUserId: req.user?.id,
+        ipAddress: extractClientIp(req),
+        userAgent: String(req.headers['user-agent'] || 'Unknown'),
       });
 
       res.status(200).json({
@@ -643,9 +477,11 @@ salonRouter.patch(
         appointment: updated,
       });
     } catch (err: any) {
-      res.status(500).json({
-        error: 'RESCHEDULE_ERROR',
-        message: err.message,
+      const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+      const code = err?.code || 'RESCHEDULE_ERROR';
+      res.status(statusCode).json({
+        error: code,
+        message: err.message || 'خطا در جابجایی نوبت.',
       });
     }
   }

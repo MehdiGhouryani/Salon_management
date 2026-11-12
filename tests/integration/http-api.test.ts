@@ -341,9 +341,9 @@ describe('Public routes & error contracts over HTTP (integration)', () => {
     const created = await bookingService.createBooking({
       salonId: 'sal-101',
       serviceId: 'srv-101',
-      staffId: 'stf-102',
+      staffId: 'stf-101',
       bookingDate: '2026-11-21',
-      bookingTime: '10:00',
+      bookingTime: '12:30',
       clientName: 'مالک نوبت',
       clientPhone: '09370001233',
       ipAddress: '127.0.0.1',
@@ -372,9 +372,9 @@ describe('Public routes & error contracts over HTTP (integration)', () => {
     const created = await bookingService.createBooking({
       salonId: 'sal-101',
       serviceId: 'srv-101',
-      staffId: 'stf-103',
+      staffId: 'stf-101',
       bookingDate: '2026-11-21',
-      bookingTime: '11:00',
+      bookingTime: '15:30',
       clientName: 'آنتریپ کد',
       clientPhone: '09370001344',
       ipAddress: '127.0.0.1',
@@ -469,8 +469,8 @@ describe('Guest booking grant flow (Phase 08, integration)', () => {
   const GUEST_PHONE = '09362223344';
   const GUEST_BOOKING = {
     salonId: 'sal-101',
-    serviceId: 'srv-101',
-    staffId: 'stf-101',
+    serviceId: 'srv-104',
+    staffId: 'stf-102',
     bookingDate: '2026-11-21',
     bookingTime: '14:00',
     clientName: 'مشتری مهمان',
@@ -667,7 +667,7 @@ describe('Guest booking grant flow (Phase 08, integration)', () => {
           'X-NobatAra-Client': 'test',
           'X-NobatAra-Booking-Grant': grant,
         },
-        body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09362223377', staffId: 'stf-102', bookingTime: '16:00' }),
+        body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09362223377', bookingTime: '16:00' }),
       }),
       fetch(`${baseUrl}/api/public/bookings`, {
         method: 'POST',
@@ -676,7 +676,7 @@ describe('Guest booking grant flow (Phase 08, integration)', () => {
           'X-NobatAra-Client': 'test',
           'X-NobatAra-Booking-Grant': grant,
         },
-        body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09362223377', staffId: 'stf-102', bookingTime: '16:00' }),
+        body: JSON.stringify({ ...GUEST_BOOKING, clientPhone: '09362223377', bookingTime: '16:00' }),
       }),
     ]);
 
@@ -692,5 +692,64 @@ describe('Guest booking grant flow (Phase 08, integration)', () => {
     const grantRejections = outcomes.filter((o) => o.status === 401 && o.code === 'BOOKING_GRANT_ALREADY_USED');
     expect(successes.length).toBe(1);
     expect(grantRejections.length).toBe(1);
+  });
+});
+
+describe('Booking policy via HTTP (Phase 09)', () => {
+  it('rejects past dates with PAST_DATE_NOT_ALLOWED', async () => {
+    const phone = '09367778899';
+    const { token } = await bookingGrantService.issueGrant(phone);
+    const res = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': token,
+      },
+      body: JSON.stringify({
+        salonId: 'sal-101', serviceId: 'srv-101', staffId: 'stf-101',
+        bookingDate: '2026-11-12', bookingTime: '10:00',
+        clientName: 'تست گذشته', clientPhone: phone,
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('PAST_DATE_NOT_ALLOWED');
+  });
+
+  it('rejects staff-service pairs that are not assigned (STAFF_NOT_ELIGIBLE_FOR_SERVICE)', async () => {
+    const phone = '09367778811';
+    const { token } = await bookingGrantService.issueGrant(phone);
+    const res = await fetch(`${baseUrl}/api/public/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-NobatAra-Client': 'test',
+        'X-NobatAra-Booking-Grant': token,
+      },
+      body: JSON.stringify({
+        salonId: 'sal-101', serviceId: 'srv-101', staffId: 'stf-102',
+        bookingDate: '2026-11-28', bookingTime: '10:00',
+        clientName: 'تست صلاحیت', clientPhone: phone,
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('STAFF_NOT_ELIGIBLE_FOR_SERVICE');
+  });
+
+  it('completed appointments cannot be cancelled by the customer', async () => {
+    const { bookingService } = await import('../../server/services/booking/bookingService.ts');
+    const { appointmentRepository } = await import('../../server/repositories/appointmentRepository.ts');
+
+    const created = await bookingService.createBooking({
+      salonId: 'sal-101', serviceId: 'srv-101', staffId: 'stf-101',
+      bookingDate: '2026-11-28', bookingTime: '17:00',
+      clientName: 'نوبت تکمیل‌شده', clientPhone: '09367778822',
+      ipAddress: '127.0.0.1', userAgent: 'policy-probe',
+    });
+    await appointmentRepository.updateStatus(created.appointment.id, 'completed', 'سالن', 'تسویه');
+
+    await expect(
+      bookingService.cancelBooking(created.trackingCode, '09367778822', 'لغو پس از تکمیل')
+    ).rejects.toMatchObject({ statusCode: 409, code: 'APPOINTMENT_NOT_CANCELLABLE' });
   });
 });

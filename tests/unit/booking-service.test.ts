@@ -12,7 +12,7 @@ import { bookingService, _setTestProductionMode } from '../../server/services/bo
 describe('Availability & working hours (unit, in-memory)', () => {
   it('Calculates slots for open working day with service duration', async () => {
     // 2026-10-24 is a Saturday (day 0 in Iranian week)
-    const avail = await bookingService.calculateAvailability('sal-101', 'srv-104', '2026-10-24', 'stf-102');
+    const avail = await bookingService.calculateAvailability('sal-101', 'srv-104', '2026-11-28', 'stf-102');
     expect(avail.isOpen).toBe(true);
     expect(avail.serviceDurationMinutes).toBe(60);
     expect(avail.serviceName).toBe('پدیکور درمانی و کفسابی اسپا');
@@ -24,7 +24,7 @@ describe('Availability & working hours (unit, in-memory)', () => {
 
   it('Detects closed day (Friday) and returns empty slots with reason', async () => {
     // 2026-10-23 is a Friday (day 6 in Iranian week)
-    const avail = await bookingService.calculateAvailability('sal-101', 'srv-101', '2026-10-23');
+    const avail = await bookingService.calculateAvailability('sal-101', 'srv-101', '2026-11-27');
     expect(avail.isOpen).toBe(false);
     expect(avail.slots.length).toBe(0);
     expect(avail.reason?.includes('جمعه')).toBe(true);
@@ -32,11 +32,11 @@ describe('Availability & working hours (unit, in-memory)', () => {
 
   it('Rejects nonexistent salon or inactive service with 404', async () => {
     await expect(
-      bookingService.calculateAvailability('nonexistent-salon', 'srv-101', '2026-10-24')
+      bookingService.calculateAvailability('nonexistent-salon', 'srv-101', '2026-11-28')
     ).rejects.toMatchObject({ statusCode: 404, code: 'SALON_NOT_FOUND' });
 
     await expect(
-      bookingService.calculateAvailability('sal-101', 'nonexistent-service', '2026-10-24')
+      bookingService.calculateAvailability('sal-101', 'nonexistent-service', '2026-11-28')
     ).rejects.toMatchObject({ statusCode: 404, code: 'SERVICE_NOT_FOUND' });
   });
 });
@@ -47,7 +47,7 @@ describe('Booking creation & authoritative pricing (unit, in-memory)', () => {
       salonId: 'sal-101',
       serviceId: 'srv-103', // 680,000 toman, 90 min
       staffId: 'stf-102',
-      bookingDate: '2026-10-24',
+      bookingDate: '2026-11-28',
       bookingTime: '10:00',
       clientName: 'نیلوفر رضایی',
       clientPhone: '09121112233',
@@ -72,7 +72,7 @@ describe('Booking creation & authoritative pricing (unit, in-memory)', () => {
       salonId: 'sal-101',
       serviceId: 'srv-104',
       staffId: 'stf-102',
-      bookingDate: '2026-10-24',
+      bookingDate: '2026-11-28',
       bookingTime: '12:00',
       clientName: 'مریم کمالی',
       clientPhone: '۰۹۱۲-۹۸۷-۶۵۴۳', // Formatted Persian digits
@@ -89,7 +89,7 @@ describe('Booking creation & authoritative pricing (unit, in-memory)', () => {
       salonId: 'sal-101',
       serviceId: 'srv-101',
       staffId: 'stf-101',
-      bookingDate: '2026-10-24',
+      bookingDate: '2026-11-28',
       bookingTime: '14:00',
       clientName: 'زهرا کاظمی',
       clientPhone: '09125556677',
@@ -108,7 +108,7 @@ describe('Overlap & conflict prevention (unit, in-memory)', () => {
         salonId: 'sal-101',
         serviceId: 'srv-103',
         staffId: 'stf-102',
-        bookingDate: '2026-10-24',
+        bookingDate: '2026-11-28',
         bookingTime: '10:00', // Stf-102 is already booked 10:00-11:30
         clientName: 'شیدا مرادی',
         clientPhone: '09351112233',
@@ -124,7 +124,7 @@ describe('Overlap & conflict prevention (unit, in-memory)', () => {
         salonId: 'sal-101',
         serviceId: 'srv-104', // 60 min
         staffId: 'stf-102',
-        bookingDate: '2026-10-24',
+        bookingDate: '2026-11-28',
         bookingTime: '10:30', // Overlaps with 10:00-11:30
         clientName: 'پریا صادقی',
         clientPhone: '09352223344',
@@ -140,7 +140,7 @@ describe('Overlap & conflict prevention (unit, in-memory)', () => {
       salonId: 'sal-101',
       serviceId: 'srv-104', // 60 min
       staffId: 'stf-102',
-      bookingDate: '2026-10-24',
+      bookingDate: '2026-11-28',
       bookingTime: '13:00',
       clientName: 'ساناز امینی',
       clientPhone: '09353334455',
@@ -158,7 +158,7 @@ describe('Overlap & conflict prevention (unit, in-memory)', () => {
         salonId: 'sal-101',
         serviceId: 'srv-104',
         staffId: 'stf-102',
-        bookingDate: '2026-10-24',
+        bookingDate: '2026-11-28',
         bookingTime: '13:00',
         clientName: 'ساناز امینی',
         clientPhone: '09353334455', // Same client
@@ -184,8 +184,8 @@ describe('Parallel concurrency & mutex race prevention (unit, in-process mutex)'
         bookingService.createBooking({
           salonId: 'sal-101',
           serviceId: 'srv-104', // 60 min
-          staffId: 'stf-103',
-          bookingDate: '2026-10-25',
+          staffId: 'stf-102',
+          bookingDate: '2026-11-22',
           bookingTime: '15:00',
           clientName: c.name,
           clientPhone: c.phone,
@@ -245,7 +245,7 @@ describe('Customer privacy & ownership (unit, in-memory)', () => {
       salonId: 'sal-101',
       serviceId: 'srv-103',
       staffId: 'stf-102',
-      bookingDate: '2026-10-24',
+      bookingDate: '2026-11-28',
       bookingTime: '10:00',
       clientName: 'مشتری جدید جایگزین',
       clientPhone: '09128889900',
@@ -268,7 +268,7 @@ describe('Production safeguard & truth in reporting (unit)', () => {
           salonId: 'sal-101',
           serviceId: 'srv-104',
           staffId: 'stf-102',
-          bookingDate: '2026-10-26',
+          bookingDate: '2026-11-24',
           bookingTime: '14:00',
           clientName: 'تست پروداکشن',
           clientPhone: '09120001122',

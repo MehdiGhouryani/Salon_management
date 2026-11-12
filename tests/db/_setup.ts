@@ -27,7 +27,7 @@ export interface DbUnderTest {
   appointmentRepository: any;
   bookingService: any;
   raw: pg.Client;
-  fixtures: { salonId: string; serviceId: string; staffId: string };
+  fixtures: { salonId: string; serviceId: string; service2Id: string; staffId: string };
   cleanup: () => Promise<void>;
 }
 
@@ -90,7 +90,7 @@ export async function initDatabaseUnderTest(): Promise<DbUnderTest> {
     throw new Error(`Expected at least 3 applied migrations in the test database, found ${applied.rows.length}.`);
   }
 
-  const fixtures = { salonId: 't3-salon-1', serviceId: 't3-srv-1', staffId: 't3-stf-1' };
+  const fixtures = { salonId: 't3-salon-1', serviceId: 't3-srv-1', staffId: 't3-stf-1', service2Id: 't3-srv-2' };
   const ignoreDuplicate = (err: any): void => {
     if (err?.code !== '23505') throw err;
   };
@@ -132,6 +132,34 @@ export async function initDatabaseUnderTest(): Promise<DbUnderTest> {
     rating: 4.8,
     isActive: true,
   }).catch(ignoreDuplicate);
+
+  // Phase 09: schedule configuration must exist or the fail-safe engine
+  // rejects every booking for this fixture salon. Open every day 07:00-22:00.
+  await salonMod.salonRepository.setWorkingHours(fixtures.salonId, [
+    { dayOfWeek: 0, startTime: '07:00', endTime: '22:00', isClosed: false },
+    { dayOfWeek: 1, startTime: '07:00', endTime: '22:00', isClosed: false },
+    { dayOfWeek: 2, startTime: '07:00', endTime: '22:00', isClosed: false },
+    { dayOfWeek: 3, startTime: '07:00', endTime: '22:00', isClosed: false },
+    { dayOfWeek: 4, startTime: '07:00', endTime: '22:00', isClosed: false },
+    { dayOfWeek: 5, startTime: '07:00', endTime: '22:00', isClosed: false },
+    { dayOfWeek: 6, startTime: '07:00', endTime: '22:00', isClosed: false },
+  ]);
+
+  // Phase 09: staff-service eligibility is enforced by the engine.
+  await staffMod.staffRepository.assignService(fixtures.staffId, fixtures.serviceId);
+
+  await serviceMod.serviceRepository.create({
+    id: fixtures.service2Id,
+    salonId: fixtures.salonId,
+    name: 'خدمت آزمایشی دوم (۹۰ دقیقه)',
+    category: 'hair',
+    categoryLabel: 'مو',
+    price: 800000,
+    durationMinutes: 90,
+    isActive: true,
+  }).catch(ignoreDuplicate);
+
+  await staffMod.staffRepository.assignService(fixtures.staffId, fixtures.service2Id);
 
   return {
     isDatabaseConfigured: poolMod.isDatabaseConfigured,

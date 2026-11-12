@@ -7,6 +7,7 @@ import { serviceRepository } from '../repositories/serviceRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
 import { bookingService, BookingError } from '../services/booking/bookingService.ts';
 import { bookingGrantService, BookingGrantError } from '../services/auth/bookingGrantService.ts';
+import { BookingRuleError } from '../services/booking/bookingRules.ts';
 import { extractClientIp } from '../services/auth/sessionService.ts';
 import { normalizeIranianPhone } from '../utils/phone.ts';
 
@@ -293,6 +294,15 @@ publicRouter.post(
       }
       if (err instanceof BookingGrantError) {
         // Consumed/raced/expired grants surface with the precise contract.
+        res.status(err.statusCode).json({
+          error: err.code,
+          message: err.message,
+        });
+        return;
+      }
+      if (err instanceof BookingRuleError) {
+        // Phase 09: schedule-rule violations (eligibility, hours, past dates)
+        // carry their own status and structured code.
         res.status(err.statusCode).json({
           error: err.code,
           message: err.message,

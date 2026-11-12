@@ -33,6 +33,19 @@ export interface DbAppointment {
   updated_at: Date;
 }
 
+/**
+ * Allowed appointment status transitions (Phase 09 — documented business rule:
+ * completed / cancelled / no_show are terminal states; no commercial
+ * cancellation-window policy is invented here).
+ */
+export const APPOINTMENT_STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
+  pending: ['confirmed', 'cancelled', 'no_show'],
+  confirmed: ['completed', 'cancelled', 'no_show'],
+  completed: [],
+  cancelled: [],
+  no_show: [],
+};
+
 export interface CreateAppointmentDto {
   id: string;
   trackingCode: string;
@@ -440,6 +453,15 @@ export const appointmentRepository = {
     if (!isDatabaseConfigured()) {
       const existing = inMemoryAppointments.get(id);
       if (!existing) return null;
+      // Phase 09: enforce the status transition map (terminal states are final).
+      if (!APPOINTMENT_STATUS_TRANSITIONS[existing.status]?.includes(newStatus)) {
+        const err = new Error(
+          `تغییر وضعیت از «${existing.status}» به «${newStatus}» مجاز نیست.`
+        ) as Error & { statusCode?: number; code?: string };
+        err.statusCode = 409;
+        err.code = 'INVALID_STATUS_TRANSITION';
+        throw err;
+      }
       existing.status = newStatus;
       if (newStatus === 'cancelled') {
         existing.cancellation_reason = reason || null;
@@ -450,6 +472,16 @@ export const appointmentRepository = {
 
     const current = await this.findById(id, client);
     if (!current) return null;
+
+    // Phase 09: enforce the status transition map (terminal states are final).
+    if (!APPOINTMENT_STATUS_TRANSITIONS[current.status]?.includes(newStatus)) {
+      const err = new Error(
+        `تغییر وضعیت از «${current.status}» به «${newStatus}» مجاز نیست.`
+      ) as Error & { statusCode?: number; code?: string };
+      err.statusCode = 409;
+      err.code = 'INVALID_STATUS_TRANSITION';
+      throw err;
+    }
 
     // Transactional mutation (Phase 06): the status change and its history
     // row must commit or roll back together when no outer transaction exists.
