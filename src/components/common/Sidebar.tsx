@@ -13,7 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Scissors,
-  Sparkles,
+  LogOut,
   X,
 } from 'lucide-react';
 import { useAdmin, AdminTab } from '../../context/AdminContext';
@@ -32,6 +32,59 @@ interface NavGroup {
   label: string;
   items: NavItem[];
 }
+
+/**
+ * The signed-in admin, or an honest demo label. Nothing here is a claim the app cannot back:
+ * a name, phone and sign-out only exist for a real server session; demo mode says so.
+ */
+const AccountRow: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
+  const { isDemoMode, serverAuth, serverLogout } = useAdmin();
+
+  if (isDemoMode || !serverAuth.authenticated || !serverAuth.user) {
+    return collapsed ? (
+      <div className="flex justify-center" title="پیش‌نمایش آزمایشی: داده‌ها نمونه‌اند">
+        <span className="w-2 h-2 rounded-full bg-[var(--status-warning)]" />
+      </div>
+    ) : (
+      <div className="flex items-center gap-2 px-1 text-[11px] text-[var(--text-secondary)]">
+        <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[var(--status-warning)]" />
+        <span>پیش‌نمایش آزمایشی؛ داده‌ها نمونه‌اند</span>
+      </div>
+    );
+  }
+
+  const name = serverAuth.user.fullName || '';
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w.charAt(0)).join('') || '؟';
+
+  return (
+    <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
+      <div
+        className="w-8 h-8 shrink-0 rounded-full bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)] flex items-center justify-center text-xs font-bold"
+        title={collapsed ? name : undefined}
+      >
+        {initials}
+      </div>
+      {!collapsed && (
+        <>
+          <div className="min-w-0 flex-1 text-right">
+            <p className="text-xs font-bold text-[var(--text-primary)] truncate">{name}</p>
+            <p dir="ltr" className="text-[11px] text-[var(--text-muted)] tabular-nums truncate text-right">
+              {serverAuth.user.phone}
+            </p>
+          </div>
+          <button
+            onClick={() => serverLogout()}
+            className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--status-error)] hover:bg-[var(--status-error-bg)] transition-colors cursor-pointer shrink-0"
+            title="خروج از حساب"
+            aria-label="خروج از حساب"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
 
 export const Sidebar: React.FC = React.memo(() => {
   const {
@@ -126,7 +179,7 @@ export const Sidebar: React.FC = React.memo(() => {
   return (
     <>
       <aside
-        className={`relative z-20 hidden md:flex flex-col h-screen bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] transition-all duration-300 select-none shrink-0 ${
+        className={`relative z-20 hidden md:flex flex-col h-full bg-[var(--bg-surface)] border-l border-[var(--border-subtle)] transition-[width] duration-300 select-none shrink-0 ${
           collapsed ? 'w-20' : 'w-60 md:w-64'
         }`}
       >
@@ -141,7 +194,7 @@ export const Sidebar: React.FC = React.memo(() => {
               <span className="text-sm font-bold text-[var(--text-primary)] truncate">
                 نوبت‌آرا
               </span>
-              <span className="text-[10px] text-[var(--text-secondary)] font-medium truncate">
+              <span className="text-[11px] text-[var(--text-secondary)] font-medium truncate">
                 سامانه مدیریت کل
               </span>
             </div>
@@ -162,7 +215,7 @@ export const Sidebar: React.FC = React.memo(() => {
         {navGroups.map((group, groupIdx) => (
           <div key={groupIdx} className="space-y-1">
             {!collapsed && (
-              <p className="px-3 mb-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+              <p className="px-3 mb-1.5 text-[11px] font-bold text-[var(--text-muted)]">
                 {group.label}
               </p>
             )}
@@ -174,25 +227,25 @@ export const Sidebar: React.FC = React.memo(() => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer group relative ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer group relative ${
                     isActive
-                      ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] font-bold border border-[var(--brand-border)] shadow-xs'
+                      ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] font-bold border border-[var(--brand-border)] shadow-xs'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
                   } ${collapsed ? 'justify-center px-0' : ''}`}
                   title={collapsed ? item.title : undefined}
                 >
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
+                      isActive ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text-primary)]'
                     }`}
                   />
                   {!collapsed && <span className="truncate flex-1 text-right">{item.title}</span>}
 
                   {!collapsed && item.badge !== undefined && (
                     <span
-                      className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums ${
+                      className={`px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums ${
                         item.badgeType === 'error'
-                          ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]'
+                          ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] dark:text-[#FF9A9C] border-[var(--status-error-border)]'
                           : item.badgeType === 'warning'
                           ? 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]'
                           : 'bg-[var(--status-info-bg)] text-[var(--status-info)] border-[var(--status-info-border)]'
@@ -230,19 +283,7 @@ export const Sidebar: React.FC = React.memo(() => {
           </div>
         )}
 
-        {!collapsed ? (
-          <div className="flex items-center justify-between text-[11px] text-[var(--text-secondary)] px-1 pt-1 border-t border-[var(--border-subtle)]">
-            <span className="flex items-center gap-1.5 font-medium text-[var(--status-success)]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
-              سرور فعال
-            </span>
-            <span className="font-mono text-[10px] text-[var(--text-muted)] tabular-nums">نسخه ۲.۴</span>
-          </div>
-        ) : (
-          <div className="flex justify-center pt-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" title="سرور فعال" />
-          </div>
-        )}
+        <AccountRow collapsed={collapsed} />
       </div>
     </aside>
 
@@ -265,7 +306,7 @@ export const Sidebar: React.FC = React.memo(() => {
               </div>
               <div className="flex flex-col text-right">
                 <span className="text-sm font-bold text-[var(--text-primary)]">نوبت‌آرا</span>
-                <span className="text-[10px] text-[var(--text-secondary)]">سامانه مدیریت کل</span>
+                <span className="text-[11px] text-[var(--text-secondary)]">سامانه مدیریت کل</span>
               </div>
             </div>
             <button
@@ -281,7 +322,7 @@ export const Sidebar: React.FC = React.memo(() => {
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
             {navGroups.map((group, groupIdx) => (
               <div key={groupIdx} className="space-y-1">
-                <p className="px-3 mb-1.5 text-[10px] font-bold text-[var(--text-muted)]">
+                <p className="px-3 mb-1.5 text-[11px] font-bold text-[var(--text-muted)]">
                   {group.label}
                 </p>
                 {group.items.map((item) => {
@@ -294,22 +335,22 @@ export const Sidebar: React.FC = React.memo(() => {
                         setActiveTab(item.id);
                         setMobileSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                         isActive
-                          ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] font-bold border border-[var(--brand-border)] shadow-xs'
+                          ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] font-bold border border-[var(--brand-border)] shadow-xs'
                           : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <Icon
                           className={`w-4 h-4 ${
-                            isActive ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'
+                            isActive ? 'text-[var(--brand-accent)]' : 'text-[var(--text-muted)]'
                           }`}
                         />
                         <span>{item.title}</span>
                       </div>
                       {item.badge !== undefined && (
-                        <span className="px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums bg-[var(--brand-subdued)] text-[var(--brand-primary)] border-[var(--brand-border)]">
+                        <span className="px-1.5 py-0.2 text-[11px] font-bold rounded-full border tabular-nums bg-[var(--brand-subdued)] text-[var(--brand-accent)] border-[var(--brand-border)]">
                           {toPersianDigits(item.badge)}
                         </span>
                       )}
@@ -323,13 +364,7 @@ export const Sidebar: React.FC = React.memo(() => {
           {/* Mobile Drawer Footer */}
           <div className="p-3 border-t border-[var(--border-subtle)] space-y-2 bg-[var(--bg-subsurface)]">
             <ThemeToggle variant="switch" />
-            <div className="flex items-center justify-between text-[11px] text-[var(--text-secondary)] px-1 pt-1 border-t border-[var(--border-subtle)]">
-              <span className="flex items-center gap-1.5 font-medium text-[var(--status-success)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]" />
-                سرور فعال
-              </span>
-              <span className="font-mono text-[10px] text-[var(--text-muted)]">نسخه ۲.۴</span>
-            </div>
+            <AccountRow collapsed={false} />
           </div>
         </div>
       </div>

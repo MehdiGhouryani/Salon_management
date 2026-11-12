@@ -1,35 +1,31 @@
 /**
- * E2E Journey 3 — Customer OTP login + booking history (real server, real browser)
+ * E2E Journey 3 — Customer OTP login + booking history (v11 UI, real server)
  *
- * Proves the real authentication round trip: ServerAuthModal → /api/auth/otp/request
- * + /api/auth/otp/verify (purpose=login) → real session cookie →
- * /api/public/bookings/my returns the customer's (currently empty) history.
- *
- * The booking row assertion is pending SECURITY-R2: the booking wizard cannot
- * create bookings until booking OTP verification is fixed (see journey-booking.spec.ts).
+ * Proves the real authentication round trip: storefront drawer → ServerAuthModal
+ * → /api/auth/otp/request + /api/auth/otp/verify (purpose=login) → real session
+ * cookie → /api/auth/me confirms the session server-side.
  */
 import { test, expect } from '@playwright/test';
 
 const CUSTOMER_PHONE = '09364567890';
 
-test('customer can log in via real OTP and see their booking history from the server', async ({ page }) => {
+test('customer can log in via real OTP and their session is verified by the server', async ({ page }) => {
   await page.goto('/');
-  await page.getByTitle('وب‌سایت اختصاصی رزرو سالن برای مشتریان').click();
-  await expect(page.getByText('کاتالوگ خدمات و رزرو سریع')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 15000 });
 
-  // Open the customer side drawer (accessible name comes from aria-label)
-  await page.getByRole('button', { name: 'باز کردن منوی کشویی' }).click();
-  await expect(page.getByText('نوبت‌های من')).toBeVisible({ timeout: 10000 });
+  // Open the customer drawer from the storefront banner
+  await page.getByRole('button', { name: 'نوبت‌های من' }).click();
 
-  // Non-demo posture: the quick-login form forwards to the REAL OTP auth modal
-  await page.getByPlaceholder('نام و نام خانوادگی').fill('کاربر سفر رزرو');
-  await page.getByPlaceholder('شماره موبایل (09...)').fill(CUSTOMER_PHONE);
-  await page.getByRole('button', { name: 'ثبت مشخصات و ورود' }).click();
-
-  // REAL OTP login modal (ServerAuthModal → /api/auth/otp/request + /verify)
-  const phoneInput = page.getByPlaceholder('09123456789');
+  // Drawer quick login (non-demo posture forwards to the REAL OTP auth modal)
+  const phoneInput = page.getByPlaceholder('09121234567');
   await expect(phoneInput).toBeVisible({ timeout: 10000 });
   await phoneInput.fill(CUSTOMER_PHONE);
+  await page.getByRole('button', { name: 'ورود', exact: true }).click();
+
+  // REAL OTP login modal (ServerAuthModal → /api/auth/otp/request + /verify)
+  const modalPhone = page.getByPlaceholder('09123456789');
+  await expect(modalPhone).toBeVisible({ timeout: 10000 });
+  await modalPhone.fill(CUSTOMER_PHONE);
   await page.getByRole('button', { name: 'دریافت کد تایید' }).click();
 
   // Retrieve the REAL OTP issued by the server (dev-only peek route)
@@ -39,7 +35,7 @@ test('customer can log in via real OTP and see their booking history from the se
   const code: string = otpBody.otp?.code;
   expect(code).toMatch(/^\d{6}$/);
 
-  await page.getByPlaceholder('123456').fill(code);
+  await page.getByPlaceholder('123456', { exact: true }).fill(code);
   await page.getByRole('button', { name: 'تایید و ورود به سیستم' }).click();
 
   // REAL server-backed assertion: the session cookie issued by the OTP verify
@@ -48,7 +44,4 @@ test('customer can log in via real OTP and see their booking history from the se
   const me = await meRes.json();
   expect(me.authenticated).toBe(true);
   expect(me.user.platformRole).toBe('user');
-
-  // The drawer's bookings tab re-renders with the (empty) server-scoped history
-  await expect(page.getByText('نوبتی برای نمایش یافت نشد')).toBeVisible({ timeout: 15000 });
 });

@@ -8,12 +8,12 @@ export const ToastContainer: React.FC = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-5 left-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+    <div role="status" aria-live="polite" className="fixed left-3 right-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-5 sm:bottom-5 sm:w-96 z-50 flex flex-col gap-2.5 pointer-events-none">
       {toasts.map((toast) => {
         return (
           <div
             key={toast.id}
-            className="pointer-events-auto flex items-start gap-3 p-3.5 bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-xl shadow-2xl backdrop-blur-md text-right text-xs animate-in slide-in-from-bottom-3 duration-200 text-[var(--text-primary)]"
+            className="pointer-events-auto flex items-start gap-3 p-3.5 bg-[var(--bg-elevated)] border border-[var(--border-strong)] rounded-xl shadow-2xl text-right text-xs animate-in slide-in-from-bottom-3 duration-200 text-[var(--text-primary)]"
           >
             {/* Icon */}
             <div className="shrink-0 mt-0.5">
@@ -36,7 +36,7 @@ export const ToastContainer: React.FC = () => {
                   toast.undoAction?.();
                   removeToast(toast.id);
                 }}
-                className="flex items-center gap-1 text-[11px] font-semibold text-[var(--brand-primary)] hover:underline px-2 py-1 rounded bg-[var(--brand-subdued)] transition-colors shrink-0 cursor-pointer"
+                className="flex items-center gap-1 text-[11px] font-semibold text-[var(--brand-accent)] hover:underline px-2 py-1 rounded bg-[var(--brand-subdued)] transition-colors shrink-0 cursor-pointer"
               >
                 <Undo2 className="w-3 h-3" />
                 <span>بازگردانی</span>

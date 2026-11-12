@@ -4,14 +4,8 @@ import {
   ShieldCheck,
   Lock,
   Globe,
-  Smartphone,
   Trash2,
-  Plus,
-  AlertTriangle,
-  Key,
-  Users,
   Search,
-  CheckCircle2,
   X,
   Laptop,
 } from 'lucide-react';
@@ -33,12 +27,10 @@ export const SecurityView: React.FC = () => {
     auditLogs,
     sessions,
     securitySettings,
-    updateSecuritySettings,
     terminateSession,
     terminateAllOtherSessions,
     addIpToBlacklist,
     removeIpFromBlacklist,
-    addToast,
   } = useAdmin();
 
   const [activeSubTab, setActiveSubTab] = useState<'audit' | 'sessions' | 'firewall'>('audit');
@@ -127,7 +119,7 @@ export const SecurityView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-[var(--brand-primary)]" />
+            <ShieldAlert className="w-5 h-5 text-[var(--brand-accent)]" />
             مرکز امنیت، لاگ‌ها و نشست‌های فعال
           </h2>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -137,7 +129,7 @@ export const SecurityView: React.FC = () => {
 
         <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--status-success-bg)] border border-[var(--status-success-border)] rounded-xl text-xs text-[var(--status-success)] font-semibold">
           <ShieldCheck className="w-4 h-4 text-[var(--status-success)]" />
-          <span>امنیت هسته: فعال و پایدار</span>
+          <span className="text-emerald-800 dark:text-emerald-300">امنیت هسته: فعال و پایدار</span>
         </div>
       </div>
 
@@ -147,7 +139,7 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('audit')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'audit'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -159,7 +151,7 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('sessions')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'sessions'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -171,7 +163,7 @@ export const SecurityView: React.FC = () => {
           onClick={() => setActiveSubTab('firewall')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
             activeSubTab === 'firewall'
-              ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)]'
+              ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}
         >
@@ -184,7 +176,7 @@ export const SecurityView: React.FC = () => {
       {activeSubTab === 'audit' && (
         <div className="space-y-4">
           {/* Advanced Filter Bar with Debounce & Select Components */}
-          <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
             <div className="w-full md:w-80">
               <Input
                 size="sm"
@@ -239,7 +231,7 @@ export const SecurityView: React.FC = () => {
 
               <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1.5 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
                 <span>نمایش </span>
-                <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredLogs.length)}</strong>
+                <strong className="text-[var(--brand-accent)]">{toPersianDigits(filteredLogs.length)}</strong>
                 <span> از {toPersianDigits(auditLogs.length)}</span>
               </div>
             </div>
@@ -249,7 +241,7 @@ export const SecurityView: React.FC = () => {
             {filteredLogs.length > 0 ? (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-right text-xs">
+                  <table className="w-full text-right text-sm">
                     <thead className="nobat-table-header">
                       <tr>
                         <th className="py-3 px-4">زمان ثبت</th>
@@ -273,17 +265,13 @@ export const SecurityView: React.FC = () => {
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span>{log.actor}</span>
                                 {log.isDemo && (
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-[var(--status-warning-bg)] text-[var(--status-warning)] border border-[var(--status-warning-border)] font-bold">
-                                    داده آزمایشی
-                                  </span>
+                                  <span className="text-[11px] text-[var(--text-muted)]">داده‌ی نمونه</span>
                                 )}
                               </div>
                             </td>
                             <td className="py-3 px-4 font-medium">{log.action}</td>
                             <td className="py-3 px-4 hidden md:table-cell">
-                              <Badge variant={catBadge.variant} size="sm">
-                                {catBadge.label}
-                              </Badge>
+                              <span className="text-xs text-[var(--text-secondary)]">{catBadge.label}</span>
                             </td>
                             <td className="py-3 px-4 text-[var(--text-secondary)] hidden lg:table-cell">{log.target}</td>
                             <td className="py-3 px-4 font-mono text-[11px] text-[var(--text-muted)] hidden sm:table-cell" dir="ltr">{log.ipAddress}</td>
@@ -363,7 +351,7 @@ export const SecurityView: React.FC = () => {
             {sessions.map((sess) => (
               <div
                 key={sess.id}
-                className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs flex items-center justify-between"
+                className="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-[var(--bg-elevated)] text-[var(--text-secondary)]">
@@ -379,7 +367,7 @@ export const SecurityView: React.FC = () => {
                       )}
                     </div>
                     <span className="text-[11px] text-[var(--text-secondary)] block mt-0.5">
-                      {sess.device} · IP: <span className="font-mono">{sess.ipAddress}</span>
+                      {sess.device} · IP: <span className="font-mono" dir="ltr">{sess.ipAddress}</span>
                     </span>
                   </div>
                 </div>
@@ -404,7 +392,7 @@ export const SecurityView: React.FC = () => {
       {/* Tab 3: Firewall */}
       {activeSubTab === 'firewall' && (
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
             <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">
               افزودن IP به لیست سیاه فایروال
             </h3>
@@ -432,7 +420,7 @@ export const SecurityView: React.FC = () => {
             </form>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs space-y-3">
+          <div className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-3">
             <h4 className="text-xs font-bold text-[var(--text-primary)]">
               IPهای مسدود شده در سامانه ({toPersianDigits(securitySettings.ipBlacklist.length)})
             </h4>

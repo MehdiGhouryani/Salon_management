@@ -4,7 +4,7 @@
  */
 
 import React, { useState, Suspense, lazy } from 'react';
-import { AdminProvider, useAdmin, AdminTab } from './context/AdminContext';
+import { AdminProvider, useAdmin } from './context/AdminContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
@@ -32,102 +32,18 @@ import {
   Globe,
   Smartphone,
   Shield,
-  LayoutDashboard,
-  Store,
-  Users as UsersIcon,
-  CreditCard,
-  Sliders,
-  MessageSquare,
-  HelpCircle,
-  Activity,
   ShieldAlert,
-  Settings as SettingsIcon,
   Layers,
   Check,
   X,
   Loader2,
-  LogOut,
 } from 'lucide-react';
 import { ProductionAdminLogin } from './components/common/ProductionAdminLogin';
 import { ProductionSalonLogin } from './components/common/ProductionSalonLogin';
 
 
-type MainCategory = 'overview' | 'businesses' | 'users' | 'finance' | 'system';
-
 const AdminLayout: React.FC = () => {
-  const { activeTab, setActiveTab, salons, messages, tickets, isDemoMode, serverAuth, serverLogout } = useAdmin();
-
-  const pendingSalons = salons.filter((s) => s.status === 'pending').length;
-  const failedMessages = messages.filter((m) => m.status === 'failed' || m.status === 'retrying').length;
-  const openTickets = tickets.filter((t) => t.status === 'open' || t.status === 'in_progress').length;
-
-  // Map individual tab to main category
-  const getCurrentCategory = (): MainCategory => {
-    if (activeTab === 'overview') return 'overview';
-    if (activeTab === 'businesses') return 'businesses';
-    if (activeTab === 'users') return 'users';
-    if (activeTab === 'subscriptions' || activeTab === 'messages') return 'finance';
-    return 'system';
-  };
-
-  const currentCategory = getCurrentCategory();
-
-  interface CategoryItem {
-    id: MainCategory;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    defaultTab: AdminTab;
-    badge?: number;
-    badgeType?: 'warning' | 'error' | 'info';
-  }
-
-  // 5 Streamlined Core Categories
-  const categories: CategoryItem[] = [
-    {
-      id: 'overview',
-      label: 'داشبورد و شاخص‌ها',
-      icon: LayoutDashboard,
-      defaultTab: 'overview',
-      badge: undefined,
-    },
-    {
-      id: 'businesses',
-      label: 'سالن‌ها و مراکز',
-      icon: Store,
-      defaultTab: 'businesses',
-      badge: pendingSalons > 0 ? pendingSalons : undefined,
-      badgeType: 'warning',
-    },
-    {
-      id: 'users',
-      label: 'کاربران و پرسنل',
-      icon: UsersIcon,
-      defaultTab: 'users',
-      badge: undefined,
-    },
-    {
-      id: 'finance',
-      label: 'مالی و پیامک',
-      icon: CreditCard,
-      defaultTab: (activeTab === 'messages' ? 'messages' : 'subscriptions') as AdminTab,
-      badge: failedMessages > 0 ? failedMessages : undefined,
-      badgeType: 'error',
-    },
-    {
-      id: 'system',
-      label: 'عملیات و ابزارها',
-      icon: Sliders,
-      defaultTab: (['support', 'operations', 'security', 'settings', 'simulator'].includes(activeTab)
-        ? activeTab
-        : 'operations') as AdminTab,
-      badge: openTickets > 0 ? openTickets : undefined,
-      badgeType: 'info',
-    },
-  ];
-
-  const handleCategorySelect = (cat: CategoryItem) => {
-    setActiveTab(cat.defaultTab);
-  };
+  const { activeTab } = useAdmin();
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -157,180 +73,19 @@ const AdminLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] overflow-hidden font-sans antialiased transition-colors duration-200" dir="rtl">
+    <div className="flex h-full bg-[var(--bg-canvas)] text-[var(--text-primary)] overflow-hidden font-sans antialiased transition-colors duration-200" dir="rtl">
       {/* Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Viewport */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Header Contract */}
         <Header />
 
         {/* Scrollable Content Body */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-[var(--bg-canvas)]">
           <div className="max-w-7xl mx-auto space-y-5">
-            {/* 1. Primary Clean Category Tabs Bar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-xs">
-              <div className="flex items-center gap-1.5 overflow-x-auto p-0.5 select-none scrollbar-none">
-                {categories.map((cat) => {
-                  const isSelected = currentCategory === cat.id;
-                  const Icon = cat.icon;
-
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => handleCategorySelect(cat)}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] font-bold border border-[var(--brand-border)] shadow-xs'
-                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] border border-transparent'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'}`} />
-                      <span>{cat.label}</span>
-                      {cat.badge !== undefined && (
-                        <span
-                          className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full border tabular-nums ${
-                            cat.badgeType === 'error'
-                              ? 'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]'
-                              : cat.badgeType === 'warning'
-                              ? 'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]'
-                              : 'bg-[var(--status-info-bg)] text-[var(--status-info)] border-[var(--status-info-border)]'
-                          }`}
-                        >
-                          {cat.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Quick Persona / Auth Indicators */}
-              <div className="hidden lg:flex items-center gap-2 text-xs text-[var(--text-secondary)] pl-2">
-                {serverAuth.authenticated && !isDemoMode ? (
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--status-success-bg)] border border-[var(--status-success-border)] text-[11px] font-bold text-[var(--status-success)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-success)]"></span>
-                      مدیر کل: {serverAuth.user?.fullName} ({serverAuth.user?.phone})
-                    </span>
-                    <button
-                      onClick={() => serverLogout()}
-                      className="px-2 py-1 text-[11px] rounded-lg bg-[var(--bg-subsurface)] hover:bg-[var(--status-error-bg)] text-[var(--text-secondary)] hover:text-[var(--status-error)] border border-[var(--border-subtle)] transition-colors flex items-center gap-1 cursor-pointer"
-                      title="خروج از حساب مدیر"
-                    >
-                      <LogOut className="w-3 h-3" />
-                      <span>خروج</span>
-                    </button>
-                  </div>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--status-warning-bg)] border border-[var(--status-warning-border)] text-[11px] font-bold text-[var(--status-warning)]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-warning)] animate-pulse"></span>
-                    پیش‌نمایش آزمایشی (داده‌های سنتتیک دمو)
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* 2. Sub-Category Selector for Multi-tool groups */}
-            {currentCategory === 'finance' && (
-              <div className="flex items-center gap-2 p-1 bg-[var(--bg-surface)] backdrop-blur-xs border border-[var(--border-subtle)] rounded-xl w-fit text-xs">
-                <button
-                  onClick={() => setActiveTab('subscriptions')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'subscriptions'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <CreditCard className="w-3.5 h-3.5" />
-                  <span>اشتراک‌ها، بسته‌ها و تراکنش‌ها</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('messages')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'messages'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>مرکز پیامک و دیسپچ نوبت‌ها</span>
-                  {failedMessages > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] text-[10px] font-bold tabular-nums">
-                      {failedMessages}
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {currentCategory === 'system' && (
-              <div className="flex items-center gap-1.5 p-1 bg-[var(--bg-surface)] backdrop-blur-xs border border-[var(--border-subtle)] rounded-xl w-fit overflow-x-auto text-xs">
-                <button
-                  onClick={() => setActiveTab('operations')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'operations'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>سلامت سیستم و منابع سرور</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('security')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'security'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>امنیت، رویدادها و لاگ‌ها</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('support')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'support'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span>مرکز پشتیبانی و تیکت‌ها</span>
-                  {openTickets > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-[var(--status-info-bg)] text-[var(--status-info)] border border-[var(--status-info-border)] text-[10px] font-bold tabular-nums">
-                      {openTickets}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('settings')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'settings'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <SettingsIcon className="w-3.5 h-3.5" />
-                  <span>تنظیمات هسته</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('simulator')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === 'simulator'
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs font-bold'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                  }`}
-                >
-                  <Smartphone className="w-3.5 h-3.5" />
-                  <span>شبیه‌ساز سالن</span>
-                </button>
-              </div>
-            )}
-
-            {/* 3. The Active Decluttered View */}
+            {/* The active admin view. Navigation lives in the sidebar only. */}
             <Suspense fallback={<LoadingFallback message="در حال بارگذاری بخش مدیریتی..." />}>
               {renderActiveView()}
             </Suspense>
@@ -346,10 +101,16 @@ const AdminLayout: React.FC = () => {
   );
 };
 
+// The three places of the platform, in the order the switch shows them.
+const PERSONA_OPTIONS: { key: 'salon_website' | 'salon_app' | 'super_admin'; label: string; title: string; icon: React.FC<{ className?: string }> }[] = [
+  { key: 'salon_website', label: 'وب‌سایت سالن', title: 'وب‌سایت اختصاصی رزرو سالن برای مشتریان', icon: Globe },
+  { key: 'salon_app', label: 'اپلیکیشن سالن', title: 'اپلیکیشن نوبت‌دهی مدیر سالن', icon: Smartphone },
+  { key: 'super_admin', label: 'پنل مدیریت کل', title: 'پنل مدیریت کل پلتفرم (پیش‌نمایش آزمایشی)', icon: Shield },
+];
+
 const MainSwitcher: React.FC = () => {
   const { persona, setPersona, isDemoMode, serverAuth, serverLogout } = useAdmin();
   const [mobilePersonaOpen, setMobilePersonaOpen] = useState(false);
-  const [isPillCollapsed, setIsPillCollapsed] = useState(true);
 
   const renderContent = () => {
     // SERVER AUTHENTICATION & RBAC GATE (Phase 5):
@@ -372,14 +133,14 @@ const MainSwitcher: React.FC = () => {
       if (serverAuth.user?.platformRole !== 'super_admin') {
         return (
           <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
-            <div className="max-w-md w-full bg-[#111B2E] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="max-w-md w-full bg-dk-surface border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
                 <ShieldAlert className="w-8 h-8" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-lg font-bold text-white">دسترسی مسدود است (403 Forbidden)</h2>
                 <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد مجوز مدیر کل است</p>
-                <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                <p className="text-xs text-text-subtle leading-relaxed pt-2">
                   شماره شما ({serverAuth.user?.phone}) با موفقیت احراز هویت شد، اما نقش شما در سرور ({serverAuth.user?.platformRole}) مجوز دسترسی به پنل مدیریت کل پلتفرم را ندارد.
                 </p>
               </div>
@@ -427,14 +188,14 @@ const MainSwitcher: React.FC = () => {
       if (!hasSalonAccess) {
         return (
           <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900 text-slate-100" dir="rtl">
-            <div className="max-w-md w-full bg-[#111B2E] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="max-w-md w-full bg-dk-surface border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
               <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
                 <ShieldAlert className="w-8 h-8" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-lg font-bold text-white">دسترسی مسدود است (403 Forbidden)</h2>
                 <p className="text-xs text-amber-300 font-semibold">حساب کاربری شما فاقد عضویت در کادر سالن است</p>
-                <p className="text-xs text-slate-400 leading-relaxed pt-2">
+                <p className="text-xs text-text-subtle leading-relaxed pt-2">
                   شماره شما ({serverAuth.user?.phone}) احراز هویت شد، اما هنوز به عنوان مدیر یا پرسنل سالنی در سامانه ثبت نگردیده است.
                 </p>
               </div>
@@ -495,103 +256,102 @@ const MainSwitcher: React.FC = () => {
 
   const ActiveIcon = getPersonaIcon();
 
+  // The admin shell renders only in demo mode or with a super-admin server session (same gates as renderContent).
+  const adminShellActive =
+    persona === 'super_admin' &&
+    (isDemoMode || (serverAuth.authenticated && serverAuth.user?.platformRole === 'super_admin'));
+
+  const content = (
+    <Suspense fallback={<LoadingFallback message="در حال دریافت اطلاعات صفحه..." />}>
+      {renderContent()}
+    </Suspense>
+  );
+
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-[#0B1120] text-slate-900 dark:text-[#E7ECF5] transition-colors duration-200">
-      {/* Top Governance / Security Environment Mode Indicator */}
+    <div
+      className={`relative min-h-screen bg-slate-50 dark:bg-canvas text-slate-900 dark:text-text-main transition-colors duration-200 ${
+        adminShellActive ? 'h-screen flex flex-col overflow-hidden' : ''
+      }`}
+    >
+      {/* Environment strip: says where the data comes from and holds the only persona switch. It is part of the page, so it never covers content. */}
       <div
-        className={`px-3 py-1.5 text-[11px] flex items-center justify-between border-b transition-colors select-none ${
+        className={`px-3 py-1 text-[11px] flex items-center gap-3 border-b transition-colors select-none ${
           isDemoMode
             ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-300'
             : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-300'
         }`}
         dir="rtl"
       >
-        <div className="flex items-center gap-2 truncate">
-          <span
-            className={`w-2 h-2 rounded-full shrink-0 ${
-              isDemoMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
-            }`}
-          />
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${isDemoMode ? 'bg-amber-500' : 'bg-emerald-500'}`} />
           <span className="truncate">
             {isDemoMode ? (
-              <span>
-                <strong>محیط پیش‌نمایش آزمایشی (Demo Mode):</strong> داده‌ها و عملیات جنبه شبیه‌سازی دارند و سوئیچر نقش‌ها ابزار تست توسعه است.
-              </span>
+              <strong>پیش‌نمایش آزمایشی:</strong>
             ) : (
-              <span>
-                <strong>محیط عملیاتی سرور (Production Mode):</strong> دسترسی به ادمین منوط به احراز هویت سرور است.
-              </span>
-            )}
+              <strong>محیط عملیاتی:</strong>
+            )}{' '}
+            {isDemoMode ? 'داده‌ها نمونه‌اند و عملیات شبیه‌سازی می‌شوند.' : 'دسترسی به ادمین منوط به احراز هویت سرور است.'}
           </span>
         </div>
-        <div className="shrink-0 mr-2">
-          {isDemoMode ? (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
-              توسعه / Demo Preview
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
-              عملیاتی / Production
-            </span>
-          )}
+
+        {/* Wide screens: the three places in one control */}
+        <div role="group" aria-label="بخش پلتفرم" className="hidden sm:flex items-center gap-0.5 p-px rounded-lg bg-[var(--bg-surface)] border border-[var(--border-default)] shrink-0">
+          {PERSONA_OPTIONS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => setPersona(option.key)}
+              aria-pressed={persona === option.key}
+              title={option.key === 'super_admin' && !isDemoMode ? 'پنل مدیریت کل (نیازمند ورود به سرور)' : option.title}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold transition-colors cursor-pointer ${
+                persona === option.key
+                  ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-default)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <option.icon className="w-3 h-3" />
+              <span>{option.label}</span>
+              {option.key === 'super_admin' && !isDemoMode && (
+                <span className="text-[11px] text-[var(--status-error)]">مسدود</span>
+              )}
+            </button>
+          ))}
         </div>
+
+        {/* Phones: one button that opens the sheet with the same choices */}
+        <button
+          type="button"
+          onClick={() => setMobilePersonaOpen(true)}
+          aria-label="تغییر بخش نوبت‌آرا"
+          className="sm:hidden flex items-center gap-1.5 px-2 py-1 rounded-md font-semibold bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] shrink-0 cursor-pointer"
+        >
+          <ActiveIcon className="w-3 h-3" />
+          <span>{getPersonaLabel()}</span>
+        </button>
       </div>
 
-      <Suspense fallback={<LoadingFallback message="در حال دریافت اطلاعات صفحه..." />}>
-        {renderContent()}
-      </Suspense>
+      {adminShellActive ? <div className="flex-1 min-h-0">{content}</div> : content}
 
-      {/* MOBILE COLLAPSIBLE FLOATING BUTTON */}
-      <div className="sm:hidden fixed bottom-16 left-3.5 z-40">
-        {isPillCollapsed ? (
-          <button
-            onClick={() => setMobilePersonaOpen(true)}
-            className="w-10 h-10 rounded-full bg-white/95 dark:bg-[#111B2E]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#344258] shadow-lg text-slate-800 dark:text-[#E7ECF5] flex items-center justify-center active:scale-90 transition-all cursor-pointer ring-1 ring-black/5 dark:ring-white/5 relative group"
-            aria-label="تغییر بخش نوبت‌آرا"
-            title={`بخش فعلی: ${getPersonaLabel()} (برای تغییر کلیک کنید)`}
-          >
-            <ActiveIcon className="w-4 h-4 text-[#F43F7A]" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#F43F7A] ring-2 ring-white dark:ring-[#111B2E]" />
-          </button>
-        ) : (
-          <div className="flex items-center gap-1 p-1 bg-white/95 dark:bg-[#111B2E]/95 backdrop-blur-md border border-slate-200/90 dark:border-[#344258] shadow-xl rounded-full text-slate-800 dark:text-[#E7ECF5] text-xs font-bold ring-1 ring-black/5 dark:ring-white/5 animate-in fade-in zoom-in-95 duration-150">
-            <button
-              onClick={() => setMobilePersonaOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-[#18243A] transition-colors cursor-pointer"
-            >
-              <ActiveIcon className="w-3.5 h-3.5 text-[#F43F7A]" />
-              <span className="text-[11px]">{getPersonaLabel()}</span>
-            </button>
-            <button
-              onClick={() => setIsPillCollapsed(true)}
-              className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-              title="جمع کردن به دکمه کوچک"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* MOBILE PERSONA SELECTION MODAL SHEET */}
       {mobilePersonaOpen && (
         <div
-          className="sm:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+          className="sm:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 animate-in fade-in duration-150"
           onClick={() => setMobilePersonaOpen(false)}
         >
           <div
-            className="w-full max-w-sm bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-3xl p-4 shadow-2xl space-y-3 animate-in slide-in-from-bottom duration-200 text-right"
+            className="w-full max-w-sm bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-3xl p-4 shadow-2xl space-y-3 animate-in slide-in-from-bottom duration-200 text-right"
             onClick={(e) => e.stopPropagation()}
             dir="rtl"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#344258]">
-              <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-[#F43F7A]" />
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-border-default">
+              <span className="text-xs font-bold text-slate-800 dark:text-text-main flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-brand-accent" />
                 انتخاب بخش پلتفرم نوبت‌آرا
               </span>
               <button
                 onClick={() => setMobilePersonaOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#E7ECF5] cursor-pointer"
+                className="p-1 rounded-lg text-text-subtle hover:text-slate-700 dark:hover:text-text-main cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -604,10 +364,10 @@ const MainSwitcher: React.FC = () => {
                   setPersona('salon_website');
                   setMobilePersonaOpen(false);
                 }}
-                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-colors cursor-pointer ${
                   persona === 'salon_website'
-                    ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                    : 'bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]'
+                    ? 'bg-brand dark:bg-brand text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -623,10 +383,10 @@ const MainSwitcher: React.FC = () => {
                   setPersona('salon_app');
                   setMobilePersonaOpen(false);
                 }}
-                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-colors cursor-pointer ${
                   persona === 'salon_app'
-                    ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                    : 'bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]'
+                    ? 'bg-brand dark:bg-brand text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -642,17 +402,17 @@ const MainSwitcher: React.FC = () => {
                   setPersona('super_admin');
                   setMobilePersonaOpen(false);
                 }}
-                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-between p-3 rounded-2xl font-bold transition-colors cursor-pointer ${
                   persona === 'super_admin'
-                    ? 'bg-[#E11D48] dark:bg-[#F43F7A] text-white shadow-xs'
-                    : 'bg-slate-50 dark:bg-[#18243A] text-slate-700 dark:text-[#E7ECF5] border border-slate-200 dark:border-[#344258]'
+                    ? 'bg-brand dark:bg-brand text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-elevated text-slate-700 dark:text-text-main border border-slate-200 dark:border-border-default'
                 }`}
               >
                 <span className="flex items-center gap-2">
                   <Shield className="w-4 h-4" />
                   <span>پنل مدیریت و نظارت کل</span>
                   {!isDemoMode && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                       مسدود
                     </span>
                   )}
@@ -661,70 +421,14 @@ const MainSwitcher: React.FC = () => {
               </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-100 dark:border-[#344258] flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-500 dark:text-[#9AAAC2]">پوسته صفحه:</span>
+            <div className="pt-2 border-t border-slate-100 dark:border-border-default flex items-center justify-between text-xs">
+              <span className="text-[11px] text-text-muted dark:text-text-muted">پوسته صفحه:</span>
               <ThemeToggle variant="segmented" />
             </div>
           </div>
         </div>
       )}
 
-      {/* DESKTOP FLOATING THREE-PILLAR SWITCHER (Hidden on mobile screens) */}
-      <div className="hidden sm:block fixed bottom-4 left-4 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-        <div className="bg-[var(--bg-surface)] backdrop-blur-md border border-[var(--border-subtle)] shadow-xl rounded-2xl p-1.5 flex items-center gap-1.5 text-xs">
-          {/* Pillar 1: Salon Website for Clients */}
-          <button
-            onClick={() => setPersona('salon_website')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-              persona === 'salon_website'
-                ? 'bg-[var(--brand-primary)] text-white shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-            }`}
-            title="وب‌سایت اختصاصی رزرو سالن برای مشتریان"
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>وب‌سایت سالن</span>
-          </button>
-
-          {/* Pillar 2: Android App for Salon Manager */}
-          <button
-            onClick={() => setPersona('salon_app')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-              persona === 'salon_app'
-                ? 'bg-[var(--brand-primary)] text-white shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-            }`}
-            title="اپلیکیشن نوبت‌دهی مدیر سالن"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            <span>اپلیکیشن سالن</span>
-          </button>
-
-          {/* Pillar 3: Super Admin Web Panel */}
-          <button
-            onClick={() => setPersona('super_admin')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-              persona === 'super_admin'
-                ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border border-[var(--brand-border)] shadow-xs'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-            }`}
-            title={!isDemoMode ? 'پنل مدیریت کل (مسدود در محیط بدون سرور)' : 'پنل مدیریت کل پلتفرم (پیش‌نمایش آزمایشی)'}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>پنل مدیریت کل</span>
-            {!isDemoMode && (
-              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[var(--status-error-bg)] text-[var(--status-error)] border border-[var(--status-error-border)] font-bold">
-                مسدود
-              </span>
-            )}
-          </button>
-
-          <div className="w-px h-5 bg-[var(--border-subtle)] mx-1" />
-
-          {/* Fast Theme Toggle Icon */}
-          <ThemeToggle variant="icon" />
-        </div>
-      </div>
     </div>
   );
 };

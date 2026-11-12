@@ -50,13 +50,13 @@ export const SupportView: React.FC = () => {
   const getPriorityBadge = (p: TicketPriority) => {
     switch (p) {
       case 'critical':
-        return { label: 'بحرانی', color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-500/20' };
+        return { label: 'بحرانی', color: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-500/20' };
       case 'high':
-        return { label: 'بالا', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-500/20' };
+        return { label: 'بالا', color: 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-500/20' };
       case 'medium':
         return { label: 'معمولی', color: 'text-sky-600 bg-sky-50 dark:bg-sky-950/40 border-sky-500/20' };
       case 'low':
-        return { label: 'کم', color: 'text-zinc-500 bg-stone-100 dark:bg-zinc-800 border-stone-200' };
+        return { label: 'کم', color: 'text-text-muted bg-stone-100 dark:bg-zinc-800 border-stone-200' };
     }
   };
 
@@ -65,11 +65,11 @@ export const SupportView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
+          <h2 className="text-base font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             مرکز پشتیبانی و تیکت‌های سالن‌ها
           </h2>
-          <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
+          <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
             رسیدگی به درخواست‌های فنی، مالی و راهنمایی مدیران سالن‌ها
           </p>
         </div>
@@ -78,7 +78,7 @@ export const SupportView: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
           >
             <option value="all">تمام وضعیت‌ها</option>
             <option value="open">تیکت‌های باز</option>
@@ -90,7 +90,7 @@ export const SupportView: React.FC = () => {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-1.5 bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
+            className="px-3 py-1.5 bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none cursor-pointer"
           >
             <option value="all">تمام اولویت‌ها</option>
             <option value="critical">بحرانی</option>
@@ -103,8 +103,8 @@ export const SupportView: React.FC = () => {
       {/* Main Split: Ticket List & Conversation View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ticket List */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs space-y-3">
-          <h3 className="font-bold text-xs text-zinc-700 dark:text-[#9AAAC2] px-1">
+        <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default space-y-3">
+          <h3 className="font-bold text-xs text-zinc-700 dark:text-text-muted px-1">
             لیست تیکت‌ها ({toPersianDigits(filteredTickets.length)})
           </h3>
 
@@ -117,20 +117,20 @@ export const SupportView: React.FC = () => {
                 <div
                   key={t.id}
                   onClick={() => setSelectedTicketId(t.id)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer text-xs ${
+                  className={`p-3.5 rounded-xl border transition-colors cursor-pointer text-xs ${
                     isSelected
-                      ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/20 shadow-xs'
-                      : 'border-stone-100 dark:border-[#344258] hover:border-stone-200 dark:hover:border-zinc-700'
+                      ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/20'
+                      : 'border-stone-100 dark:border-border-default hover:border-stone-200 dark:hover:border-zinc-700'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h4 className="font-bold text-zinc-900 dark:text-[#E7ECF5] truncate">{t.subject}</h4>
-                    <span className={`px-1.5 py-0.2 text-[10px] rounded-md font-semibold border shrink-0 ${prio.color}`}>
+                    <h4 className="font-bold text-zinc-900 dark:text-text-main truncate">{t.subject}</h4>
+                    <span className={`px-1.5 py-0.2 text-[11px] rounded-md font-semibold border shrink-0 ${prio.color}`}>
                       {prio.label}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                  <div className="flex items-center justify-between text-[11px] text-text-muted">
                     <span>{t.salonName}</span>
                     <span>{t.updatedAt}</span>
                   </div>
@@ -139,7 +139,7 @@ export const SupportView: React.FC = () => {
             })}
 
             {filteredTickets.length === 0 && (
-              <div className="py-8 text-center text-zinc-400">
+              <div className="py-8 text-center text-text-subtle">
                 تیکتی یافت نشد.
               </div>
             )}
@@ -148,13 +148,13 @@ export const SupportView: React.FC = () => {
 
         {/* Selected Ticket Conversation */}
         {selectedTicket ? (
-          <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-2 p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default flex flex-col justify-between">
             <div>
               {/* Ticket Header */}
-              <div className="flex items-start justify-between pb-3 border-b border-stone-100 dark:border-[#344258]">
+              <div className="flex items-start justify-between pb-3 border-b border-stone-100 dark:border-border-default">
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">{selectedTicket.subject}</h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">{selectedTicket.subject}</h3>
+                  <p className="text-xs text-text-muted mt-0.5">
                     سالن: {selectedTicket.salonName} · ثبت توسط: {selectedTicket.creatorName}
                   </p>
                 </div>
@@ -163,7 +163,7 @@ export const SupportView: React.FC = () => {
                   {selectedTicket.status !== 'resolved' && (
                     <button
                       onClick={() => resolveTicket(selectedTicket.id)}
-                      className="px-3 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
+                      className="px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                     >
                       حل تیکت
                     </button>
@@ -171,7 +171,7 @@ export const SupportView: React.FC = () => {
                   {selectedTicket.status !== 'closed' && (
                     <button
                       onClick={() => closeTicket(selectedTicket.id)}
-                      className="px-3 py-1 text-xs text-zinc-500 hover:text-zinc-800 rounded-lg cursor-pointer"
+                      className="px-3 py-1 text-xs text-text-muted hover:text-zinc-800 rounded-lg cursor-pointer"
                     >
                       بستن
                     </button>
@@ -187,10 +187,10 @@ export const SupportView: React.FC = () => {
                     className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
                       m.senderRole === 'admin'
                         ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-500/20 text-zinc-800 dark:text-zinc-200 mr-auto'
-                        : 'bg-stone-50 dark:bg-[#111B2E] border border-stone-200/80 dark:border-[#344258] text-zinc-800 dark:text-zinc-200 ml-auto'
+                        : 'bg-stone-50 dark:bg-surface border border-stone-200/80 dark:border-border-default text-zinc-800 dark:text-zinc-200 ml-auto'
                     }`}
                   >
-                    <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1">
+                    <div className="flex items-center justify-between text-[11px] text-text-subtle mb-1">
                       <span className="font-bold">{m.senderName} ({m.senderRole === 'admin' ? 'پشتیبان نوبت‌آرا' : 'سالن'})</span>
                       <span>{m.timestamp}</span>
                     </div>
@@ -201,13 +201,13 @@ export const SupportView: React.FC = () => {
             </div>
 
             {/* Quick Canned Responses & Reply Form */}
-            <div className="pt-3 border-t border-stone-100 dark:border-[#344258] space-y-2.5">
+            <div className="pt-3 border-t border-stone-100 dark:border-border-default space-y-2.5">
               <div className="flex flex-wrap gap-1.5">
                 {CANNED_RESPONSES.map((res, idx) => (
                   <button
                     key={idx}
                     onClick={() => setReplyText(res)}
-                    className="px-2 py-0.5 text-[10px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-[#9AAAC2] rounded-lg hover:bg-stone-200 cursor-pointer"
+                    className="px-2 py-0.5 text-[11px] bg-stone-100 dark:bg-zinc-800 text-zinc-600 dark:text-text-muted rounded-lg hover:bg-stone-200 cursor-pointer"
                   >
                     {res.slice(0, 30)}...
                   </button>
@@ -220,11 +220,11 @@ export const SupportView: React.FC = () => {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="پاسخ به تیکت سالن..."
-                  className="flex-1 px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-xs text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                  className="flex-1 px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-xs text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl cursor-pointer flex items-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>ارسال</span>
@@ -233,7 +233,7 @@ export const SupportView: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="lg:col-span-2 p-12 text-center text-zinc-400 bg-white dark:bg-[#18243A] rounded-2xl border border-stone-200 dark:border-[#344258]">
+          <div className="lg:col-span-2 p-12 text-center text-text-subtle bg-white dark:bg-elevated rounded-2xl border border-stone-200 dark:border-border-default">
             لطفاً یک تیکت را از لیست انتخاب کنید.
           </div>
         )}

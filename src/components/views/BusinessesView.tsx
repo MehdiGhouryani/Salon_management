@@ -3,25 +3,16 @@ import {
   Store,
   Plus,
   Search,
-  Filter,
   Download,
   Eye,
   CheckCircle,
   AlertTriangle,
   X,
   Edit2,
-  Trash2,
   Check,
-  Phone,
-  MapPin,
-  Calendar,
-  Users,
-  DollarSign,
-  ShieldCheck,
   EyeOff,
   LayoutGrid,
   List,
-  Sparkles,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Salon, SalonStatus, PlanType } from '../../types/admin';
@@ -45,10 +36,8 @@ export const BusinessesView: React.FC = () => {
     salons,
     approveSalon,
     suspendSalon,
-    activateSalon,
     updateSalonPlan,
     saveSalon,
-    deleteSalon,
     inspectedSalon,
     setInspectedSalon,
     addToast,
@@ -271,24 +260,24 @@ export const BusinessesView: React.FC = () => {
       {/* View Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900 dark:text-[#E7ECF5] flex items-center gap-2">
-            <Store className="w-5 h-5 text-[#E11D48] dark:text-[#F43F7A]" />
+          <h2 className="text-base font-bold text-slate-900 dark:text-text-main flex items-center gap-2">
+            <Store className="w-5 h-5 text-brand-accent dark:text-brand-accent" />
             <span className="tabular-nums">سالن‌ها و مراکز زیبایی ({toPersianDigits(salons.length)})</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-[#9AAAC2] mt-0.5">
+          <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
             تایید صلاحیت مدارک، وضعیت فعالیت و مدیریت بسته‌های اشتراک
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* View Mode Toggle: Cards vs Table */}
-          <div className="flex items-center p-1 bg-slate-100 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl text-xs">
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-elevated border border-slate-200 dark:border-border-default rounded-xl text-xs">
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white dark:bg-[#111B2E] text-slate-900 dark:text-[#E7ECF5] font-bold shadow-xs border border-slate-200 dark:border-[#344258]'
-                  : 'text-slate-500 dark:text-[#9AAAC2] hover:text-slate-700 dark:hover:text-[#E7ECF5]'
+                  ? 'bg-white dark:bg-surface text-slate-900 dark:text-text-main font-bold border border-slate-200 dark:border-border-default'
+                  : 'text-text-muted dark:text-text-muted hover:text-slate-700 dark:hover:text-text-main'
               }`}
               title="نمایش کارت‌های خلوت"
             >
@@ -297,10 +286,10 @@ export const BusinessesView: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-[#111B2E] text-slate-900 dark:text-[#E7ECF5] font-bold shadow-xs border border-slate-200 dark:border-[#344258]'
-                  : 'text-slate-500 dark:text-[#9AAAC2] hover:text-slate-700 dark:hover:text-[#E7ECF5]'
+                  ? 'bg-white dark:bg-surface text-slate-900 dark:text-text-main font-bold border border-slate-200 dark:border-border-default'
+                  : 'text-text-muted dark:text-text-muted hover:text-slate-700 dark:hover:text-text-main'
               }`}
               title="نمایش جدول فشرده"
             >
@@ -311,7 +300,7 @@ export const BusinessesView: React.FC = () => {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-[#E7ECF5] hover:text-slate-900 bg-white dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] rounded-xl transition-colors cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-text-main hover:text-slate-900 bg-white dark:bg-elevated border border-slate-200 dark:border-border-default rounded-xl transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">اکسل</span>
@@ -319,7 +308,7 @@ export const BusinessesView: React.FC = () => {
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#E11D48] hover:bg-[#BE123C] dark:bg-[#F43F7A] dark:hover:bg-[#E11D48] rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand rounded-xl transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>افزودن سالن</span>
@@ -328,7 +317,7 @@ export const BusinessesView: React.FC = () => {
       </div>
 
       {/* Segmented Status Tabs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] rounded-xl text-xs shadow-xs">
+      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-xl text-xs">
         {[
           { id: 'all', label: 'همه سالن‌ها', count: salons.length },
           { id: 'active', label: 'فعال', count: salons.filter((s) => s.status === 'active').length },
@@ -341,16 +330,16 @@ export const BusinessesView: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all cursor-pointer font-medium ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-medium ${
                 isSelected
-                  ? 'bg-rose-50 dark:bg-[#F43F7A]/15 text-[#E11D48] dark:text-[#FB7185] font-bold border border-rose-300 dark:border-[#F43F7A]/30 shadow-xs'
-                  : 'text-slate-600 dark:text-[#9AAAC2] hover:text-slate-900 dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A] border border-transparent'
+                  ? 'bg-surface text-text-main font-semibold border border-border-default'
+                  : 'text-slate-600 dark:text-text-muted hover:text-slate-900 dark:hover:text-text-main hover:bg-slate-100 dark:hover:bg-elevated border border-transparent'
               }`}
             >
               <span>{tab.label}</span>
               <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
-                  isSelected ? 'bg-rose-500/20 text-[#E11D48] dark:text-[#FB7185]' : 'bg-slate-100 dark:bg-[#18243A] text-slate-500 dark:text-[#9AAAC2]'
+                className={`px-1.5 py-0.2 rounded-full text-[11px] font-bold tabular-nums ${
+                  isSelected ? 'bg-rose-500/20 text-brand-accent dark:text-brand-accent' : 'bg-slate-100 dark:bg-elevated text-text-muted dark:text-text-muted'
                 }`}
               >
                 {toPersianDigits(tab.count)}
@@ -361,22 +350,22 @@ export const BusinessesView: React.FC = () => {
       </div>
 
       {/* Search & Quick Filter Bar */}
-      <div className="p-3.5 rounded-xl bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] space-y-3 shadow-xs">
+      <div className="p-3.5 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-border-default space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           {/* Search Input */}
           <div className="lg:col-span-3 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
+            <Search className="w-4 h-4 text-text-subtle absolute right-3 top-2.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="جستجوی نام سالن، مدیر، شهر یا شماره تماس..."
-              className="w-full pl-8 pr-9 py-2 bg-slate-50 dark:bg-[#0D1527] border border-slate-200 dark:border-[#344258] rounded-lg text-slate-900 dark:text-[#E7ECF5] placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-[#F43F7A] transition-colors"
+              className="w-full pl-8 pr-9 py-2 bg-slate-50 dark:bg-subsurface border border-slate-200 dark:border-border-default rounded-lg text-slate-900 dark:text-text-main placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute left-2.5 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-[#E7ECF5]"
+                className="absolute left-2.5 top-2.5 text-text-subtle hover:text-slate-700 dark:hover:text-text-main"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -413,13 +402,13 @@ export const BusinessesView: React.FC = () => {
         </div>
 
         {/* Sort & Result Count */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-[#344258] text-[11px] text-slate-500 dark:text-[#9AAAC2]">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-border-default text-[11px] text-text-muted dark:text-text-muted">
           <div className="flex items-center gap-2">
             <span>مرتب‌سازی:</span>
             <button
               onClick={() => setSortBy('revenue')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'revenue' ? 'bg-rose-50 dark:bg-[#F43F7A]/15 text-[#E11D48] dark:text-[#FB7185] font-semibold border border-rose-200 dark:border-[#F43F7A]/30' : 'hover:text-slate-800 dark:hover:text-[#E7ECF5]'
+                sortBy === 'revenue' ? 'bg-surface text-text-main font-semibold border border-border-default' : 'hover:text-slate-800 dark:hover:text-text-main'
               }`}
             >
               بیشترین درآمد
@@ -427,7 +416,7 @@ export const BusinessesView: React.FC = () => {
             <button
               onClick={() => setSortBy('appointments')}
               className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                sortBy === 'appointments' ? 'bg-rose-50 dark:bg-[#F43F7A]/15 text-[#E11D48] dark:text-[#FB7185] font-semibold border border-rose-200 dark:border-[#F43F7A]/30' : 'hover:text-slate-800 dark:hover:text-[#E7ECF5]'
+                sortBy === 'appointments' ? 'bg-surface text-text-main font-semibold border border-border-default' : 'hover:text-slate-800 dark:hover:text-text-main'
               }`}
             >
               بیشترین نوبت
@@ -435,8 +424,8 @@ export const BusinessesView: React.FC = () => {
           </div>
 
           <div className="tabular-nums">
-            نمایش <span className="font-bold text-slate-800 dark:text-[#E7ECF5]">{toPersianDigits(filteredSalons.length)}</span> از{' '}
-            <span className="font-bold text-slate-800 dark:text-[#E7ECF5]">{toPersianDigits(salons.length)}</span> سالن
+            نمایش <span className="font-bold text-slate-800 dark:text-text-main">{toPersianDigits(filteredSalons.length)}</span> از{' '}
+            <span className="font-bold text-slate-800 dark:text-text-main">{toPersianDigits(salons.length)}</span> سالن
           </div>
         </div>
       </div>
@@ -453,50 +442,50 @@ export const BusinessesView: React.FC = () => {
                   return (
                     <div
                       key={salon.id}
-                      className="p-5 rounded-2xl bg-white dark:bg-[#111B2E] border border-slate-200/90 dark:border-[#344258] shadow-xs hover:border-slate-300 dark:hover:border-slate-500 transition-all flex flex-col justify-between group"
+                      className="p-5 rounded-2xl bg-white dark:bg-surface border border-slate-200/90 dark:border-border-default hover:border-slate-300 dark:hover:border-slate-500 transition-colors flex flex-col justify-between group"
                     >
                       <div>
                         {/* Card Header: Icon, Name, Category & Status Badge */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#18243A] border border-slate-200 dark:border-[#344258] flex items-center justify-center font-bold text-[#E11D48] dark:text-[#F43F7A] shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-elevated border border-slate-200 dark:border-border-default flex items-center justify-center font-bold text-brand-accent dark:text-brand-accent shrink-0">
                               {salon.name.slice(0, 1)}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <h3 className="font-bold text-slate-900 dark:text-[#E7ECF5] text-sm truncate">
+                                <h3 className="font-bold text-slate-900 dark:text-text-main text-sm truncate">
                                   {salon.name}
                                 </h3>
                                 {salon.verifiedBadge && (
-                                  <span className="text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
+                                  <span className="text-[#0369A1] dark:text-[#38BDF8] text-xs font-bold" title="دارای تاییدیه رسمی">✓</span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-slate-500 dark:text-[#9AAAC2] truncate mt-0.5">
+                              <p className="text-[11px] text-text-muted dark:text-text-muted truncate mt-0.5">
                                 {salon.category}
                               </p>
                             </div>
                           </div>
 
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
+                          <span className={`px-2 py-0.5 text-[11px] rounded-md font-medium border shrink-0 ${badge.bg} ${badge.text} ${badge.border}`}>
                             {badge.label}
                           </span>
                         </div>
 
                         {/* Owner, City & Contact */}
-                        <div className="space-y-1.5 py-2.5 border-y border-slate-100 dark:border-[#344258] text-xs">
-                          <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
+                        <div className="space-y-1.5 py-2.5 border-y border-slate-100 dark:border-border-default text-xs">
+                          <div className="flex items-center justify-between text-slate-600 dark:text-text-muted">
                             <span>مدیر سالن:</span>
-                            <span className="font-semibold text-slate-800 dark:text-[#E7ECF5]">{salon.ownerName}</span>
+                            <span className="font-semibold text-slate-800 dark:text-text-main">{salon.ownerName}</span>
                           </div>
 
-                          <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
+                          <div className="flex items-center justify-between text-slate-600 dark:text-text-muted">
                             <span>موقعیت:</span>
-                            <span className="text-slate-700 dark:text-[#E7ECF5]">{salon.city} ({salon.province})</span>
+                            <span className="text-slate-700 dark:text-text-main">{salon.city} ({salon.province})</span>
                           </div>
 
-                          <div className="flex items-center justify-between text-slate-600 dark:text-[#9AAAC2]">
+                          <div className="flex items-center justify-between text-slate-600 dark:text-text-muted">
                             <span>شماره تماس:</span>
-                            <span className="font-mono text-slate-700 dark:text-[#E7ECF5]" dir="ltr">
+                            <span className="font-mono text-slate-700 dark:text-text-main" dir="ltr">
                               {maskPhone(salon.phone)}
                             </span>
                           </div>
@@ -504,23 +493,23 @@ export const BusinessesView: React.FC = () => {
 
                         {/* Clean Metrics Row */}
                         <div className="grid grid-cols-3 gap-2 my-3 text-center">
-                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
-                            <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">گردش ماه</span>
-                            <span className="text-xs font-bold text-emerald-600 dark:text-[#34D399] tabular-nums">
+                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-subsurface border border-slate-100 dark:border-border-default/60">
+                            <span className="text-[11px] text-text-muted dark:text-text-muted block mb-0.5">گردش ماه</span>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-status-success tabular-nums">
                               {formatCurrency(salon.monthlyRevenue, 'toman')}
                             </span>
                           </div>
 
-                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
-                            <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">نوبت‌ها</span>
-                            <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] tabular-nums">
+                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-subsurface border border-slate-100 dark:border-border-default/60">
+                            <span className="text-[11px] text-text-muted dark:text-text-muted block mb-0.5">نوبت‌ها</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-text-main tabular-nums">
                               {toPersianDigits(salon.totalAppointments)}
                             </span>
                           </div>
 
-                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-[#0D1527] border border-slate-100 dark:border-[#344258]/60">
-                            <span className="text-[10px] text-slate-500 dark:text-[#9AAAC2] block mb-0.5">پرسنل</span>
-                            <span className="text-xs font-bold text-slate-800 dark:text-[#E7ECF5] tabular-nums">
+                          <div className="p-2 rounded-xl bg-slate-50 dark:bg-subsurface border border-slate-100 dark:border-border-default/60">
+                            <span className="text-[11px] text-text-muted dark:text-text-muted block mb-0.5">پرسنل</span>
+                            <span className="text-xs font-bold text-slate-800 dark:text-text-main tabular-nums">
                               {toPersianDigits(salon.activeStaffCount)} نفر
                             </span>
                           </div>
@@ -528,10 +517,10 @@ export const BusinessesView: React.FC = () => {
                       </div>
 
                       {/* Footer: Plan Badge & Action Buttons */}
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#344258]">
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default">
                         <button
                           onClick={() => openPlanModal(salon)}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 bg-slate-100 dark:bg-[#18243A] border-slate-200 dark:border-[#344258] text-slate-700 dark:text-[#E7ECF5]"
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 bg-slate-100 dark:bg-elevated border-slate-200 dark:border-border-default text-slate-700 dark:text-text-main"
                         >
                           <span>{salon.plan === 'gold_vip' ? 'بسته VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}</span>
                           <Edit2 className="w-2.5 h-2.5 opacity-60" />
@@ -540,7 +529,7 @@ export const BusinessesView: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => setInspectedSalon(salon)}
-                            className="p-1.5 text-slate-500 hover:text-slate-800 dark:text-[#9AAAC2] dark:hover:text-[#E7ECF5] hover:bg-slate-100 dark:hover:bg-[#18243A] rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 text-text-muted hover:text-slate-800 dark:text-text-muted dark:hover:text-text-main hover:bg-slate-100 dark:hover:bg-elevated rounded-lg transition-colors cursor-pointer"
                             title="مشاهده جزئیات کامل"
                           >
                             <Eye className="w-4 h-4" />
@@ -549,7 +538,7 @@ export const BusinessesView: React.FC = () => {
                           {salon.status === 'pending' && (
                             <button
                               onClick={() => openStatusChangeModal(salon, 'active')}
-                              className="px-2.5 py-1 text-xs font-semibold bg-[#059669] hover:bg-[#047857] dark:bg-[#34D399] dark:hover:bg-[#10B981] text-white dark:text-[#0B1120] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                              className="px-2.5 py-1 text-xs font-semibold bg-[#047857] hover:bg-[#065F46] dark:bg-status-success dark:hover:bg-[#10B981] text-white dark:text-canvas rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                               title="تایید سالن"
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -560,7 +549,7 @@ export const BusinessesView: React.FC = () => {
                           {salon.status === 'active' && (
                             <button
                               onClick={() => openStatusChangeModal(salon, 'suspended')}
-                              className="p-1.5 text-amber-600 dark:text-[#FBBF24] hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-amber-600 dark:text-status-warning hover:bg-amber-50 dark:hover:bg-amber-950/30 rounded-lg transition-colors cursor-pointer"
                               title="تعلیق فعالیت"
                             >
                               <AlertTriangle className="w-4 h-4" />
@@ -570,7 +559,7 @@ export const BusinessesView: React.FC = () => {
                           {salon.status === 'suspended' && (
                             <button
                               onClick={() => openStatusChangeModal(salon, 'active')}
-                              className="p-1.5 text-emerald-600 dark:text-[#34D399] hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
+                              className="p-1.5 text-emerald-600 dark:text-status-success hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                               title="فعال‌سازی مجدد"
                             >
                               <CheckCircle className="w-4 h-4" />
@@ -615,12 +604,12 @@ export const BusinessesView: React.FC = () => {
 
       {/* VIEW 2: COMPACT CLEAN TABLE (ALTERNATIVE) */}
       {viewMode === 'table' && (
-        <div className="rounded-2xl bg-white dark:bg-[#111B2E] border border-slate-200 dark:border-[#344258] overflow-hidden shadow-xs">
+        <div className="rounded-2xl bg-white dark:bg-surface border border-slate-200 dark:border-border-default overflow-hidden">
           {filteredSalons.length > 0 ? (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 dark:bg-[#0D1527] border-b border-slate-200 dark:border-[#344258] text-slate-500 dark:text-[#9AAAC2] font-semibold">
+                <table className="w-full text-right text-sm">
+                  <thead className="border-b border-border-default text-xs font-medium text-text-muted">
                     <tr>
                       <th className="py-3 px-4">نام سالن و دسته‌بندی</th>
                       <th className="py-3 px-4">مدیر و تماس</th>
@@ -632,41 +621,41 @@ export const BusinessesView: React.FC = () => {
                       <th className="py-3 px-4 text-center">عملیات</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-[#344258] text-slate-700 dark:text-[#E7ECF5]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-border-default text-slate-700 dark:text-text-main">
                     {paginatedSalons.map((salon) => {
                       const badge = getStatusBadge(salon.status);
 
                       return (
-                        <tr key={salon.id} className="hover:bg-slate-50/60 dark:hover:bg-[#18243A]/50 transition-colors">
+                        <tr key={salon.id} className="hover:bg-slate-50/60 dark:hover:bg-elevated/50 transition-colors">
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#18243A] flex items-center justify-center font-bold text-[#E11D48] dark:text-[#F43F7A] shrink-0 border border-slate-200 dark:border-[#344258]">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-elevated flex items-center justify-center font-bold text-text-main shrink-0 border border-border-default">
                                 {salon.name.slice(0, 1)}
                               </div>
                               <div>
-                                <span className="font-bold text-slate-900 dark:text-[#E7ECF5] block">{salon.name}</span>
-                                <span className="text-[11px] text-slate-500 dark:text-[#9AAAC2]">{salon.category}</span>
+                                <span className="font-bold text-slate-900 dark:text-text-main block">{salon.name}</span>
+                                <span className="text-[11px] text-text-muted dark:text-text-muted">{salon.category}</span>
                               </div>
                             </div>
                           </td>
                           <td className="py-3 px-4">
                             <span className="block font-medium">{salon.ownerName}</span>
-                            <span className="font-mono text-[11px] text-slate-500 dark:text-[#9AAAC2]" dir="ltr">{maskPhone(salon.phone)}</span>
+                            <span className="font-mono text-[11px] text-text-muted dark:text-text-muted" dir="ltr">{maskPhone(salon.phone)}</span>
                           </td>
-                          <td className="py-3 px-4 text-slate-600 dark:text-[#9AAAC2] hidden md:table-cell">{salon.city}</td>
+                          <td className="py-3 px-4 text-slate-600 dark:text-text-muted hidden md:table-cell">{salon.city}</td>
                           <td className="py-3 px-4 hidden sm:table-cell">
-                            <span className="text-[11px] font-semibold text-slate-700 dark:text-[#E7ECF5]">
+                            <span className="text-[11px] font-semibold text-slate-700 dark:text-text-main">
                               {salon.plan === 'gold_vip' ? 'VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-bold text-emerald-600 dark:text-[#34D399] tabular-nums hidden lg:table-cell">
+                          <td className="py-3 px-4 tabular-nums text-text-main hidden lg:table-cell">
                             {formatCurrency(salon.monthlyRevenue, 'toman')}
                           </td>
-                          <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-[#9AAAC2] hidden xl:table-cell">
+                          <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-text-muted hidden xl:table-cell">
                             {toPersianDigits(salon.activeStaffCount)} نفر
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
+                            <span className={`inline-block px-2 py-0.5 text-[11px] rounded-md font-medium border ${badge.bg} ${badge.text} ${badge.border}`}>
                               {badge.label}
                             </span>
                           </td>
@@ -674,7 +663,7 @@ export const BusinessesView: React.FC = () => {
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 onClick={() => setInspectedSalon(salon)}
-                                className="p-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-[#E7ECF5] rounded-lg"
+                                className="p-1.5 text-text-subtle hover:text-slate-800 dark:hover:text-text-main rounded-lg"
                                 title="جزئیات"
                               >
                                 <Eye className="w-4 h-4" />
@@ -682,7 +671,7 @@ export const BusinessesView: React.FC = () => {
                               {salon.status === 'pending' && (
                                 <button
                                   onClick={() => openStatusChangeModal(salon, 'active')}
-                                  className="p-1.5 text-emerald-600 dark:text-[#34D399] rounded-lg hover:bg-emerald-50 dark:hover:bg-[#34D399]/15"
+                                  className="p-1.5 text-emerald-600 dark:text-status-success rounded-lg hover:bg-emerald-50 dark:hover:bg-status-success/15"
                                   title="تایید"
                                 >
                                   <Check className="w-4 h-4" />
@@ -729,25 +718,25 @@ export const BusinessesView: React.FC = () => {
 
       {/* Inspected Salon Side Drawer */}
       {inspectedSalon && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 animate-in fade-in duration-200">
           <div className="fixed inset-0" onClick={() => setInspectedSalon(null)}></div>
 
-          <div className="relative w-full max-w-md h-full bg-white dark:bg-[#18243A] border-r border-stone-200 dark:border-[#344258] shadow-2xl p-6 overflow-y-auto space-y-5 text-right z-10 text-zinc-900 dark:text-[#E7ECF5]">
+          <div className="relative w-full max-w-md h-full bg-white dark:bg-elevated border-r border-stone-200 dark:border-border-default shadow-2xl p-6 overflow-y-auto space-y-5 text-right z-10 text-zinc-900 dark:text-text-main">
             {/* Drawer Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-[#344258]">
+            <div className="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-border-default">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold">{inspectedSalon.name}</h3>
-                  <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border ${getStatusBadge(inspectedSalon.status).bg} ${getStatusBadge(inspectedSalon.status).text} ${getStatusBadge(inspectedSalon.status).border}`}>
+                  <span className={`px-2 py-0.5 text-[11px] rounded-md font-medium border ${getStatusBadge(inspectedSalon.status).bg} ${getStatusBadge(inspectedSalon.status).text} ${getStatusBadge(inspectedSalon.status).border}`}>
                     {getStatusBadge(inspectedSalon.status).label}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">{inspectedSalon.category}</p>
+                <p className="text-xs text-text-muted mt-1">{inspectedSalon.category}</p>
               </div>
 
               <button
                 onClick={() => setInspectedSalon(null)}
-                className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1.5 text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -758,7 +747,7 @@ export const BusinessesView: React.FC = () => {
               {inspectedSalon.status === 'pending' && (
                 <button
                   onClick={() => openStatusChangeModal(inspectedSalon, 'active')}
-                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                  className="flex-1 py-2 text-xs font-semibold bg-emerald-700 hover:bg-emerald-700 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>تایید سالن</span>
@@ -768,7 +757,7 @@ export const BusinessesView: React.FC = () => {
               {inspectedSalon.status === 'active' && (
                 <button
                   onClick={() => openStatusChangeModal(inspectedSalon, 'suspended')}
-                  className="flex-1 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                  className="flex-1 py-2 text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <AlertTriangle className="w-4 h-4" />
                   <span>تعلیق موقت</span>
@@ -778,7 +767,7 @@ export const BusinessesView: React.FC = () => {
               {inspectedSalon.status === 'suspended' && (
                 <button
                   onClick={() => openStatusChangeModal(inspectedSalon, 'active')}
-                  className="flex-1 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                  className="flex-1 py-2 text-xs font-semibold bg-emerald-700 hover:bg-emerald-700 text-white rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle className="w-4 h-4" />
                   <span>رفع تعلیق</span>
@@ -795,45 +784,45 @@ export const BusinessesView: React.FC = () => {
 
             {/* Key Facts Grid */}
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 bg-stone-50 dark:bg-[#111B2E] rounded-xl border border-stone-200/80 dark:border-[#344258]">
-                <span className="text-zinc-500 block mb-1">گردش مالی ماه</span>
+              <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
+                <span className="text-text-muted block mb-1">گردش مالی ماه</span>
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   {formatCurrency(inspectedSalon.monthlyRevenue, 'toman')}
                 </span>
               </div>
 
-              <div className="p-3 bg-stone-50 dark:bg-[#111B2E] rounded-xl border border-stone-200/80 dark:border-[#344258]">
-                <span className="text-zinc-500 block mb-1">کل نوبت‌ها</span>
+              <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
+                <span className="text-text-muted block mb-1">کل نوبت‌ها</span>
                 <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
                   {formatNumber(inspectedSalon.totalAppointments)}
                 </span>
               </div>
 
-              <div className="p-3 bg-stone-50 dark:bg-[#111B2E] rounded-xl border border-stone-200/80 dark:border-[#344258]">
-                <span className="text-zinc-500 block mb-1">تعداد پرسنل</span>
+              <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
+                <span className="text-text-muted block mb-1">تعداد پرسنل</span>
                 <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 tabular-nums">
                   {toPersianDigits(inspectedSalon.activeStaffCount)} نفر
                 </span>
               </div>
 
-              <div className="p-3 bg-stone-50 dark:bg-[#111B2E] rounded-xl border border-stone-200/80 dark:border-[#344258]">
-                <span className="text-zinc-500 block mb-1">پلن اشتراک</span>
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+              <div className="p-3 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default">
+                <span className="text-text-muted block mb-1">پلن اشتراک</span>
+                <span className="text-sm font-bold text-amber-800 dark:text-amber-300">
                   {inspectedSalon.plan === 'gold_vip' ? 'ویژه VIP' : inspectedSalon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}
                 </span>
               </div>
             </div>
 
             {/* Manager Contact & Location */}
-            <div className="p-4 bg-stone-50 dark:bg-[#111B2E] rounded-xl border border-stone-200/80 dark:border-[#344258] space-y-2.5 text-xs">
-              <h4 className="font-bold text-zinc-900 dark:text-[#E7ECF5]">مشخصات تماس و نشانی</h4>
+            <div className="p-4 bg-stone-50 dark:bg-surface rounded-xl border border-stone-200/80 dark:border-border-default space-y-2.5 text-xs">
+              <h4 className="font-bold text-zinc-900 dark:text-text-main">مشخصات تماس و نشانی</h4>
               
-              <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+              <div className="flex items-center justify-between text-zinc-600 dark:text-text-muted">
                 <span>مدیر:</span>
                 <span className="font-semibold text-zinc-800 dark:text-zinc-200">{inspectedSalon.ownerName}</span>
               </div>
 
-              <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+              <div className="flex items-center justify-between text-zinc-600 dark:text-text-muted">
                 <span>شماره تماس:</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-zinc-800 dark:text-zinc-200" dir="ltr">
@@ -841,20 +830,20 @@ export const BusinessesView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => setRevealPhone(!revealPhone)}
-                    className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                    className="text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200"
                   >
                     {revealPhone ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-zinc-600 dark:text-[#9AAAC2]">
+              <div className="flex items-center justify-between text-zinc-600 dark:text-text-muted">
                 <span>ایمیل:</span>
-                <span className="font-mono text-zinc-700 dark:text-[#9AAAC2]" dir="ltr">{inspectedSalon.email}</span>
+                <span className="font-mono text-zinc-700 dark:text-text-muted" dir="ltr">{inspectedSalon.email}</span>
               </div>
 
-              <div className="pt-2 border-t border-stone-200 dark:border-[#344258] text-zinc-600 dark:text-[#9AAAC2]">
-                <span className="block text-zinc-500 mb-0.5">نشانی دقیق:</span>
+              <div className="pt-2 border-t border-stone-200 dark:border-border-default text-zinc-600 dark:text-text-muted">
+                <span className="block text-text-muted mb-0.5">نشانی دقیق:</span>
                 <p className="leading-relaxed text-zinc-800 dark:text-zinc-200">
                   {inspectedSalon.province}، {inspectedSalon.address}
                 </p>
@@ -863,7 +852,7 @@ export const BusinessesView: React.FC = () => {
 
             {/* Notes */}
             <div className="space-y-1.5 text-xs">
-              <h4 className="font-bold text-zinc-900 dark:text-[#E7ECF5]">یادداشت نظارتی</h4>
+              <h4 className="font-bold text-zinc-900 dark:text-text-main">یادداشت نظارتی</h4>
               <textarea
                 value={inspectedSalon.notes || ''}
                 onChange={(e) => {
@@ -873,7 +862,7 @@ export const BusinessesView: React.FC = () => {
                 }}
                 rows={3}
                 placeholder="یادداشت در مورد سالن، مدارک و سوابق..."
-                className="w-full p-2.5 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-rose-500"
+                className="w-full p-2.5 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:border-rose-500"
               />
             </div>
           </div>
@@ -882,18 +871,18 @@ export const BusinessesView: React.FC = () => {
 
       {/* Add New Salon Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-150">
           <div className="fixed inset-0" onClick={() => setIsAddModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
-                <Plus className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+          <div className="relative w-full max-w-lg bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-border-default">
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
+                <Plus className="w-4 h-4 text-rose-700 dark:text-rose-400" />
                 ثبت سالن جدید
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1 text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -901,24 +890,24 @@ export const BusinessesView: React.FC = () => {
 
             <form onSubmit={handleCreateSalon} className="space-y-4 text-xs">
               <div>
-                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نام سالن *</label>
+                <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">نام سالن *</label>
                 <input
                   type="text"
                   required
                   value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="مثال: سالن تخصصی مهسا"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">دسته‌بندی</label>
+                  <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">دسته‌بندی</label>
                   <select
                     value={formData.category || 'سالن عمومی بانوان'}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   >
                     <option value="سالن تخصصی عروس و زیبایی">سالن عروس و زیبایی</option>
                     <option value="کلینیک پوست و فیشیال">کلینیک پوست و فیشیال</option>
@@ -929,11 +918,11 @@ export const BusinessesView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">پلن اشتراک</label>
+                  <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">پلن اشتراک</label>
                   <select
                     value={formData.plan || 'bronze'}
                     onChange={(e) => setFormData({ ...formData, plan: e.target.value as PlanType })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   >
                     <option value="bronze">پایه (برنزی)</option>
                     <option value="silver">حرفه‌ای (نقره‌ای)</option>
@@ -944,19 +933,19 @@ export const BusinessesView: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نام مدیر *</label>
+                  <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">نام مدیر *</label>
                   <input
                     type="text"
                     required
                     value={formData.ownerName || ''}
                     onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                     placeholder="مثال: سارا محمدی"
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">شماره تماس مدیر *</label>
+                  <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">شماره تماس مدیر *</label>
                   <input
                     type="tel"
                     required
@@ -964,18 +953,18 @@ export const BusinessesView: React.FC = () => {
                     value={formData.phone || ''}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="09121234567"
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500 font-mono text-left"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500 font-mono text-left"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">استان</label>
+                  <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">استان</label>
                   <select
                     value={formData.province || 'تهران'}
                     onChange={(e) => setFormData({ ...formData, province: e.target.value, city: e.target.value })}
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-800 dark:text-zinc-200 focus:outline-none focus:border-rose-500 cursor-pointer"
                   >
                     <option value="تهران">تهران</option>
                     <option value="اصفهان">اصفهان</option>
@@ -987,39 +976,39 @@ export const BusinessesView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">شهر / محله</label>
+                  <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">شهر / محله</label>
                   <input
                     type="text"
                     value={formData.city || ''}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="مثال: تهران (سعادت‌آباد)"
-                    className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                    className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-zinc-700 dark:text-[#9AAAC2] font-semibold mb-1">نشانی سالن</label>
+                <label className="block text-zinc-700 dark:text-text-muted font-semibold mb-1">نشانی سالن</label>
                 <input
                   type="text"
                   value={formData.address || ''}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="خیابان، پلاک، طبقه و واحد"
-                  className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                  className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-[#344258]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-border-default">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2 text-xs font-medium text-zinc-600 dark:text-text-muted hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+                  className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer"
                 >
                   ثبت سالن
                 </button>
@@ -1031,18 +1020,18 @@ export const BusinessesView: React.FC = () => {
 
       {/* Plan Changer Modal */}
       {isPlanModalOpen && targetSalonForPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-150">
           <div className="fixed inset-0" onClick={() => setIsPlanModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-md bg-white dark:bg-[#18243A] border border-stone-200 dark:border-[#344258] rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-[#344258]">
+          <div className="relative w-full max-w-md bg-white dark:bg-elevated border border-stone-200 dark:border-border-default rounded-2xl shadow-2xl p-6 z-10 text-right space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-border-default">
               <div>
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5]">تغییر پلن اشتراک</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">{targetSalonForPlan.name}</p>
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main">تغییر پلن اشتراک</h3>
+                <p className="text-xs text-text-muted mt-0.5">{targetSalonForPlan.name}</p>
               </div>
               <button
                 onClick={() => setIsPlanModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
+                className="p-1 text-text-subtle hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1057,25 +1046,25 @@ export const BusinessesView: React.FC = () => {
                 <div
                   key={p.id}
                   onClick={() => setSelectedPlanOption(p.id)}
-                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                  className={`p-3 rounded-xl border cursor-pointer transition-colors ${
                     selectedPlanOption === p.id
-                      ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20 shadow-xs'
-                      : 'border-stone-200 dark:border-[#344258] hover:border-stone-300'
+                      ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/20'
+                      : 'border-stone-200 dark:border-border-default hover:border-stone-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between font-bold text-zinc-900 dark:text-[#E7ECF5]">
+                  <div className="flex items-center justify-between font-bold text-zinc-900 dark:text-text-main">
                     <span>{p.title}</span>
-                    <span className="text-rose-600 dark:text-rose-400 text-[11px]">{p.price}</span>
+                    <span className="text-rose-700 dark:text-rose-400 text-[11px]">{p.price}</span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 mt-1">{p.desc}</p>
+                  <p className="text-[11px] text-text-muted mt-1">{p.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-200 dark:border-[#344258]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-200 dark:border-border-default">
               <button
                 onClick={() => setIsPlanModalOpen(false)}
-                className="px-4 py-2 text-xs text-zinc-600 dark:text-[#9AAAC2] hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl"
+                className="px-4 py-2 text-xs text-zinc-600 dark:text-text-muted hover:text-zinc-900 bg-stone-100 dark:bg-zinc-800 rounded-xl"
               >
                 انصراف
               </button>

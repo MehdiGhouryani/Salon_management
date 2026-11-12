@@ -45,7 +45,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           {toPersianDigits(endItem)}
         </span>
         <span>از کل</span>
-        <span className="font-bold text-[var(--brand-primary)] tabular-nums">
+        <span className="font-bold text-[var(--brand-accent)] tabular-nums">
           {toPersianDigits(totalItems)}
         </span>
         <span>{itemLabel}</span>

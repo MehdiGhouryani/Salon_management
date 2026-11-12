@@ -95,7 +95,7 @@ export const StatusReasonModal: React.FC<StatusReasonModalProps> = ({
               if (error) setError(null);
             }}
             placeholder={placeholder}
-            className="w-full px-3.5 py-2.5 bg-[var(--bg-subsurface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15 transition-all leading-relaxed"
+            className="w-full px-3.5 py-2.5 bg-[var(--bg-subsurface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]/15 transition-colors leading-relaxed"
             required
           />
           <p className="text-[11px] text-[var(--text-muted)] mt-1">
@@ -111,7 +111,7 @@ export const StatusReasonModal: React.FC<StatusReasonModalProps> = ({
         )}
 
         <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)] mt-2">
-          <span className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+          <span className="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5 text-[var(--status-success)]" />
             <span>ثبت امن با شناسه اپراتور</span>
           </span>

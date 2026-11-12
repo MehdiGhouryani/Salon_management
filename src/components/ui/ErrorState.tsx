@@ -10,35 +10,33 @@ export interface ErrorStateProps {
   className?: string;
 }
 
+/**
+ * Inside the block that failed, never a full-screen banner: one sentence about what failed and a
+ * retry. The error colour lives only on the small icon; the frame stays neutral.
+ */
 export const ErrorState: React.FC<ErrorStateProps> = ({
   title = 'خطا در بارگذاری اطلاعات',
-  message = 'در برقراری ارتباط با سرور مشکلی رخ داده است. لطفاً اتصال اینترنت خود را بررسی کرده و مجدداً تلاش فرمایید.',
+  message = 'ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.',
   onRetry,
   actionLabel = 'تلاش مجدد',
   className = '',
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center text-center p-6 sm:p-10 rounded-2xl border border-[var(--status-error-border)] bg-[var(--status-error-bg)] text-[var(--text-primary)] ${className}`}
+      className={`flex flex-col items-center justify-center text-center px-6 py-8 sm:py-10 rounded-2xl border border-[var(--border-default)] text-[var(--text-primary)] ${className}`}
       dir="rtl"
       role="alert"
     >
-      <div
-        className="w-12 h-12 rounded-2xl bg-[var(--bg-surface)] text-[var(--status-error)] flex items-center justify-center mb-3.5 shadow-xs border border-[var(--status-error-border)]"
-        aria-hidden="true"
-      >
-        <AlertCircle className="w-6 h-6" />
+      <div className="flex items-center gap-2 text-[var(--status-error)]" aria-hidden="true">
+        <AlertCircle className="w-4 h-4 shrink-0" />
       </div>
-      <h4 className="text-sm sm:text-base font-bold text-[var(--text-primary)] mb-1.5">
-        {title}
-      </h4>
-      <p className="text-xs text-[var(--text-secondary)] max-w-sm leading-relaxed mb-4">
-        {message}
-      </p>
+      <h4 className="text-sm font-semibold text-[var(--text-primary)] mt-2">{title}</h4>
+      <p className="text-sm text-[var(--text-secondary)] max-w-sm mt-1">{message}</p>
       {onRetry && (
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
+          className="mt-4"
           onClick={onRetry}
           rightIcon={<RefreshCw className="w-3.5 h-3.5" />}
         >

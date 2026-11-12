@@ -27,7 +27,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   return (
     <div
       aria-hidden="true"
-      className={`bg-[var(--bg-elevated)] border border-[var(--border-subtle)] ${variantClasses[variant]} ${animationClass} ${className}`}
+      className={`bg-[var(--bg-elevated)] ${variantClasses[variant]} ${animationClass} ${className}`}
       style={{
         width,
         height,

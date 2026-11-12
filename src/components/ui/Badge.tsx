@@ -27,19 +27,19 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variantStyles: Record<BadgeVariant, string> = {
     neutral:
-      'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)]',
+      'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-default)]',
     brand:
-      'bg-[var(--brand-subdued)] text-[var(--brand-primary)] border-[var(--brand-border)]',
+      'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border-transparent',
     success:
-      'bg-[var(--status-success-bg)] text-[var(--status-success)] border-[var(--status-success-border)]',
+      'bg-[var(--status-success-bg)] text-[var(--status-success)] border-transparent',
     warning:
-      'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-[var(--status-warning-border)]',
+      'bg-[var(--status-warning-bg)] text-[var(--status-warning)] border-transparent',
     error:
-      'bg-[var(--status-error-bg)] text-[var(--status-error)] border-[var(--status-error-border)]',
+      'bg-[var(--status-error-bg)] text-[var(--status-error)] border-transparent',
     info:
-      'bg-[var(--status-info-bg)] text-[var(--status-info)] border-[var(--status-info-border)]',
+      'bg-[var(--status-info-bg)] text-[var(--status-info)] border-transparent',
     purple:
-      'bg-[var(--status-purple-bg)] text-[var(--status-purple)] border-[var(--status-purple-border)]',
+      'bg-[var(--status-purple-bg)] text-[var(--status-purple)] border-transparent',
   };
 
   const dotColors: Record<BadgeVariant, string> = {
@@ -53,8 +53,8 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const sizeClasses: Record<BadgeSize, string> = {
-    sm: 'px-2 py-0.2 text-[10px] rounded-md',
-    md: 'px-2.5 py-0.5 text-xs rounded-lg',
+    sm: 'px-2 py-0.5 text-[11px] rounded-full',
+    md: 'px-2.5 py-0.5 text-xs rounded-full',
   };
 
   return (

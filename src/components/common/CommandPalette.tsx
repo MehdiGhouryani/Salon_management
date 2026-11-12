@@ -84,7 +84,7 @@ export const CommandPalette: React.FC = () => {
       <div className="relative w-full max-w-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[80vh] text-[var(--text-primary)]">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--border-subtle)]">
-          <Search className="w-5 h-5 text-[var(--brand-primary)] shrink-0" />
+          <Search className="w-5 h-5 text-[var(--brand-accent)] shrink-0" />
           <input
             type="text"
             value={search}
@@ -130,7 +130,7 @@ export const CommandPalette: React.FC = () => {
                       className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[var(--bg-elevated)] text-[var(--text-primary)] transition-colors text-right cursor-pointer"
                     >
                       <span className="flex items-center gap-2.5">
-                        <Icon className="w-4 h-4 text-[var(--brand-primary)]" />
+                        <Icon className="w-4 h-4 text-[var(--brand-accent)]" />
                         <span className="font-medium">{act.label}</span>
                       </span>
                       <ArrowRight className="w-3.5 h-3.5 text-[var(--text-muted)]" />
@@ -167,7 +167,7 @@ export const CommandPalette: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
                       مشاهده جزئیات
                     </span>
                   </button>
@@ -201,7 +201,7 @@ export const CommandPalette: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-[var(--bg-subsurface)] text-[var(--text-secondary)] border border-[var(--border-subtle)] font-medium">
                       مدیریت کاربر
                     </span>
                   </button>

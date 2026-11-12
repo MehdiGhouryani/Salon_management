@@ -2,10 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   Search,
-  Plus,
-  Shield,
-  Smartphone,
-  Mail,
   Lock,
   Unlock,
   CheckCircle2,
@@ -14,9 +10,7 @@ import {
   UserPlus,
   LayoutGrid,
   List,
-  Store,
   MoreVertical,
-  Filter,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { User, UserRole } from '../../types/admin';
@@ -199,7 +193,7 @@ export const UsersView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-            <Users className="w-5 h-5 text-[var(--brand-primary)]" />
+            <Users className="w-5 h-5 text-[var(--brand-accent)]" />
             مدیریت کاربران، مدیران و پرسنل
           </h2>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
@@ -209,12 +203,12 @@ export const UsersView: React.FC = () => {
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
           {/* View Mode Toggle */}
-          <div className="flex items-center p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl shadow-xs">
+          <div className="flex items-center p-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl">
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] shadow-xs'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش کارتی شبکه‌ای"
@@ -224,9 +218,9 @@ export const UsersView: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-primary)] shadow-xs'
+                  ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)]'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               title="نمایش جدول فشرده"
@@ -248,7 +242,7 @@ export const UsersView: React.FC = () => {
       </div>
 
       {/* Role Filter Tabs & Result Count */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs">
         <div className="flex flex-wrap items-center gap-1">
           {[
             { id: 'all', label: 'همه کاربران', count: users.length },
@@ -262,15 +256,15 @@ export const UsersView: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setRoleFilter(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all cursor-pointer font-medium ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-colors cursor-pointer font-medium ${
                   isSelected
-                    ? 'bg-[var(--brand-primary)] text-white font-bold shadow-xs'
+                    ? 'bg-[var(--brand-primary)] text-white font-bold'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold tabular-nums ${
+                  className={`px-1.5 py-0.2 rounded-full text-[11px] font-bold tabular-nums ${
                     isSelected ? 'bg-white/20 text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
                   }`}
                 >
@@ -298,14 +292,14 @@ export const UsersView: React.FC = () => {
 
           <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
             <span>نمایش </span>
-            <strong className="text-[var(--brand-primary)]">{toPersianDigits(filteredUsers.length)}</strong>
+            <strong className="text-[var(--brand-accent)]">{toPersianDigits(filteredUsers.length)}</strong>
             <span> از {toPersianDigits(users.length)}</span>
           </div>
         </div>
       </div>
 
       {/* Debounced Search Bar */}
-      <div className="p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs">
+      <div className="p-3 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
         <Input
           size="sm"
           value={search}
@@ -340,13 +334,13 @@ export const UsersView: React.FC = () => {
                   return (
                     <div
                       key={user.id}
-                      className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] shadow-xs hover:border-[var(--brand-border)] transition-all flex flex-col justify-between"
+                      className="p-5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:border-[var(--brand-border)] transition-colors flex flex-col justify-between"
                     >
                       <div>
                         {/* Top: Avatar, Name & Role Badge */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[var(--brand-primary)] shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[var(--brand-accent)] shrink-0">
                               {user.name.slice(0, 1)}
                             </div>
                             <div className="min-w-0">
@@ -359,7 +353,7 @@ export const UsersView: React.FC = () => {
                             </div>
                           </div>
 
-                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-medium border shrink-0 ${roleBadge.color}`}>
+                          <span className={`px-2 py-0.5 text-[11px] rounded-md font-medium border shrink-0 ${roleBadge.color}`}>
                             {roleBadge.label}
                           </span>
                         </div>
@@ -369,7 +363,7 @@ export const UsersView: React.FC = () => {
                           <div className="flex items-center justify-between text-[var(--text-secondary)]">
                             <span>ایمیل:</span>
                             <span className="font-mono text-[var(--text-primary)] truncate max-w-[170px]" dir="ltr">
-                              {user.email}
+                              <span dir="ltr">{user.email}</span>
                             </span>
                           </div>
 
@@ -476,7 +470,7 @@ export const UsersView: React.FC = () => {
           {filteredUsers.length > 0 ? (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
+                <table className="w-full text-right text-sm">
                   <thead className="nobat-table-header">
                     <tr>
                       <th className="py-3 px-4">نام کاربر</th>
@@ -495,7 +489,7 @@ export const UsersView: React.FC = () => {
                         <tr key={user.id} className="nobat-table-row">
                           <td className="py-3 px-4 font-bold text-[var(--text-primary)]">
                             <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-lg bg-[var(--bg-elevated)] text-[var(--brand-primary)] flex items-center justify-center font-bold text-xs shrink-0">
+                              <div className="w-7 h-7 rounded-lg bg-[var(--bg-elevated)] text-[var(--brand-accent)] flex items-center justify-center font-bold text-xs shrink-0">
                                 {user.name.slice(0, 1)}
                               </div>
                               <span>{user.name}</span>
@@ -507,14 +501,12 @@ export const UsersView: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 text-[var(--text-secondary)] hidden md:table-cell">{user.salonName || 'دفتر مرکزی'}</td>
                           <td className="py-3 px-4">
-                            <span className={`inline-block px-2 py-0.5 text-[10px] rounded-md font-medium border ${roleBadge.color}`}>
+                            <span className="text-xs text-[var(--text-secondary)]">
                               {roleBadge.label}
                             </span>
                           </td>
                           <td className="py-3 px-4 hidden lg:table-cell">
-                            <Badge variant={user.twoFactorEnabled ? 'success' : 'neutral'} size="sm">
-                              {user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}
-                            </Badge>
+                            <span className={`text-xs ${user.twoFactorEnabled ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
                           </td>
                           <td className="py-3 px-4">
                             <Badge variant={user.status === 'active' ? 'success' : 'error'} size="sm">
@@ -524,29 +516,11 @@ export const UsersView: React.FC = () => {
                           <td className="py-3 px-4 text-center">
                             {/* Desktop row action buttons */}
                             <div className="hidden sm:flex items-center justify-center gap-1.5">
-                              <Button
-                                variant="outline"
-                                size="xs"
-                                onClick={() => openRoleModal(user)}
-                              >
-                                نقش
-                              </Button>
+                              <button type="button" onClick={() => openRoleModal(user)} className="px-2 py-1 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline cursor-pointer">نقش</button>
                               {user.status === 'active' ? (
-                                <Button
-                                  variant="danger"
-                                  size="xs"
-                                  onClick={() => openStatusChangeModal(user, 'banned')}
-                                >
-                                  مسدود
-                                </Button>
+                                <button type="button" onClick={() => openStatusChangeModal(user, 'banned')} className="px-2 py-1 text-xs font-semibold text-[var(--status-error)] hover:underline cursor-pointer">مسدود</button>
                               ) : (
-                                <Button
-                                  variant="success"
-                                  size="xs"
-                                  onClick={() => openStatusChangeModal(user, 'active')}
-                                >
-                                  رفع مسدود
-                                </Button>
+                                <button type="button" onClick={() => openStatusChangeModal(user, 'active')} className="px-2 py-1 text-xs font-semibold text-[var(--status-success)] hover:underline cursor-pointer">رفع مسدود</button>
                               )}
                             </div>
 

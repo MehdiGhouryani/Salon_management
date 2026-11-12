@@ -6,15 +6,10 @@ import {
   User,
   Plus,
   CheckCircle2,
-  DollarSign,
   Scissors,
   Check,
   X,
-  Phone,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
   Star,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
@@ -156,22 +151,22 @@ export const SalonSimulatorView: React.FC = () => {
       {/* Header & Salon Switcher */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-rose-400" />
             شبیه‌ساز زنده اپلیکیشن سالن‌دستیار (Companion Salon App)
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-text-subtle mt-1">
             مشاهده و تست عملکرد دستیار سالن و نوبت‌دهی آنلاین از نگاه مدیر و مشتریان هر سالن در شبکه
           </p>
         </div>
 
         {/* Salon Selector */}
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-400 font-medium">مشاهده عملکرد سالن:</span>
+          <span className="text-text-subtle font-medium">مشاهده عملکرد سالن:</span>
           <select
             value={currentSalon?.id}
             onChange={(e) => setSimulatorSalonId(e.target.value)}
-            className="px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-200 font-bold focus:outline-none focus:border-rose-500 cursor-pointer shadow"
+            className="px-3.5 py-2 bg-surface border border-border-default rounded-xl text-text-main font-semibold focus:outline-none focus:border-brand cursor-pointer"
           >
             {salons.map((s) => (
               <option key={s.id} value={s.id}>
@@ -183,13 +178,13 @@ export const SalonSimulatorView: React.FC = () => {
       </div>
 
       {/* Policy Notice: In-person Payment for Appointments */}
-      <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 flex items-start gap-3">
+      <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 flex items-start gap-3">
         <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
         <div className="space-y-0.5">
-          <p className="font-bold text-indigo-200">
+          <p className="font-bold text-indigo-900 dark:text-indigo-200">
             مدل تسویه نوبت‌ها: منحصراً حضوری در سالن (نقد و کارتخوان سالن)
           </p>
-          <p className="text-[11px] text-indigo-300/80 leading-relaxed">
+          <p className="text-[11px] text-indigo-700/90 dark:text-indigo-300/80 leading-relaxed">
             مشتریان نوبت‌ها به درگاه پرداخت اینترنتی متصل نمی‌شوند؛ برنامه فقط قیمت مصوب را نمایش داده و رزرو را ثبت می‌کند. پرداخت نهایی در محل سالن انجام می‌شود. درگاه‌های بانکی سیستم صرفاً برای خرید اشتراک سالن‌ها است.
           </p>
         </div>
@@ -198,30 +193,30 @@ export const SalonSimulatorView: React.FC = () => {
       {/* Simulator Presentation Container */}
       <div className="flex justify-center py-2">
         {/* Mobile Device Frame */}
-        <div className="w-full max-w-md bg-[#0B1120] border-4 border-[#344258] rounded-[38px] shadow-2xl overflow-hidden text-xs flex flex-col min-h-[640px] relative text-[#E7ECF5]">
+        <div className="w-full max-w-md bg-dk-canvas border-4 border-dk-border rounded-[38px] shadow-2xl overflow-hidden text-xs flex flex-col min-h-[640px] relative text-dk-text">
           {/* Mobile Speaker & Camera Notch */}
-          <div className="h-6 bg-[#0B1120] flex items-center justify-center relative">
-            <div className="w-20 h-3.5 bg-[#111B2E] rounded-full flex items-center justify-center border border-[#344258]">
-              <div className="w-2 h-2 rounded-full bg-[#18243A] mr-2"></div>
+          <div className="h-6 bg-dk-canvas flex items-center justify-center relative">
+            <div className="w-20 h-3.5 bg-dk-surface rounded-full flex items-center justify-center border border-dk-border">
+              <div className="w-2 h-2 rounded-full bg-dk-elevated mr-2"></div>
             </div>
           </div>
 
           {/* Salon App Header */}
-          <div className="p-4 bg-[#111B2E] border-b border-[#344258] flex items-center justify-between">
+          <div className="p-4 bg-dk-surface border-b border-dk-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow">
+              <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white font-bold text-sm shadow">
                 {currentSalon?.name.slice(0, 1)}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-bold text-[#E7ECF5]">{currentSalon?.name}</h3>
+                  <h3 className="font-bold text-dk-text">{currentSalon?.name}</h3>
                   {currentSalon?.verifiedBadge && (
-                    <span className="text-sky-400 font-bold text-[10px]" title="تایید شده">
+                    <span className="text-sky-700 dark:text-sky-400 font-bold text-[11px]" title="تایید شده">
                       ✓
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-[#9AAAC2] mt-0.5">
+                <p className="text-[11px] text-dk-muted mt-0.5">
                   {currentSalon?.city} · مدیر: {currentSalon?.ownerName}
                 </p>
               </div>
@@ -239,23 +234,23 @@ export const SalonSimulatorView: React.FC = () => {
           </div>
 
           {/* Today Summary Strip */}
-          <div className="p-3 bg-[#111B2E]/90 border-b border-[#344258] grid grid-cols-3 gap-2 text-center text-[11px]">
-            <div className="p-2 bg-[#18243A] border border-[#344258] rounded-xl">
-              <span className="text-[#9AAAC2] block text-[10px]">نوبت‌های امروز</span>
-              <span className="font-bold text-[#E7ECF5] text-xs mt-0.5 block tabular-nums">
+          <div className="p-3 bg-dk-surface/90 border-b border-dk-border grid grid-cols-3 gap-2 text-center text-[11px]">
+            <div className="p-2 bg-dk-elevated border border-dk-border rounded-xl">
+              <span className="text-dk-muted block text-[11px]">نوبت‌های امروز</span>
+              <span className="font-bold text-dk-text text-xs mt-0.5 block tabular-nums">
                 {toPersianDigits(appointments.length)} نوبت
               </span>
             </div>
 
-            <div className="p-2 bg-[#18243A] border border-[#344258] rounded-xl">
-              <span className="text-[#9AAAC2] block text-[10px]">تکمیل شده</span>
+            <div className="p-2 bg-dk-elevated border border-dk-border rounded-xl">
+              <span className="text-dk-muted block text-[11px]">تکمیل شده</span>
               <span className="font-bold text-emerald-400 text-xs mt-0.5 block tabular-nums">
                 {toPersianDigits(completedCount)} نوبت
               </span>
             </div>
 
-            <div className="p-2 bg-[#18243A] border border-[#344258] rounded-xl">
-              <span className="text-[#9AAAC2] block text-[10px]">فروش امروز</span>
+            <div className="p-2 bg-dk-elevated border border-dk-border rounded-xl">
+              <span className="text-dk-muted block text-[11px]">فروش امروز</span>
               <span className="font-bold text-amber-300 text-xs mt-0.5 block tabular-nums">
                 {formatCurrency(todayRevenue, 'toman')}
               </span>
@@ -267,7 +262,7 @@ export const SalonSimulatorView: React.FC = () => {
             {/* TAB 1: Calendar & Appointments */}
             {mobileTab === 'calendar' && (
               <>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 px-1 mb-1">
+                <div className="flex items-center justify-between text-[11px] text-dk-muted px-1 mb-1">
                   <span className="font-bold text-slate-300">تقویم نوبت‌های رزرو شده</span>
                   <span>امروز</span>
                 </div>
@@ -279,19 +274,19 @@ export const SalonSimulatorView: React.FC = () => {
                   return (
                     <div
                       key={apt.id}
-                      className={`p-3 rounded-2xl border transition-all text-right space-y-2 ${
+                      className={`p-3 rounded-2xl border transition-colors text-right space-y-2 ${
                         isCompleted
-                          ? 'bg-[#18243A]/40 border-[#344258]/80 opacity-75'
+                          ? 'bg-dk-elevated/40 border-dk-border/80 opacity-75'
                           : isInProgress
                           ? 'bg-rose-500/10 border-rose-500/30'
-                          : 'bg-[#18243A] border-[#344258]'
+                          : 'bg-dk-elevated border-dk-border'
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-[#E7ECF5]">{apt.clientName}</span>
-                            <span className="text-[10px] text-[#9AAAC2] font-mono" dir="ltr">
+                            <span className="font-bold text-dk-text">{apt.clientName}</span>
+                            <span className="text-[11px] text-dk-muted font-mono" dir="ltr">
                               {apt.clientPhone}
                             </span>
                           </div>
@@ -301,8 +296,8 @@ export const SalonSimulatorView: React.FC = () => {
                         </div>
 
                         <div className="text-left">
-                          <span className="flex items-center gap-1 font-mono text-[#E7ECF5] font-bold text-xs" dir="ltr">
-                            <Clock className="w-3 h-3 text-[#9AAAC2]" /> {toPersianDigits(apt.time)}
+                          <span className="flex items-center gap-1 font-mono text-dk-text font-bold text-xs" dir="ltr">
+                            <Clock className="w-3 h-3 text-dk-muted" /> {toPersianDigits(apt.time)}
                           </span>
                           <span className="text-[11px] text-emerald-400 font-semibold block mt-0.5 tabular-nums">
                             {formatCurrency(apt.price, 'toman')}
@@ -310,8 +305,8 @@ export const SalonSimulatorView: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-[#344258]/60 text-[11px]">
-                        <div className="flex items-center gap-1.5 text-[#9AAAC2]">
+                      <div className="flex items-center justify-between pt-2 border-t border-dk-border/60 text-[11px]">
+                        <div className="flex items-center gap-1.5 text-dk-muted">
                           <span>آرایشگر: {apt.staffName}</span>
                           <span>·</span>
                           <span className="text-amber-300 font-medium bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">تسویه حضوری</span>
@@ -324,7 +319,7 @@ export const SalonSimulatorView: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => handleCompleteVisit(apt.id)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>تکمیل خدمت و ثبت تسویه</span>
@@ -340,32 +335,32 @@ export const SalonSimulatorView: React.FC = () => {
             {/* TAB 2: Clients Directory */}
             {mobileTab === 'clients' && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-[#9AAAC2] px-1 mb-1">
-                  <span className="font-bold text-[#E7ECF5]">مشتریان دائم سالن</span>
+                <div className="flex items-center justify-between text-[11px] text-dk-muted px-1 mb-1">
+                  <span className="font-bold text-dk-text">مشتریان دائم سالن</span>
                   <span>{toPersianDigits(clients.length)} مشتری فعال</span>
                 </div>
 
                 {clients.map((c, i) => (
-                  <div key={i} className="p-3 rounded-2xl bg-[#18243A] border border-[#344258] flex items-center justify-between">
+                  <div key={i} className="p-3 rounded-2xl bg-dk-elevated border border-dk-border flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-[#E7ECF5]">{c.name}</span>
+                        <span className="font-bold text-dk-text">{c.name}</span>
                         {c.vip && (
-                          <span className="flex items-center gap-0.5 text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
+                          <span className="flex items-center gap-0.5 text-[11px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
                             <Star className="w-2.5 h-2.5 fill-amber-300" /> VIP
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-[#9AAAC2] font-mono block mt-0.5" dir="ltr">
-                        {c.phone}
+                      <span className="text-[11px] text-dk-muted font-mono block mt-0.5" dir="ltr">
+                        <span dir="ltr">{c.phone}</span>
                       </span>
-                      <span className="text-[10px] text-rose-400 block mt-0.5">
+                      <span className="text-[11px] text-rose-400 block mt-0.5">
                         آخرین مراجعه: {c.lastService}
                       </span>
                     </div>
 
                     <div className="text-left">
-                      <span className="text-[11px] text-[#E7ECF5] font-semibold block">
+                      <span className="text-[11px] text-dk-text font-semibold block">
                         {toPersianDigits(c.visits)} مراجعه
                       </span>
                       <button
@@ -376,7 +371,7 @@ export const SalonSimulatorView: React.FC = () => {
                             message: `ارسال پیام به ${c.name} (${c.phone})`,
                           });
                         }}
-                        className="mt-1 px-2 py-0.5 rounded bg-[#111B2E] text-[#9AAAC2] hover:text-[#E7ECF5] border border-[#344258] text-[10px] transition-colors cursor-pointer"
+                        className="mt-1 px-2 py-0.5 rounded bg-dk-surface text-dk-muted hover:text-dk-text border border-dk-border text-[11px] transition-colors cursor-pointer"
                       >
                         ارسال پیامک
                       </button>
@@ -389,17 +384,17 @@ export const SalonSimulatorView: React.FC = () => {
             {/* TAB 3: Services & Pricing Menu */}
             {mobileTab === 'services' && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-[#9AAAC2] px-1 mb-1">
-                  <span className="font-bold text-[#E7ECF5]">منوی خدمات و تعرفه‌ها</span>
+                <div className="flex items-center justify-between text-[11px] text-dk-muted px-1 mb-1">
+                  <span className="font-bold text-dk-text">منوی خدمات و تعرفه‌ها</span>
                   <span>{toPersianDigits(services.length)} نوع خدمات</span>
                 </div>
 
                 {services.map((srv, i) => (
-                  <div key={i} className="p-3 rounded-2xl bg-[#18243A] border border-[#344258] flex items-center justify-between">
+                  <div key={i} className="p-3 rounded-2xl bg-dk-elevated border border-dk-border flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-[#E7ECF5] block">{srv.name}</span>
-                      <span className="text-[10px] text-[#9AAAC2] mt-0.5 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-[#9AAAC2]" /> مدت زمان: {srv.duration}
+                      <span className="font-bold text-dk-text block">{srv.name}</span>
+                      <span className="text-[11px] text-dk-muted mt-0.5 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-dk-muted" /> مدت زمان: {srv.duration}
                       </span>
                     </div>
 
@@ -407,7 +402,7 @@ export const SalonSimulatorView: React.FC = () => {
                       <span className="font-bold text-emerald-400 text-xs tabular-nums block">
                         {formatCurrency(srv.price, 'toman')}
                       </span>
-                      <span className="text-[10px] text-[#9AAAC2] font-medium">{srv.category}</span>
+                      <span className="text-[11px] text-dk-muted font-medium">{srv.category}</span>
                     </div>
                   </div>
                 ))}
@@ -416,11 +411,11 @@ export const SalonSimulatorView: React.FC = () => {
           </div>
 
           {/* Mobile Bottom Navigation Bar (Interactive) */}
-          <div className="p-2.5 bg-[#111B2E] border-t border-[#344258] flex items-center justify-around text-[10px]">
+          <div className="p-2.5 bg-dk-surface border-t border-dk-border flex items-center justify-around text-[11px]">
             <button
               onClick={() => setMobileTab('calendar')}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-colors cursor-pointer ${
-                mobileTab === 'calendar' ? 'text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20' : 'text-[#9AAAC2] hover:text-[#E7ECF5]'
+                mobileTab === 'calendar' ? 'text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20' : 'text-dk-muted hover:text-dk-text'
               }`}
             >
               <Calendar className="w-4 h-4" />
@@ -430,7 +425,7 @@ export const SalonSimulatorView: React.FC = () => {
             <button
               onClick={() => setMobileTab('clients')}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-colors cursor-pointer ${
-                mobileTab === 'clients' ? 'text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20' : 'text-[#9AAAC2] hover:text-[#E7ECF5]'
+                mobileTab === 'clients' ? 'text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20' : 'text-dk-muted hover:text-dk-text'
               }`}
             >
               <User className="w-4 h-4" />
@@ -440,7 +435,7 @@ export const SalonSimulatorView: React.FC = () => {
             <button
               onClick={() => setMobileTab('services')}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-colors cursor-pointer ${
-                mobileTab === 'services' ? 'text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20' : 'text-[#9AAAC2] hover:text-[#E7ECF5]'
+                mobileTab === 'services' ? 'text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20' : 'text-dk-muted hover:text-dk-text'
               }`}
             >
               <Scissors className="w-4 h-4" />
@@ -452,73 +447,73 @@ export const SalonSimulatorView: React.FC = () => {
 
       {/* Add Appointment Simulator Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 animate-in fade-in duration-150">
           <div className="fixed inset-0" onClick={() => setIsAddModalOpen(false)}></div>
 
-          <div className="relative w-full max-w-sm bg-[#111B2E] border border-[#344258] rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4 text-xs text-[#E7ECF5]">
-            <div className="flex items-center justify-between pb-3 border-b border-[#344258]">
-              <h3 className="font-bold text-[#E7ECF5] flex items-center gap-2">
-                <Plus className="w-4 h-4 text-rose-500 dark:text-[#F43F7A]" />
+          <div className="relative w-full max-w-sm bg-dk-surface border border-dk-border rounded-2xl shadow-2xl p-5 z-10 text-right space-y-4 text-xs text-dk-text">
+            <div className="flex items-center justify-between pb-3 border-b border-dk-border">
+              <h3 className="font-bold text-dk-text flex items-center gap-2">
+                <Plus className="w-4 h-4 text-rose-500 dark:text-brand-accent" />
                 ثبت رزرو جدید برای {currentSalon?.name}
               </h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-[#9AAAC2] hover:text-[#E7ECF5] cursor-pointer">
+              <button onClick={() => setIsAddModalOpen(false)} className="p-1 text-dk-muted hover:text-dk-text cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateAppointment} className="space-y-3">
               <div>
-                <label className="block text-[#9AAAC2] font-semibold mb-1">نام مشتری *</label>
+                <label className="block text-dk-muted font-semibold mb-1">نام مشتری *</label>
                 <input
                   type="text"
                   required
                   value={newClientName}
                   onChange={(e) => setNewClientName(e.target.value)}
                   placeholder="مثال: پریناز یزدانی"
-                  className="w-full px-3 py-2 bg-[#18243A] border border-[#344258] rounded-xl text-[#E7ECF5] placeholder-[#9AAAC2]/60 focus:outline-none focus:border-[#F43F7A]"
+                  className="w-full px-3 py-2 bg-dk-elevated border border-dk-border rounded-xl text-dk-text placeholder-dk-muted/60 focus:outline-none focus:border-brand"
                 />
               </div>
 
               <div>
-                <label className="block text-[#9AAAC2] font-semibold mb-1">شماره تماس مشتری</label>
+                <label className="block text-dk-muted font-semibold mb-1">شماره تماس مشتری</label>
                 <input
                   type="tel"
                   dir="ltr"
                   value={newClientPhone}
                   onChange={(e) => setNewClientPhone(e.target.value)}
                   placeholder="09121234567"
-                  className="w-full px-3 py-2 bg-[#18243A] border border-[#344258] rounded-xl text-[#E7ECF5] placeholder-[#9AAAC2]/60 focus:outline-none focus:border-[#F43F7A] font-mono text-left"
+                  className="w-full px-3 py-2 bg-dk-elevated border border-dk-border rounded-xl text-dk-text placeholder-dk-muted/60 focus:outline-none focus:border-brand font-mono text-left"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[#9AAAC2] font-semibold mb-1">ساعت نوبت</label>
+                  <label className="block text-dk-muted font-semibold mb-1">ساعت نوبت</label>
                   <input
                     type="text"
                     value={newTime}
                     onChange={(e) => setNewTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#18243A] border border-[#344258] rounded-xl text-[#E7ECF5] focus:outline-none focus:border-[#F43F7A] text-center font-mono tabular-nums"
+                    className="w-full px-3 py-2 bg-dk-elevated border border-dk-border rounded-xl text-dk-text focus:outline-none focus:border-brand text-center font-mono tabular-nums"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[#9AAAC2] font-semibold mb-1">هزینه خدمات (تومان)</label>
+                  <label className="block text-dk-muted font-semibold mb-1">هزینه خدمات (تومان)</label>
                   <input
                     type="number"
                     value={newPrice}
                     onChange={(e) => setNewPrice(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-[#18243A] border border-[#344258] rounded-xl text-[#E7ECF5] focus:outline-none focus:border-[#F43F7A] text-center tabular-nums font-mono"
+                    className="w-full px-3 py-2 bg-dk-elevated border border-dk-border rounded-xl text-dk-text focus:outline-none focus:border-brand text-center tabular-nums font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[#9AAAC2] font-semibold mb-1">نوع خدمت</label>
+                <label className="block text-dk-muted font-semibold mb-1">نوع خدمت</label>
                 <select
                   value={newService}
                   onChange={(e) => setNewService(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#18243A] border border-[#344258] rounded-xl text-[#E7ECF5] focus:outline-none focus:border-[#F43F7A] cursor-pointer"
+                  className="w-full px-3 py-2 bg-dk-elevated border border-dk-border rounded-xl text-dk-text focus:outline-none focus:border-brand cursor-pointer"
                 >
                   <option value="رنگ و هایلایت تخصصی مو">رنگ و هایلایت تخصصی مو</option>
                   <option value="کاشت و ژلیش ناخن">کاشت و ژلیش ناخن</option>
@@ -528,17 +523,17 @@ export const SalonSimulatorView: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#344258]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-dk-border">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-[#9AAAC2] hover:text-[#E7ECF5] bg-[#18243A] border border-[#344258] rounded-xl cursor-pointer"
+                  className="px-4 py-2 text-dk-muted hover:text-dk-text bg-dk-elevated border border-dk-border rounded-xl cursor-pointer"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-white font-semibold bg-[#F43F7A] hover:bg-[#F43F7A]/90 rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 text-white font-semibold bg-brand hover:bg-brand/90 rounded-xl cursor-pointer"
                 >
                   افزودن به تقویم
                 </button>

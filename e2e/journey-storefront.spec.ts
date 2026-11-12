@@ -1,23 +1,25 @@
 /**
- * E2E Journey 1 — Public salon browsing (real server, real browser)
+ * E2E Journey 1 — Public salon browsing (real server, real browser) — v11 UI
  */
 import { test, expect } from '@playwright/test';
 
 test('visitor can browse the salon storefront and see services and specialists', async ({ page }) => {
   await page.goto('/');
 
-  // Switch to the salon website persona via the environment switcher
-  await page.getByTitle('وب‌سایت اختصاصی رزرو سالن برای مشتریان').click();
+  // v11: the salon website is the default persona; the environment bar shows the active section
+  await expect(page.getByRole('button', { name: 'وب‌سایت سالن' })).toBeVisible({ timeout: 15000 });
 
-  // Storefront renders the service catalog and specialist roster
-  await expect(page.getByText('کاتالوگ خدمات و رزرو سریع')).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText('آرایشگران و متخصصین سالن')).toBeVisible();
+  // Storefront renders the salon hero and the priced service catalog
+  await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'خدمات و قیمت‌ها' })).toBeVisible();
 
   // The catalog exposes bookable services
-  const serviceButtons = page.getByRole('button', { name: 'رزرو این خدمت' });
-  await expect(serviceButtons.first()).toBeVisible();
-  expect(await serviceButtons.count()).toBeGreaterThan(0);
+  const catalog = page.getByRole('region', { name: 'خدمات و قیمت‌ها' });
+  const bookButtons = catalog.getByRole('button', { name: /^رزرو/ });
+  await expect(bookButtons.first()).toBeVisible();
+  expect(await bookButtons.count()).toBeGreaterThan(0);
 
-  // Online booking is promoted in the header
-  await expect(page.getByText('رزرو آنلاین نوبت').first()).toBeVisible();
+  // Header promotes booking and the customer menu
+  await expect(page.getByRole('button', { name: 'رزرو نوبت' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'نوبت‌های من' })).toBeVisible();
 });

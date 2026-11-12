@@ -2,22 +2,15 @@ import React, { useState } from 'react';
 import {
   Settings,
   Key,
-  Database,
-  Radio,
   Eye,
   EyeOff,
-  Save,
-  CheckCircle2,
   AlertTriangle,
-  HardDrive,
-  RefreshCw,
   Bell,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { maskApiKey } from '../../utils/formatters';
 
 export const SettingsView: React.FC = () => {
-  const { isDemoMode, securitySettings, updateSecuritySettings, addToast } = useAdmin();
+  const { isDemoMode, addToast } = useAdmin();
 
   // API credentials state - Empty defaults for secure configuration state
   const [kavenegarKey, setKavenegarKey] = useState('');
@@ -77,27 +70,32 @@ export const SettingsView: React.FC = () => {
 
       {/* Header */}
       <div>
-        <h2 className="text-base font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
-          <Settings className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+        <h2 className="text-base font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
+          <Settings className="w-5 h-5 text-rose-700 dark:text-rose-400" />
           تنظیمات هسته و اتصالات
         </h2>
-        <p className="text-xs text-zinc-500 dark:text-[#9AAAC2] mt-0.5">
+        <p className="text-xs text-text-muted dark:text-text-muted mt-0.5">
           پیکربندی کلیدهای وب‌سرویس پیامک، درگاه بانکی شاپرک و اطلاعیه‌های سراسری
         </p>
+        {isDemoMode && (
+          <p className="text-xs text-text-muted mt-1">
+            حالت پیش‌نمایش: کلیدها و اطلاعیه‌ها فقط در همین مرورگر ذخیره می‌شوند و به سرور نمی‌رسند.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form 1: API Keys & Gateways */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-[#344258]">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-border-default">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
               <Key className="w-4 h-4 text-amber-500" />
               کلیدهای اتصال پیامک و درگاه
             </h3>
             <button
               type="button"
               onClick={() => setShowKeys(!showKeys)}
-              className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
+              className="text-xs text-text-muted hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 cursor-pointer"
             >
               {showKeys ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               <span>{showKeys ? 'پنهان‌سازی کلیدها' : 'نمایش کلیدها'}</span>
@@ -106,42 +104,42 @@ export const SettingsView: React.FC = () => {
 
           <form onSubmit={handleSaveApiKeys} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">API Key کاوه‌نگار (سرویس پیامک خدماتی)</label>
+              <label className="block text-zinc-600 dark:text-text-muted mb-1">API Key کاوه‌نگار (سرویس پیامک خدماتی)</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={kavenegarKey}
                 onChange={(e) => setKavenegarKey(e.target.value)}
-                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono text-left"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main font-mono text-left"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">مرچنت‌کد زرین‌پال (درگاه پرداخت اشتراک)</label>
+              <label className="block text-zinc-600 dark:text-text-muted mb-1">مرچنت‌کد زرین‌پال (درگاه پرداخت اشتراک)</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={zarinpalMerchant}
                 onChange={(e) => setZarinpalMerchant(e.target.value)}
-                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono text-left"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main font-mono text-left"
               />
             </div>
 
             <div>
-              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">ترمینال سامانه به‌پرداخت ملت</label>
+              <label className="block text-zinc-600 dark:text-text-muted mb-1">ترمینال سامانه به‌پرداخت ملت</label>
               <input
                 type={showKeys ? 'text' : 'password'}
                 dir="ltr"
                 value={samanTerminal}
                 onChange={(e) => setSamanTerminal(e.target.value)}
-                className="w-full px-3 py-2 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] font-mono text-left"
+                className="w-full px-3 py-2 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main font-mono text-left"
               />
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-colors cursor-pointer"
               >
                 ذخیره کلیدهای وب‌سرویس
               </button>
@@ -150,13 +148,13 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Form 2: System Broadcast Banner */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-[#18243A] border border-stone-200/90 dark:border-[#344258] shadow-xs space-y-4">
-          <div className="pb-3 border-b border-stone-100 dark:border-[#344258]">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-[#E7ECF5] flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default space-y-4">
+          <div className="pb-3 border-b border-stone-100 dark:border-border-default">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-text-main flex items-center gap-2">
               <Bell className="w-4 h-4 text-rose-500" />
               پیام اطلاعیه سراسری
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               نمایش بنر هشدار در بالای پنل تمام سالن‌ها و اپلیکیشن‌ها
             </p>
           </div>
@@ -176,19 +174,19 @@ export const SettingsView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-zinc-600 dark:text-[#9AAAC2] mb-1">متن پیام برای سالن‌ها</label>
+              <label className="block text-zinc-600 dark:text-text-muted mb-1">متن پیام برای سالن‌ها</label>
               <textarea
                 rows={4}
                 value={bannerText}
                 onChange={(e) => setBannerText(e.target.value)}
-                className="w-full p-3 bg-stone-50 dark:bg-[#111B2E] border border-stone-200 dark:border-[#344258] rounded-xl text-zinc-900 dark:text-[#E7ECF5] focus:outline-none focus:border-rose-500"
+                className="w-full p-3 bg-stone-50 dark:bg-surface border border-stone-200 dark:border-border-default rounded-xl text-zinc-900 dark:text-text-main focus:outline-none focus:border-rose-500"
               />
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-text-main border border-border-strong rounded-xl hover:bg-subsurface transition-colors cursor-pointer"
               >
                 اعمال وضعیت اطلاعیه
               </button>

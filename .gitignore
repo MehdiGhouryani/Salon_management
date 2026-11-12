@@ -15,3 +15,5 @@ playwright-report/
 # Local PostgreSQL data directories (never commit database data)
 pgdata/
 *.pgdata
+# Design-skill working artifacts (UI handoff tooling)
+.taste-skill/
