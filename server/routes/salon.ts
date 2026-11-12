@@ -133,7 +133,7 @@ salonRouter.get('/dashboard/overview', async (req: Request, res: Response): Prom
 
   try {
     const [allSalonAppointments, workingHours, staffList] = await Promise.all([
-      appointmentRepository.findBySalonId(salonId, { date: targetDateStr }),
+      appointmentRepository.findBySalonId(salonId),
       salonRepository.getWorkingHours(salonId),
       staffRepository.findBySalonId(salonId, true),
     ]);
@@ -206,6 +206,28 @@ salonRouter.get('/dashboard/overview', async (req: Request, res: Response): Prom
           : 'تعطیل',
       },
       urgentActions,
+      // Phase 10: next confirmed/pending appointments from Tehran-now onward
+      upcomingAppointments: allSalonAppointments
+        .filter(
+          (a) =>
+            ['pending', 'confirmed'].includes(a.status) &&
+            ((a.booking_date_greg || a.booking_date) > targetDateStr ||
+              ((a.booking_date_greg || a.booking_date) === targetDateStr &&
+                (a.booking_time || '') >= String(
+                  new Intl.DateTimeFormat('en-GB', {
+                    timeZone: 'Asia/Tehran',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                  }).format(new Date())
+                )))
+        )
+        .sort((a, b) =>
+          `${(a.booking_date_greg || a.booking_date)} ${a.booking_time}`.localeCompare(
+            `${(b.booking_date_greg || b.booking_date)} ${b.booking_time}`
+          )
+        )
+        .slice(0, 10),
       todayAppointments: todayAppointments.map((a) => ({
         id: a.id,
         trackingCode: a.tracking_code,
@@ -234,17 +256,27 @@ salonRouter.get('/dashboard/overview', async (req: Request, res: Response): Prom
  */
 salonRouter.get('/appointments', async (req: Request, res: Response) => {
   const salonId = String(req.params.salonId);
-  const { status, date, staffId, search } = req.query as Record<string, string | undefined>;
+  const { status, date, staffId, search, from, to } = req.query as Record<string, string | undefined>;
+  const limit = Math.min(Math.max(parseInt(String(req.query.limit || '50'), 10) || 50, 1), 200);
+  const offset = Math.max(parseInt(String(req.query.offset || '0'), 10) || 0, 0);
 
   try {
-    let appointments = await appointmentRepository.findBySalonId(salonId, {
+    const filter = {
       status: status as any,
       date,
       staffId,
-    });
+      // Canonical Gregorian range filters (Phase 10)
+      startDate: from,
+      endDate: to,
+    };
+    const [allAppointments, total] = await Promise.all([
+      appointmentRepository.findBySalonId(salonId, { ...filter, limit, offset }),
+      appointmentRepository.countBySalonId(salonId, filter),
+    ]);
 
-    if (search && search.trim()) {
-      const q = search.trim().toLowerCase();
+    let appointments = allAppointments;
+    const q = (search || '').trim().toLowerCase();
+    if (q) {
       appointments = appointments.filter(
         (a) =>
           a.client_name.toLowerCase().includes(q) ||
@@ -255,13 +287,16 @@ salonRouter.get('/appointments', async (req: Request, res: Response) => {
 
     res.status(200).json({
       success: true,
-      count: appointments.length,
       appointments,
+      total,
+      limit,
+      offset,
     });
   } catch (err: any) {
-    res.status(500).json({
-      error: 'APPOINTMENTS_FETCH_ERROR',
-      message: err.message,
+    const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+    res.status(statusCode).json({
+      error: err?.code || 'APPOINTMENTS_FETCH_ERROR',
+      message: err.message || 'خطا در بارگذاری نوبت‌ها.',
     });
   }
 });
@@ -426,9 +461,10 @@ salonRouter.patch(
         appointment: updated,
       });
     } catch (err: any) {
-      res.status(500).json({
-        error: 'APPOINTMENT_STATUS_UPDATE_ERROR',
-        message: err.message,
+      const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+      res.status(statusCode).json({
+        error: err?.code || 'APPOINTMENT_UPDATE_ERROR',
+        message: err.message || 'خطا در تغییر وضعیت نوبت.',
       });
     }
   }
@@ -482,6 +518,267 @@ salonRouter.patch(
       res.status(statusCode).json({
         error: code,
         message: err.message || 'خطا در جابجایی نوبت.',
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/salon/:salonId/customers
+ * Customers of THIS salon only (salon_clients join), search + stable
+ * pagination. PII restriction (Phase 10): staff/receptionist roles see the
+ * name and a masked phone; owners/managers see full contact data.
+ */
+salonRouter.get('/customers', async (req: Request, res: Response): Promise<void> => {
+  const salonId = String(req.params.salonId);
+  const limit = Math.min(Math.max(parseInt(String(req.query.limit || '50'), 10) || 50, 1), 200);
+  const offset = Math.max(parseInt(String(req.query.offset || '0'), 10) || 0, 0);
+  const search = req.query.search ? String(req.query.search) : undefined;
+
+  const membership = (req.salonMemberships || []).find((m) => m.salon_id === salonId);
+  const isPrivileged = membership?.role === 'owner' || membership?.role === 'manager' ||
+    req.user?.platform_role === 'super_admin';
+
+  try {
+    const [customers, total] = await Promise.all([
+      clientRepository.findBySalonId(salonId, limit, offset, undefined, search),
+      clientRepository.countBySalonId(salonId, undefined, search),
+    ]);
+
+    const mapped = customers.map((c) => ({
+      id: c.id,
+      fullName: c.full_name,
+      phone: isPrivileged ? c.phone : `${c.phone.slice(0, 4)}****${c.phone.slice(-2)}`,
+      email: isPrivileged ? c.email : null,
+      notes: isPrivileged ? c.notes : null,
+      totalBookings: c.total_bookings,
+      totalSpent: typeof c.total_spent === 'string' ? parseInt(c.total_spent, 10) : c.total_spent,
+      lastVisitAt: c.last_visit_at,
+    }));
+
+    res.status(200).json({
+      success: true,
+      customers: mapped,
+      total,
+      limit,
+      offset,
+      piiRestricted: !isPrivileged,
+    });
+  } catch (err: any) {
+    const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+    res.status(statusCode).json({
+      error: err?.code || 'CUSTOMERS_FETCH_ERROR',
+      message: err.message || 'خطا در بارگذاری مشتریان.',
+    });
+  }
+});
+
+/**
+ * GET /api/salon/:salonId/customers/:clientId
+ * Single customer record — must belong to THIS salon (salon_clients link).
+ */
+salonRouter.get('/customers/:clientId', async (req: Request, res: Response): Promise<void> => {
+  const salonId = String(req.params.salonId);
+  const clientId = String(req.params.clientId);
+
+  const membership = (req.salonMemberships || []).find((m) => m.salon_id === salonId);
+  const isPrivileged = membership?.role === 'owner' || membership?.role === 'manager' ||
+    req.user?.platform_role === 'super_admin';
+
+  try {
+    const link = await clientRepository.getSalonClient(salonId, clientId);
+    if (!link) {
+      res.status(404).json({
+        error: 'CUSTOMER_NOT_FOUND',
+        message: 'مشتری برای این سالن یافت نشد.',
+      });
+      return;
+    }
+    const customer = await clientRepository.findById(clientId);
+    if (!customer) {
+      res.status(404).json({
+        error: 'CUSTOMER_NOT_FOUND',
+        message: 'مشتری یافت نشد.',
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      customer: {
+        id: customer.id,
+        fullName: customer.full_name,
+        phone: isPrivileged ? customer.phone : `${customer.phone.slice(0, 4)}****${customer.phone.slice(-2)}`,
+        email: isPrivileged ? customer.email : null,
+        notes: isPrivileged ? customer.notes : null,
+        totalBookings: link.total_bookings,
+        totalSpent: typeof link.total_spent === 'string' ? parseInt(link.total_spent, 10) : link.total_spent,
+        lastVisitAt: link.last_visit_at,
+      },
+      piiRestricted: !isPrivileged,
+    });
+  } catch (err: any) {
+    const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+    res.status(statusCode).json({
+      error: err?.code || 'CUSTOMER_FETCH_ERROR',
+      message: err.message || 'خطا در دریافت مشتری.',
+    });
+  }
+});
+
+/**
+ * PUT /api/salon/:salonId/working-hours/staff/:staffId
+ * Replaces a staff member's weekly hours transactionally. The staff member
+ * must belong to this salon; times are validated (HH:MM, 0<=day<=6).
+ */
+salonRouter.put(
+  '/working-hours/staff/:staffId',
+  requireSalonPermission('manage_settings'),
+  async (req: Request, res: Response): Promise<void> => {
+    const salonId = String(req.params.salonId);
+    const staffId = String(req.params.staffId);
+    const { hours } = req.body || {};
+
+    if (!Array.isArray(hours)) {
+      res.status(400).json({
+        error: 'INVALID_HOURS_FORMAT',
+        message: 'ساعات کاری باید به صورت آرایه‌ای از روزها ارسال گردد.',
+      });
+      return;
+    }
+    for (const h of hours) {
+      if (
+        !Number.isInteger(h.dayOfWeek) || h.dayOfWeek < 0 || h.dayOfWeek > 6 ||
+        !/^([01]\d|2[0-3]):([0-5]\d)$/.test(String(h.startTime)) ||
+        !/^([01]\d|2[0-3]):([0-5]\d)$/.test(String(h.endTime))
+      ) {
+        res.status(400).json({
+          error: 'INVALID_HOURS_ENTRY',
+          message: 'روز هفته (۰ تا ۶) و قالب ساعت (HH:MM) معتبر نیستند.',
+        });
+        return;
+      }
+      if (!h.isClosed && h.startTime >= h.endTime) {
+        res.status(400).json({
+          error: 'INVALID_HOURS_RANGE',
+          message: 'ساعت شروع باید قبل از ساعت پایان باشد.',
+        });
+        return;
+      }
+    }
+
+    try {
+      const staff = await staffRepository.findById(staffId);
+      if (!staff || staff.salon_id !== salonId) {
+        res.status(404).json({
+          error: 'STAFF_NOT_FOUND',
+          message: 'متخصص برای این سالن یافت نشد.',
+        });
+        return;
+      }
+
+      await salonRepository.setStaffWorkingHours(
+        salonId,
+        staffId,
+        hours.map((h: any) => ({
+          dayOfWeek: h.dayOfWeek,
+          startTime: String(h.startTime),
+          endTime: String(h.endTime),
+          isClosed: Boolean(h.isClosed),
+        }))
+      );
+
+      const saved = await salonRepository.getStaffWorkingHours(salonId, staffId);
+
+      await auditLogRepository.create({
+        actor: req.user?.full_name || 'مدیر سالن',
+        actorRole: req.user?.platform_role || 'salon_manager',
+        action: 'تنظیم ساعات کاری هفتگی متخصص',
+        target: `Staff:${staffId}`,
+        ipAddress: extractClientIp(req),
+        userAgent: String(req.headers['user-agent'] || 'Unknown'),
+        severity: 'info',
+        category: 'business',
+        details: { salonId, staffId, days: hours.length },
+      }).catch(() => {});
+
+      res.status(200).json({
+        success: true,
+        message: 'ساعات کاری متخصص بروزرسانی شد.',
+        workingHours: saved,
+      });
+    } catch (err: any) {
+      const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+      res.status(statusCode).json({
+        error: err?.code || 'STAFF_HOURS_UPDATE_ERROR',
+        message: err.message || 'خطا در ذخیره ساعات کاری متخصص.',
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /api/salon/:salonId/staff/:staffId/services/:serviceId
+ * Removes a staff-service assignment (manage_staff).
+ */
+salonRouter.delete(
+  '/staff/:staffId/services/:serviceId',
+  requireSalonPermission('manage_staff'),
+  async (req: Request, res: Response): Promise<void> => {
+    const salonId = String(req.params.salonId);
+    const staffId = String(req.params.staffId);
+    const serviceId = String(req.params.serviceId);
+
+    try {
+      const staff = await staffRepository.findById(staffId);
+      if (!staff || staff.salon_id !== salonId) {
+        res.status(404).json({
+          error: 'STAFF_NOT_FOUND',
+          message: 'متخصص برای این سالن یافت نشد.',
+        });
+        return;
+      }
+      const service = await serviceRepository.findById(serviceId);
+      if (!service || service.salon_id !== salonId) {
+        res.status(404).json({
+          error: 'SERVICE_NOT_FOUND',
+          message: 'خدمت برای این سالن یافت نشد.',
+        });
+        return;
+      }
+
+      const removed = await staffRepository.removeServiceAssignment(staffId, serviceId);
+      if (!removed) {
+        res.status(404).json({
+          error: 'ASSIGNMENT_NOT_FOUND',
+          message: 'این خدمت به این متخصص اختصاص نیافته است.',
+        });
+        return;
+      }
+      const remaining = await staffRepository.getAssignedServices(staffId);
+
+      await auditLogRepository.create({
+        actor: req.user?.full_name || 'مدیر سالن',
+        actorRole: req.user?.platform_role || 'salon_manager',
+        action: 'حذف اتصال خدمت از متخصص',
+        target: `Staff:${staffId}:Service:${serviceId}`,
+        ipAddress: extractClientIp(req),
+        userAgent: String(req.headers['user-agent'] || 'Unknown'),
+        severity: 'info',
+        category: 'business',
+        details: { salonId, staffId, serviceId },
+      }).catch(() => {});
+
+      res.status(200).json({
+        success: true,
+        message: 'اتصال خدمت حذف شد.',
+        assignedServices: remaining,
+      });
+    } catch (err: any) {
+      const statusCode = typeof err?.statusCode === 'number' ? err.statusCode : 500;
+      res.status(statusCode).json({
+        error: err?.code || 'ASSIGNMENT_DELETE_ERROR',
+        message: err.message || 'خطا در حذف اتصال خدمت.',
       });
     }
   }
@@ -893,14 +1190,25 @@ salonRouter.get('/working-hours', async (req: Request, res: Response): Promise<v
   const salonId = String(req.params.salonId);
 
   try {
-    const [hours, exceptions] = await Promise.all([
+    const [hours, exceptions, staffList] = await Promise.all([
       salonRepository.getWorkingHours(salonId),
       salonRepository.getAllAvailabilityExceptions(salonId),
+      staffRepository.findBySalonId(salonId, true),
     ]);
+
+    // Phase 10: staff-level hours included so the panel can edit them
+    const staffHours = await Promise.all(
+      staffList.map(async (st) => ({
+        staffId: st.id,
+        staffName: st.name,
+        hours: await salonRepository.getStaffWorkingHours(salonId, st.id),
+      }))
+    );
 
     res.status(200).json({
       success: true,
       workingHours: hours,
+      staffHours,
       exceptions,
     });
   } catch (err: any) {

@@ -177,36 +177,78 @@ export const clientRepository = {
     salonId: string,
     limit: number = 50,
     offset: number = 0,
-    client?: PoolClient
+    client?: PoolClient,
+    search?: string
   ): Promise<Array<DbClient & { total_bookings: number; total_spent: string | number; last_visit_at: Date | null }>> {
     if (!isDatabaseConfigured()) {
       const list: Array<DbClient & { total_bookings: number; total_spent: string | number; last_visit_at: Date | null }> = [];
+      const q = (search || '').trim().toLowerCase();
       for (const sc of inMemorySalonClients.values()) {
-        if (sc.salon_id === salonId) {
-          const c = inMemoryClients.get(sc.client_id);
-          if (c) {
-            list.push({
-              ...c,
-              total_bookings: sc.total_bookings,
-              total_spent: sc.total_spent,
-              last_visit_at: sc.last_visit_at,
-            });
-          }
-        }
+        if (sc.salon_id !== salonId) continue;
+        const c = inMemoryClients.get(sc.client_id);
+        if (!c) continue;
+        if (q && !c.full_name.toLowerCase().includes(q) && !c.phone.includes(q)) continue;
+        list.push({
+          ...c,
+          total_bookings: sc.total_bookings,
+          total_spent: sc.total_spent,
+          last_visit_at: sc.last_visit_at,
+        });
       }
+      list.sort((a, b) => (b.last_visit_at?.getTime() ?? 0) - (a.last_visit_at?.getTime() ?? 0));
       return list.slice(offset, offset + limit);
     }
+
+    const conditions = ['sc.salon_id = $1'];
+    const params: unknown[] = [salonId];
+    if (search && search.trim()) {
+      params.push(`%${search.trim()}%`);
+      conditions.push(`(c.full_name ILIKE $${params.length} OR c.phone ILIKE $${params.length})`);
+    }
+    params.push(limit, offset);
+    const limitIdx = params.length - 1;
+    const offsetIdx = params.length;
 
     const res = await query(
       `SELECT c.*, sc.total_bookings, sc.total_spent, sc.last_visit_at
        FROM clients c
        JOIN salon_clients sc ON c.id = sc.client_id
-       WHERE sc.salon_id = $1
+       WHERE ${conditions.join(' AND ')}
        ORDER BY sc.last_visit_at DESC NULLS LAST, sc.total_bookings DESC
-       LIMIT $2 OFFSET $3`,
-      [salonId, limit, offset],
+       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      params,
       client
     );
     return res.rows;
+  },
+
+  /** Total matching customers for stable pagination (Phase 10). */
+  async countBySalonId(salonId: string, client?: PoolClient, search?: string): Promise<number> {
+    if (!isDatabaseConfigured()) {
+      const q = (search || '').trim().toLowerCase();
+      let n = 0;
+      for (const sc of inMemorySalonClients.values()) {
+        if (sc.salon_id !== salonId) continue;
+        const c = inMemoryClients.get(sc.client_id);
+        if (!c) continue;
+        if (q && !c.full_name.toLowerCase().includes(q) && !c.phone.includes(q)) continue;
+        n += 1;
+      }
+      return n;
+    }
+    const conditions = ['sc.salon_id = $1'];
+    const params: unknown[] = [salonId];
+    if (search && search.trim()) {
+      params.push(`%${search.trim()}%`);
+      conditions.push(`(c.full_name ILIKE $${params.length} OR c.phone ILIKE $${params.length})`);
+    }
+    const res = await query(
+      `SELECT COUNT(*)::int AS total FROM clients c
+       JOIN salon_clients sc ON c.id = sc.client_id
+       WHERE ${conditions.join(' AND ')}`,
+      params,
+      client
+    );
+    return res.rows[0]?.total ?? 0;
   },
 };

@@ -171,6 +171,7 @@ export const sessionService = {
     } else {
       // In-memory dev user lookup via repository
       user = await userRepository.findById(session.user_id);
+      memberships = await userRepository.getMemberships(session.user_id);
       if (!user) {
         user = {
           id: session.user_id,

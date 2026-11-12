@@ -609,6 +609,70 @@ export const salonRepository = {
     await withTransaction(async (txClient) => replaceHours(txClient));
   },
 
+  /** Phase 10: staff-level weekly hours (staff_id = target). */
+  async getStaffWorkingHours(salonId: string, staffId: string, client?: PoolClient): Promise<DbWorkingHour[]> {
+    if (!isDatabaseConfigured()) {
+      return (inMemoryWorkingHours.get(salonId) || []).filter((h) => h.staff_id === staffId);
+    }
+    const res = await query<DbWorkingHour>(
+      `SELECT * FROM working_hours WHERE salon_id = $1 AND staff_id = $2 ORDER BY day_of_week ASC`,
+      [salonId, staffId],
+      client
+    );
+    return res.rows;
+  },
+
+  /**
+   * Phase 10: transactional replace of a staff member's weekly hours
+   * (delete + insert must commit or roll back together).
+   */
+  async setStaffWorkingHours(
+    salonId: string,
+    staffId: string,
+    hours: Array<{ dayOfWeek: number; startTime: string; endTime: string; isClosed: boolean }>,
+    client?: PoolClient
+  ): Promise<void> {
+    if (!isDatabaseConfigured()) {
+      const existing = inMemoryWorkingHours.get(salonId) || [];
+      const kept = existing.filter((h) => h.staff_id !== staffId);
+      const added: DbWorkingHour[] = hours.map((h, i) => ({
+        id: `wh-${salonId}-${staffId}-${i}`,
+        salon_id: salonId,
+        staff_id: staffId,
+        day_of_week: h.dayOfWeek,
+        start_time: h.startTime,
+        end_time: h.endTime,
+        is_closed: h.isClosed,
+        created_at: new Date(),
+        updated_at: new Date(),
+      }));
+      inMemoryWorkingHours.set(salonId, [...kept, ...added]);
+      return;
+    }
+    const replace = async (txClient?: PoolClient): Promise<void> => {
+      await query(
+        `DELETE FROM working_hours WHERE salon_id = $1 AND staff_id = $2`,
+        [salonId, staffId],
+        txClient
+      );
+      for (const h of hours) {
+        await query(
+          `INSERT INTO working_hours (salon_id, staff_id, day_of_week, start_time, end_time, is_closed)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT DO NOTHING`,
+          [salonId, staffId, h.dayOfWeek, h.startTime, h.endTime, h.isClosed],
+          txClient
+        );
+      }
+    };
+
+    if (client) {
+      await replace(client);
+      return;
+    }
+    await withTransaction(async (txClient) => replace(txClient));
+  },
+
   async getAvailabilityExceptions(
     salonId: string,
     dateStr: string,

@@ -374,8 +374,13 @@ export const bookingService = {
     const price = typeof service.price === 'string' ? parseInt(service.price, 10) : service.price;
     const endTime = addMinutesToTime(params.bookingTime, durationMinutes);
 
-    // Staff-service eligibility (Phase 09)
+    // Staff ownership first, then eligibility (Phase 09/10): a staff member
+    // of ANOTHER salon must yield 404 STAFF_NOT_FOUND, not an eligibility error.
     if (params.staffId && params.staffId !== 'any') {
+      const staff = await staffRepository.findById(params.staffId);
+      if (!staff || staff.salon_id !== params.salonId || !staff.is_active) {
+        throw new BookingError('متخصص انتخاب شده در این سالن یافت نشد یا غیرفعال است.', 404, 'STAFF_NOT_FOUND');
+      }
       await assertStaffEligibleForService(params.staffId, params.serviceId);
     }
 

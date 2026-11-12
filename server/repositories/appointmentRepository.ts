@@ -172,7 +172,9 @@ export const appointmentRepository = {
       if (filter.date) list = list.filter((a) => a.booking_date === filter.date);
       if (filter.startDate) list = list.filter((a) => a.booking_date >= filter.startDate!);
       if (filter.endDate) list = list.filter((a) => a.booking_date <= filter.endDate!);
-      return list;
+      const offset = filter.offset && filter.offset > 0 ? filter.offset : 0;
+      const limit = filter.limit && filter.limit > 0 ? filter.limit : list.length;
+      return list.slice(offset, offset + limit);
     }
 
     const conditions: string[] = ['salon_id = $1'];
@@ -513,6 +515,54 @@ export const appointmentRepository = {
       return await runUpdate(client);
     }
     return await withTransaction(async (txClient) => runUpdate(txClient));
+  },
+
+  /** Phase 10: total matching appointments for stable pagination. */
+  async countBySalonId(
+    salonId: string,
+    filter: FindAppointmentsFilter = {},
+    client?: PoolClient
+  ): Promise<number> {
+    if (!isDatabaseConfigured()) {
+      let list = Array.from(inMemoryAppointments.values()).filter((a) => a.salon_id === salonId);
+      if (filter.status) list = list.filter((a) => a.status === filter.status);
+      if (filter.staffId) list = list.filter((a) => a.staff_id === filter.staffId);
+      if (filter.date) list = list.filter((a) => a.booking_date === filter.date);
+      if (filter.startDate) list = list.filter((a) => a.booking_date >= filter.startDate!);
+      if (filter.endDate) list = list.filter((a) => a.booking_date <= filter.endDate!);
+      return list.length;
+    }
+
+    const conditions: string[] = ['salon_id = $1'];
+    const values: any[] = [salonId];
+    let idx = 2;
+    if (filter.status) {
+      conditions.push(`status = $${idx++}`);
+      values.push(filter.status);
+    }
+    if (filter.staffId) {
+      conditions.push(`staff_id = $${idx++}`);
+      values.push(filter.staffId);
+    }
+    if (filter.date) {
+      conditions.push(`booking_date_greg = $${idx++}::date`);
+      values.push(filter.date);
+    }
+    if (filter.startDate) {
+      conditions.push(`booking_date_greg >= $${idx++}::date`);
+      values.push(filter.startDate);
+    }
+    if (filter.endDate) {
+      conditions.push(`booking_date_greg <= $${idx++}::date`);
+      values.push(filter.endDate);
+    }
+
+    const res = await query<{ total: number }>(
+      `SELECT COUNT(*)::int AS total FROM appointments WHERE ${conditions.join(' AND ')}`,
+      values,
+      client
+    );
+    return res.rows[0]?.total ?? 0;
   },
 
   async reschedule(

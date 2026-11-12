@@ -55,6 +55,7 @@ export interface FindUsersFilter {
   offset?: number;
 }
 
+const inMemoryMemberships: Map<string, DbSalonMembership> = new Map();
 const inMemoryUsers: Map<string, DbUser> = new Map([
   [
     'usr-superadmin',
@@ -134,7 +135,7 @@ export const userRepository = {
   async create(dto: CreateUserDto, client?: PoolClient): Promise<DbUser> {
     if (!isDatabaseConfigured()) {
       const newUser: DbUser = {
-        id: `usr-${Date.now()}`,
+        id: `usr-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         phone: dto.phone,
         full_name: dto.fullName,
         email: dto.email || null,
@@ -313,7 +314,11 @@ export const userRepository = {
 
   async getMemberships(userId: string, client?: PoolClient): Promise<DbSalonMembership[]> {
     if (!isDatabaseConfigured()) {
-      return [];
+      // In-memory adapter (Phase 10 fix): dev HTTP sessions must resolve
+      // memberships too, otherwise every salon route 403s in development.
+      return Array.from(inMemoryMemberships.values()).filter(
+        (m) => m.user_id === userId && m.status === 'active'
+      );
     }
     const res = await query<DbSalonMembership>(
       `SELECT * FROM salon_memberships WHERE user_id = $1 ORDER BY created_at ASC`,
@@ -331,16 +336,21 @@ export const userRepository = {
     client?: PoolClient
   ): Promise<DbSalonMembership> {
     if (!isDatabaseConfigured()) {
-      return {
-        id: `mem-${Date.now()}`,
+      const existing = Array.from(inMemoryMemberships.values()).find(
+        (m) => m.user_id === userId && m.salon_id === salonId
+      );
+      const record: DbSalonMembership = {
+        id: existing?.id || `mem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         user_id: userId,
         salon_id: salonId,
         role,
         status: 'active',
         permissions,
-        created_at: new Date(),
+        created_at: existing?.created_at || new Date(),
         updated_at: new Date(),
       };
+      inMemoryMemberships.set(record.id, record);
+      return record;
     }
     const res = await query<DbSalonMembership>(
       `INSERT INTO salon_memberships (user_id, salon_id, role, permissions)

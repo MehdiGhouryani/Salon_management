@@ -317,6 +317,26 @@ export const staffRepository = {
     return res.rows;
   },
 
+  /** Phase 10: removes a staff-service assignment (scoped by ids). */
+  async removeServiceAssignment(staffId: string, serviceId: string, client?: PoolClient): Promise<boolean> {
+    if (!isDatabaseConfigured()) {
+      const idx = inMemoryStaffServices.findIndex(
+        (m) => m.staff_id === staffId && m.service_id === serviceId
+      );
+      if (idx >= 0) {
+        inMemoryStaffServices.splice(idx, 1);
+        return true;
+      }
+      return false;
+    }
+    const res = await query(
+      `DELETE FROM staff_services WHERE staff_id = $1 AND service_id = $2`,
+      [staffId, serviceId],
+      client
+    );
+    return (res.rowCount ?? 0) > 0;
+  },
+
   async delete(id: string, client?: PoolClient): Promise<boolean> {
     if (!isDatabaseConfigured()) {
       const existing = inMemoryStaff.get(id);
