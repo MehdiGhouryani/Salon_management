@@ -112,6 +112,144 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL repositories — migrations & per
   });
 });
 
+describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL schema integrity & canonical dates (Phase 06)', () => {
+  beforeAll(async () => {
+    db = await initDatabaseUnderTest();
+  }, 120_000);
+
+  afterAll(async () => {
+    if (db) {
+      await db.cleanup();
+      await db.raw.end();
+    }
+  });
+
+  it('re-runs migrations safely: migrateUp is idempotent and never destructive', async () => {
+    const appliedAgain = await db.migrateUp();
+    expect(appliedAgain).toEqual([]); // nothing left to apply, nothing reapplied
+    const count = await db.raw.query(`SELECT COUNT(*)::int AS c FROM schema_migrations`);
+    expect(count.rows[0].c).toBeGreaterThanOrEqual(4);
+  });
+
+  it('canonicalizes Jalali booking dates identically to the TypeScript util (SQL↔TS cross-verification)', async () => {
+    // 1403/08/25 → must equal the TS util's conversion of the same input.
+    const { parseBookingDateInput } = await import('../../server/utils/jalali.ts');
+    const expected = parseBookingDateInput('1403/08/25')!.canonical;
+
+    await db.raw.query(
+      `INSERT INTO appointments (id, tracking_code, salon_id, service_id, staff_id, client_name, client_phone, booking_date, booking_time, end_time, price, payment_method, payment_status, status, is_demo)
+       VALUES ('t3-appt-jalali', 'T3-JAL', $1, $2, $3, 'مشتری شمسی', '09370000104', '1403/08/25', '16:00', '17:00', 500000, 'in_person', 'pending', 'confirmed', false)`,
+      [db.fixtures.salonId, db.fixtures.serviceId, db.fixtures.staffId]
+    );
+
+    const row = await db.raw.query(
+      `SELECT booking_date, booking_date_greg::text AS greg FROM appointments WHERE id = 't3-appt-jalali'`
+    );
+    expect(row.rows[0].booking_date).toBe('1403/08/25'); // original preserved, never reinterpreted silently
+    expect(row.rows[0].greg).toBe(expected); // SQL conversion == TS conversion
+    expect(expected).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('rejects impossible Jalali dates as NULL canonical values (no silent reinterpretation)', async () => {
+    const { jalaliToGregorian } = await import('../../server/utils/jalali.ts');
+
+    // 1403 IS a Jalali leap year: Esfand 30 exists and both implementations
+    // must agree on its Gregorian value.
+    const tsLeap = jalaliToGregorian(1403, 12, 30);
+    expect(tsLeap).toBeTruthy();
+    const sqlLeap = await db.raw.query(`SELECT nobatara_jalali_to_gregorian(1403, 12, 30) AS g`);
+    const tsIso = `${tsLeap!.gy}-${String(tsLeap!.gm).padStart(2, '0')}-${String(tsLeap!.gd).padStart(2, '0')}`;
+    expect(String(sqlLeap.rows[0].g)).toBe(tsIso);
+
+    // 1404 is NOT a leap year: Esfand 30 does not exist — both implementations
+    // must reject it (NULL/null) instead of silently rolling over to Farvardin.
+    const tsImpossible = jalaliToGregorian(1404, 12, 30);
+    const sqlImpossible = await db.raw.query(`SELECT nobatara_jalali_to_gregorian(1404, 12, 30) AS g`);
+    expect(tsImpossible).toBeNull();
+    expect(sqlImpossible.rows[0].g).toBeNull();
+  });
+
+  it('rejects appointments referencing nonexistent salons (foreign key 23503)', async () => {
+    let pgError: any = null;
+    try {
+      await db.raw.query(
+        `INSERT INTO appointments (id, tracking_code, salon_id, service_id, staff_id, client_name, client_phone, booking_date, booking_date_greg, booking_time, end_time, price, payment_method, payment_status, status, is_demo)
+         VALUES ('t3-appt-fk', 'T3-FK', 't3-nonexistent-salon', $1, $2, 'بدون سالن', '09370000105', '2026-11-22', '2026-11-22', '09:00', '10:00', 500000, 'in_person', 'pending', 'confirmed', false)`,
+        [db.fixtures.serviceId, db.fixtures.staffId]
+      );
+    } catch (err: any) {
+      pgError = err;
+    }
+    expect(pgError).toBeTruthy();
+    expect(pgError.code).toBe('23503');
+  });
+
+  it('enforces one working-hours row per (salon, day) — duplicate insert rejected with 23505', async () => {
+    let pgError: any = null;
+    try {
+      await db.raw.query(
+        `INSERT INTO working_hours (salon_id, staff_id, day_of_week, start_time, end_time, is_closed)
+         VALUES ($1, NULL, 0, '09:00', '18:00', false)`,
+        [db.fixtures.salonId]
+      );
+      await db.raw.query(
+        `INSERT INTO working_hours (salon_id, staff_id, day_of_week, start_time, end_time, is_closed)
+         VALUES ($1, NULL, 0, '10:00', '19:00', false)`,
+        [db.fixtures.salonId]
+      );
+    } catch (err: any) {
+      pgError = err;
+    }
+    expect(pgError).toBeTruthy();
+    expect(pgError.code).toBe('23505');
+  });
+
+  it('mixed-format dates can no longer alias the same staff slot (canonical uniqueness)', async () => {
+    // Same calendar day, same staff, same time — one written in Jalali, one in
+    // Gregorian ISO. The legacy VARCHAR constraint cannot see the collision;
+    // the canonical uq_staff_slot_greg index must reject the second insert.
+    const { jalaliToGregorian } = await import('../../server/utils/jalali.ts');
+    const j = jalaliToGregorian(1404, 9, 5)!;
+    const iso = `${j.gy}-${String(j.gm).padStart(2, '0')}-${String(j.gd).padStart(2, '0')}`;
+
+    // Insert the ISO-form row via repository (canonical path)
+    await db.appointmentRepository.create({
+      id: 't3-appt-alias-1',
+      trackingCode: 'T3-AL1',
+      salonId: db.fixtures.salonId,
+      serviceId: db.fixtures.serviceId,
+      staffId: db.fixtures.staffId,
+      clientName: 'قالب میلادی',
+      clientPhone: '09370000106',
+      bookingDate: iso,
+      bookingTime: '11:00',
+      endTime: '12:00',
+      price: 500000,
+      status: 'confirmed',
+    });
+
+    let pgError: any = null;
+    try {
+      // Same slot, Jalali spelling of the same day — must violate the canonical index
+      await db.raw.query(
+        `INSERT INTO appointments (id, tracking_code, salon_id, service_id, staff_id, client_name, client_phone, booking_date, booking_date_greg, booking_time, end_time, price, payment_method, payment_status, status, is_demo)
+         VALUES ('t3-appt-alias-2', 'T3-AL2', $1, $2, $3, 'قالب شمسی', '09370000107', $4, $5, '11:00', '12:00', 500000, 'in_person', 'pending', 'confirmed', false)`,
+        [
+          db.fixtures.salonId,
+          db.fixtures.serviceId,
+          db.fixtures.staffId,
+          '1404/09/05',
+          iso,
+        ]
+      );
+    } catch (err: any) {
+      pgError = err;
+    }
+    expect(pgError).toBeTruthy();
+    expect(pgError.code).toBe('23505');
+  });
+});
+
 describe('Database test gate (always visible in reports)', () => {
   it('reports whether PostgreSQL-backed tests ran, were blocked, or failed', () => {
     if (!DB_TESTS_ENABLED) {

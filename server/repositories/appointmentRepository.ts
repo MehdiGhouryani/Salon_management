@@ -1,6 +1,7 @@
 import type { PoolClient } from 'pg';
-import { query, isDatabaseConfigured } from '../db/pool.ts';
+import { query, isDatabaseConfigured, withTransaction } from '../db/pool.ts';
 import { doIntervalsOverlap } from '../utils/bookingTime.ts';
+import { parseBookingDateInput } from '../utils/jalali.ts';
 
 export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 export type PaymentStatus = 'pending' | 'paid_in_person' | 'refunded' | 'waived';
@@ -15,6 +16,10 @@ export interface DbAppointment {
   client_name: string;
   client_phone: string;
   booking_date: string;
+  /** Canonical Gregorian DATE (YYYY-MM-DD when materialized by pg). Phase 06. */
+  booking_date_greg?: string | null;
+  /** Raw pre-migration date string preserved by migration 004. */
+  booking_date_legacy?: string | null;
   booking_time: string;
   end_time: string | null;
   price: string | number;
@@ -169,16 +174,18 @@ export const appointmentRepository = {
       conditions.push(`staff_id = $${idx++}`);
       values.push(filter.staffId);
     }
+    // Date filters run against the canonical DATE column (Phase 06); legacy
+    // mixed-format strings are covered through the migrated canonical values.
     if (filter.date) {
-      conditions.push(`booking_date = $${idx++}`);
+      conditions.push(`booking_date_greg = $${idx++}::date`);
       values.push(filter.date);
     }
     if (filter.startDate) {
-      conditions.push(`booking_date >= $${idx++}`);
+      conditions.push(`booking_date_greg >= $${idx++}::date`);
       values.push(filter.startDate);
     }
     if (filter.endDate) {
-      conditions.push(`booking_date <= $${idx++}`);
+      conditions.push(`booking_date_greg <= $${idx++}::date`);
       values.push(filter.endDate);
     }
 
@@ -279,12 +286,19 @@ export const appointmentRepository = {
     excludeAppointmentId?: string,
     client?: PoolClient
   ): Promise<boolean> {
+    // Canonical date resolution at the repository boundary (Phase 06):
+    // Gregorian ISO or validated Jalali input; unparseable dates can never be
+    // "free" — they are rejected rather than guessed.
+    const canonicalDay = parseBookingDateInput(bookingDate);
+    if (!canonicalDay) return false;
+    const canonicalDate = canonicalDay.canonical;
+
     if (!isDatabaseConfigured()) {
       for (const appt of inMemoryAppointments.values()) {
         if (
           appt.salon_id === salonId &&
           appt.staff_id === staffId &&
-          appt.booking_date === bookingDate &&
+          appt.booking_date === canonicalDate &&
           appt.status !== 'cancelled' &&
           appt.id !== excludeAppointmentId
         ) {
@@ -300,10 +314,12 @@ export const appointmentRepository = {
     // In SQL:
     // Two intervals [A_start, A_end) and [B_start, B_end) overlap if:
     // A_start < B_end AND B_start < A_end
+    // Date comparison uses the canonical DATE column (Phase 06): mixed-format
+    // legacy strings can no longer alias the same calendar day into two slots.
     const conditions = [
       'salon_id = $1',
       'staff_id = $2',
-      'booking_date = $3',
+      'booking_date_greg = $3::date',
       "status NOT IN ('cancelled')",
       'booking_time < $4',
       'COALESCE(end_time, booking_time) > $5',
@@ -318,6 +334,7 @@ export const appointmentRepository = {
     // Row-level lock (R7 defense in depth): conflicting appointment rows are
     // locked FOR UPDATE inside the caller's transaction, so a concurrent
     // transaction checking the same slot blocks until the first commits/rolls back.
+    // Comparison uses the canonical DATE column (Phase 06).
     const res = await query<{ id: string }>(
       `SELECT id FROM appointments WHERE ${conditions.join(' AND ')} FOR UPDATE`,
       values,
@@ -327,6 +344,15 @@ export const appointmentRepository = {
   },
 
   async create(dto: CreateAppointmentDto, client?: PoolClient): Promise<DbAppointment> {
+    // Canonical date resolution (Phase 06): bookingDate may arrive as a
+    // validated Gregorian ISO or Jalali string; booking_date_greg stores the
+    // one canonical calendar date. Unparseable values are rejected — never guessed.
+    const canonicalDate = parseBookingDateInput(dto.bookingDate);
+    if (!canonicalDate) {
+      throw new Error(`Invalid booking date: "${dto.bookingDate}". Expected YYYY-MM-DD or a valid Jalali date.`);
+    }
+    const bookingDateGreg = canonicalDate.canonical;
+
     if (!isDatabaseConfigured()) {
       const created: DbAppointment = {
         id: dto.id,
@@ -337,7 +363,10 @@ export const appointmentRepository = {
         client_id: dto.clientId || null,
         client_name: dto.clientName,
         client_phone: dto.clientPhone,
-        booking_date: dto.bookingDate,
+        // In-memory adapter stores the canonical ISO string so dev behavior
+        // mirrors the database's DATE column exactly.
+        booking_date: bookingDateGreg,
+        booking_date_greg: bookingDateGreg,
         booking_time: dto.bookingTime,
         end_time: dto.endTime || null,
         price: dto.price,
@@ -357,12 +386,12 @@ export const appointmentRepository = {
     const res = await query<DbAppointment>(
       `INSERT INTO appointments (
         id, tracking_code, salon_id, service_id, staff_id, client_id,
-        client_name, client_phone, booking_date, booking_time, end_time,
+        client_name, client_phone, booking_date, booking_date_greg, booking_time, end_time,
         price, payment_method, payment_status, status, notes, is_demo
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
-        $7, $8, $9, $10, $11,
-        $12, $13, $14, $15, $16, $17
+        $7, $8, $9, $10, $11, $12,
+        $13, $14, $15, $16, $17, $18
       )
       RETURNING *`,
       [
@@ -375,6 +404,7 @@ export const appointmentRepository = {
         dto.clientName,
         dto.clientPhone,
         dto.bookingDate,
+        bookingDateGreg,
         dto.bookingTime,
         dto.endTime || null,
         dto.price,
@@ -421,27 +451,36 @@ export const appointmentRepository = {
     const current = await this.findById(id, client);
     if (!current) return null;
 
-    const res = await query<DbAppointment>(
-      `UPDATE appointments
-       SET status = $1,
-           cancellation_reason = CASE WHEN $1 = 'cancelled' THEN $2 ELSE cancellation_reason END,
-           updated_at = NOW()
-       WHERE id = $3
-       RETURNING *`,
-      [newStatus, reason || null, id],
-      client
-    );
+    // Transactional mutation (Phase 06): the status change and its history
+    // row must commit or roll back together when no outer transaction exists.
+    const runUpdate = async (txClient?: PoolClient): Promise<DbAppointment | null> => {
+      const res = await query<DbAppointment>(
+        `UPDATE appointments
+         SET status = $1,
+             cancellation_reason = CASE WHEN $1 = 'cancelled' THEN $2 ELSE cancellation_reason END,
+             updated_at = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [newStatus, reason || null, id],
+        txClient
+      );
 
-    // Record status transition in audit history
-    await query(
-      `INSERT INTO appointment_status_history (
-        appointment_id, old_status, new_status, changed_by_user_id, changed_by_name, reason
-      ) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [id, current.status, newStatus, changedByUserId || null, changedByName, reason || null],
-      client
-    );
+      // Record status transition in audit history
+      await query(
+        `INSERT INTO appointment_status_history (
+          appointment_id, old_status, new_status, changed_by_user_id, changed_by_name, reason
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [id, current.status, newStatus, changedByUserId || null, changedByName, reason || null],
+        txClient
+      );
 
-    return res.rows[0] || null;
+      return res.rows[0] || null;
+    };
+
+    if (client) {
+      return await runUpdate(client);
+    }
+    return await withTransaction(async (txClient) => runUpdate(txClient));
   },
 
   async reschedule(
@@ -457,7 +496,12 @@ export const appointmentRepository = {
     if (!isDatabaseConfigured()) {
       const existing = inMemoryAppointments.get(id);
       if (!existing) return null;
-      existing.booking_date = newDate;
+      const canonical = parseBookingDateInput(newDate);
+      if (!canonical) {
+        throw new Error(`Invalid reschedule date: "${newDate}".`);
+      }
+      existing.booking_date = canonical.canonical;
+      existing.booking_date_greg = canonical.canonical;
       existing.booking_time = newTime;
       existing.end_time = newEndTime;
       if (newStaffId) existing.staff_id = newStaffId;
@@ -468,35 +512,50 @@ export const appointmentRepository = {
     const current = await this.findById(id, client);
     if (!current) return null;
 
+    // Canonical date resolution (Phase 06) + transactional mutation: the move
+    // and its history row commit or roll back together.
+    const canonicalNewDate = parseBookingDateInput(newDate);
+    if (!canonicalNewDate) {
+      throw new Error(`Invalid reschedule date: "${newDate}". Expected YYYY-MM-DD or a valid Jalali date.`);
+    }
     const targetStaffId = newStaffId || current.staff_id;
-    const res = await query<DbAppointment>(
-      `UPDATE appointments
-       SET booking_date = $1,
-           booking_time = $2,
-           end_time = $3,
-           staff_id = $4,
-           updated_at = NOW()
-       WHERE id = $5
-       RETURNING *`,
-      [newDate, newTime, newEndTime, targetStaffId, id],
-      client
-    );
 
-    await query(
-      `INSERT INTO appointment_status_history (
-        appointment_id, old_status, new_status, changed_by_user_id, changed_by_name, reason
-      ) VALUES ($1, $2, $2, $3, $4, $5)`,
-      [
-        id,
-        current.status,
-        changedByUserId || null,
-        changedByName || 'پرسنل سالن',
-        `تغییر زمان نوبت از ${current.booking_date} ${current.booking_time} به ${newDate} ${newTime}`,
-      ],
-      client
-    );
+    const runReschedule = async (txClient?: PoolClient): Promise<DbAppointment | null> => {
+      const res = await query<DbAppointment>(
+        `UPDATE appointments
+         SET booking_date = $1,
+             booking_date_greg = $6::date,
+             booking_time = $2,
+             end_time = $3,
+             staff_id = $4,
+             updated_at = NOW()
+         WHERE id = $5
+         RETURNING *`,
+        [newDate, newTime, newEndTime, targetStaffId, id, canonicalNewDate.canonical],
+        txClient
+      );
 
-    return res.rows[0] || null;
+      await query(
+        `INSERT INTO appointment_status_history (
+          appointment_id, old_status, new_status, changed_by_user_id, changed_by_name, reason
+        ) VALUES ($1, $2, $2, $3, $4, $5)`,
+        [
+          id,
+          current.status,
+          changedByUserId || null,
+          changedByName || 'پرسنل سالن',
+          `تغییر زمان نوبت از ${current.booking_date} ${current.booking_time} به ${newDate} ${newTime}`,
+        ],
+        txClient
+      );
+
+      return res.rows[0] || null;
+    };
+
+    if (client) {
+      return await runReschedule(client);
+    }
+    return await withTransaction(async (txClient) => runReschedule(txClient));
   },
 
   async countAll(client?: PoolClient): Promise<number> {

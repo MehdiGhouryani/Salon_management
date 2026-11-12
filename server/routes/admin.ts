@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { authenticateSession, requireAuth, requirePlatformRole } from '../middleware/auth.ts';
+import { withTransaction } from '../db/pool.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 import { salonRepository } from '../repositories/salonRepository.ts';
 import { userRepository } from '../repositories/userRepository.ts';
@@ -113,25 +114,31 @@ adminRouter.put('/salons/:id/status', async (req: Request, res: Response) => {
     }
 
     const oldStatus = salon.status;
-    const updatedSalon = await salonRepository.update(id, { status: status as any });
+    // Transactional mutation (Phase 06): the status change and its mandatory
+    // audit log commit or roll back together — an unlogged mutation is never
+    // reported as successful.
+    const updatedSalon = await withTransaction(async (txClient) => {
+      const updated = await salonRepository.update(id, { status: status as any }, txClient);
 
-    // Record mandatory Audit Log entry with operator details
-    await auditLogRepository.create({
-      actor: req.user?.phone || 'super_admin',
-      actorRole: 'super_admin',
-      action: 'SALON_STATUS_CHANGE',
-      target: `salon:${id}:${salon.name}`,
-      ipAddress: req.ip || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Platform Admin',
-      severity: status === 'suspended' || status === 'rejected' ? 'critical' : 'info',
-      category: 'business',
-      details: {
-        salonId: id,
-        salonName: salon.name,
-        oldStatus,
-        newStatus: status,
-        reason: reason.trim(),
-      },
+      await auditLogRepository.create({
+        actor: req.user?.phone || 'super_admin',
+        actorRole: 'super_admin',
+        action: 'SALON_STATUS_CHANGE',
+        target: `salon:${id}:${salon.name}`,
+        ipAddress: req.ip || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || 'Platform Admin',
+        severity: status === 'suspended' || status === 'rejected' ? 'critical' : 'info',
+        category: 'business',
+        details: {
+          salonId: id,
+          salonName: salon.name,
+          oldStatus,
+          newStatus: status,
+          reason: reason.trim(),
+        },
+      }, txClient);
+
+      return updated;
     });
 
     res.status(200).json({
@@ -216,24 +223,29 @@ adminRouter.put('/users/:id/status', async (req: Request, res: Response) => {
     }
 
     const oldStatus = user.status;
-    const updatedUser = await userRepository.update(id, { status });
+    // Transactional mutation (Phase 06): status change + audit log atomic.
+    const updatedUser = await withTransaction(async (txClient) => {
+      const updated = await userRepository.update(id, { status }, txClient);
 
-    await auditLogRepository.create({
-      actor: req.user?.phone || 'super_admin',
-      actorRole: 'super_admin',
-      action: 'USER_STATUS_CHANGE',
-      target: `user:${id}:${user.phone}`,
-      ipAddress: req.ip || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Platform Admin',
-      severity: status === 'suspended' ? 'critical' : 'info',
-      category: 'privilege',
-      details: {
-        userId: id,
-        userPhone: user.phone,
-        oldStatus,
-        newStatus: status,
-        reason: reason.trim(),
-      },
+      await auditLogRepository.create({
+        actor: req.user?.phone || 'super_admin',
+        actorRole: 'super_admin',
+        action: 'USER_STATUS_CHANGE',
+        target: `user:${id}:${user.phone}`,
+        ipAddress: req.ip || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || 'Platform Admin',
+        severity: status === 'suspended' ? 'critical' : 'info',
+        category: 'privilege',
+        details: {
+          userId: id,
+          userPhone: user.phone,
+          oldStatus,
+          newStatus: status,
+          reason: reason.trim(),
+        },
+      }, txClient);
+
+      return updated;
     });
 
     res.status(200).json({
@@ -281,22 +293,27 @@ adminRouter.put('/users/:id/role', async (req: Request, res: Response) => {
     }
 
     const oldRole = user.platform_role;
-    const updatedUser = await userRepository.update(id, { platformRole: role });
+    // Transactional mutation (Phase 06): role change + audit log atomic.
+    const updatedUser = await withTransaction(async (txClient) => {
+      const updated = await userRepository.update(id, { platformRole: role }, txClient);
 
-    await auditLogRepository.create({
-      actor: req.user?.phone || 'super_admin',
-      actorRole: 'super_admin',
-      action: 'USER_ROLE_CHANGE',
-      target: `user:${id}:${user.phone}`,
-      ipAddress: req.ip || '127.0.0.1',
-      userAgent: req.headers['user-agent'] || 'Platform Admin',
-      severity: 'warning',
-      category: 'privilege',
-      details: {
-        userId: id,
-        oldRole,
-        newRole: role,
-      },
+      await auditLogRepository.create({
+        actor: req.user?.phone || 'super_admin',
+        actorRole: 'super_admin',
+        action: 'USER_ROLE_CHANGE',
+        target: `user:${id}:${user.phone}`,
+        ipAddress: req.ip || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || 'Platform Admin',
+        severity: 'warning',
+        category: 'privilege',
+        details: {
+          userId: id,
+          oldRole,
+          newRole: role,
+        },
+      }, txClient);
+
+      return updated;
     });
 
     res.status(200).json({

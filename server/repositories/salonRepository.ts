@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import { query, isDatabaseConfigured } from '../db/pool.ts';
+import { query, isDatabaseConfigured, withTransaction } from '../db/pool.ts';
 
 export type SalonStatus = 'active' | 'pending' | 'suspended' | 'trial';
 export type PlanType = 'bronze' | 'silver' | 'gold_vip';
@@ -582,15 +582,31 @@ export const salonRepository = {
       return;
     }
 
-    for (const h of hours) {
+    // Transactional replace (Phase 06): the delete + insert set must commit or
+    // roll back together — previously this path only INSERTed with
+    // ON CONFLICT DO NOTHING, silently keeping stale hours for existing days.
+    const replaceHours = async (txClient?: PoolClient): Promise<void> => {
       await query(
-        `INSERT INTO working_hours (salon_id, staff_id, day_of_week, start_time, end_time, is_closed)
-         VALUES ($1, NULL, $2, $3, $4, $5)
-         ON CONFLICT DO NOTHING`,
-        [salonId, h.dayOfWeek, h.startTime, h.endTime, h.isClosed],
-        client
+        `DELETE FROM working_hours WHERE salon_id = $1 AND staff_id IS NULL`,
+        [salonId],
+        txClient
       );
+      for (const h of hours) {
+        await query(
+          `INSERT INTO working_hours (salon_id, staff_id, day_of_week, start_time, end_time, is_closed)
+           VALUES ($1, NULL, $2, $3, $4, $5)
+           ON CONFLICT DO NOTHING`,
+          [salonId, h.dayOfWeek, h.startTime, h.endTime, h.isClosed],
+          txClient
+        );
+      }
+    };
+
+    if (client) {
+      await replaceHours(client);
+      return;
     }
+    await withTransaction(async (txClient) => replaceHours(txClient));
   },
 
   async getAvailabilityExceptions(

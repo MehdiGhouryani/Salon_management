@@ -3,12 +3,11 @@ import type { PoolClient } from 'pg';
 import { config } from '../../config.ts';
 import { withTransaction, isDatabaseConfigured, query } from '../../db/pool.ts';
 import { normalizeIranianPhone } from '../../utils/phone.ts';
+import { parseBookingDateInput } from '../../utils/jalali.ts';
 import {
   timeToMinutes,
   minutesToTime,
   addMinutesToTime,
-  getIranianDayOfWeek,
-  generateAvailableSlots,
   doIntervalsOverlap,
   IRANIAN_DAY_NAMES,
 } from '../../utils/bookingTime.ts';
@@ -127,16 +126,18 @@ export const bookingService = {
     const duration = service.duration_minutes || 60;
     const price = typeof service.price === 'string' ? parseInt(service.price, 10) : service.price;
 
-    // 3. Determine Iranian Day of Week
-    let dayOfWeek = 0;
-    const parsedDate = new Date(dateStr);
-    if (!isNaN(parsedDate.getTime())) {
-      dayOfWeek = getIranianDayOfWeek(parsedDate);
-    } else {
-      // Fallback for custom Jalali strings (e.g. 1403/08/25)
-      // Defaults to Saturday (0) if date string is custom
-      dayOfWeek = 0;
+    // 3. Canonical date resolution (Phase 06): Gregorian ISO or validated
+    // Jalali input — no silent fallbacks to "today" or Saturday anymore.
+    const parsedDay = parseBookingDateInput(dateStr);
+    if (!parsedDay) {
+      throw new BookingError(
+        'تاریخ انتخابی معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
+        400,
+        'INVALID_DATE'
+      );
     }
+    const canonicalDate = parsedDay.canonical;
+    const dayOfWeek = parsedDay.weekday;
     const dayName = IRANIAN_DAY_NAMES[dayOfWeek] || 'نامشخص';
 
     // 4. Retrieve Working Hours
@@ -147,7 +148,7 @@ export const bookingService = {
       return {
         isOpen: false,
         reason: `سالن در روز ${dayName} تعطیل می‌باشد.`,
-        date: dateStr,
+        date: canonicalDate,
         dayOfWeek,
         dayName,
         serviceDurationMinutes: duration,
@@ -158,13 +159,13 @@ export const bookingService = {
     }
 
     // 5. Check Availability Exceptions
-    const exceptions = await salonRepository.getAvailabilityExceptions(salonId, dateStr, staffId);
+    const exceptions = await salonRepository.getAvailabilityExceptions(salonId, canonicalDate, staffId);
     const activeException = exceptions.find((e) => !e.is_available);
     if (activeException) {
       return {
         isOpen: false,
         reason: activeException.reason || 'تعطیلی کاری در این تاریخ ثبت شده است.',
-        date: dateStr,
+        date: canonicalDate,
         dayOfWeek,
         dayName,
         serviceDurationMinutes: duration,
@@ -180,7 +181,7 @@ export const bookingService = {
       return {
         isOpen: false,
         reason: 'هیچ متخصصی در حال حاضر در این سالن فعال نمی‌باشد.',
-        date: dateStr,
+        date: canonicalDate,
         dayOfWeek,
         dayName,
         serviceDurationMinutes: duration,
@@ -208,7 +209,7 @@ export const bookingService = {
 
     // Fetch all existing appointments for this salon and date
     const existingAppointments = await appointmentRepository.findBySalonId(salonId, {
-      date: dateStr,
+      date: canonicalDate,
     });
     const activeAppointments = existingAppointments.filter((a) => a.status !== 'cancelled');
 
@@ -269,7 +270,7 @@ export const bookingService = {
 
     return {
       isOpen: true,
-      date: dateStr,
+      date: canonicalDate,
       dayOfWeek,
       dayName,
       serviceDurationMinutes: duration,
@@ -337,12 +338,18 @@ export const bookingService = {
     const price = typeof service.price === 'string' ? parseInt(service.price, 10) : service.price;
     const endTime = addMinutesToTime(params.bookingTime, durationMinutes);
 
-    // 3. Working Hours Verification
-    let dayOfWeek = 0;
-    const parsedDate = new Date(params.bookingDate);
-    if (!isNaN(parsedDate.getTime())) {
-      dayOfWeek = getIranianDayOfWeek(parsedDate);
+    // 3. Canonical date resolution (Phase 06) — rejects unparseable dates
+    // instead of silently assuming Saturday/"today".
+    const parsedDay = parseBookingDateInput(params.bookingDate);
+    if (!parsedDay) {
+      throw new BookingError(
+        'تاریخ نوبت معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
+        400,
+        'INVALID_DATE'
+      );
     }
+    const canonicalDate = parsedDay.canonical;
+    const dayOfWeek = parsedDay.weekday;
     const workingHours = await salonRepository.getWorkingHours(params.salonId);
     const dayHours = workingHours.find((h) => h.day_of_week === dayOfWeek);
 
@@ -379,7 +386,7 @@ export const bookingService = {
           const isFree = await appointmentRepository.checkSlotOverlap(
             params.salonId,
             st.id,
-            params.bookingDate,
+            canonicalDate,
             params.bookingTime,
             endTime,
             undefined,
@@ -407,7 +414,7 @@ export const bookingService = {
         const isFree = await appointmentRepository.checkSlotOverlap(
           params.salonId,
           selectedStaffId,
-          params.bookingDate,
+          canonicalDate,
           params.bookingTime,
           endTime,
           undefined,
@@ -429,7 +436,7 @@ export const bookingService = {
         (b) =>
           b.salon_id === params.salonId &&
           b.service_id === params.serviceId &&
-          b.booking_date === params.bookingDate &&
+          b.booking_date === canonicalDate &&
           b.booking_time === params.bookingTime &&
           b.status !== 'cancelled'
       );
@@ -467,7 +474,7 @@ export const bookingService = {
           clientId: clientRecord.id,
           clientName,
           clientPhone,
-          bookingDate: params.bookingDate,
+          bookingDate: canonicalDate,
           bookingTime: params.bookingTime,
           endTime,
           price,
@@ -495,7 +502,7 @@ export const bookingService = {
           salonId: params.salonId,
           serviceId: params.serviceId,
           staffId: selectedStaffId,
-          date: params.bookingDate,
+          date: canonicalDate,
           time: params.bookingTime,
           price,
         },
@@ -515,7 +522,7 @@ export const bookingService = {
         // released automatically at COMMIT/ROLLBACK.
         await dbClient.query(
           `SELECT pg_advisory_xact_lock(hashtextextended($1 || ':' || $2, 0))`,
-          [params.salonId, params.bookingDate]
+          [params.salonId, canonicalDate]
         );
         const appointment = await executeAtomicBooking(dbClient);
         return {
@@ -525,7 +532,7 @@ export const bookingService = {
       });
     } else {
       // In-Memory Dev/Test: Mutex lock per (salon, staff, date) to prevent parallel race conditions
-      const lockKey = `${params.salonId}:${params.staffId || 'any'}:${params.bookingDate}`;
+      const lockKey = `${params.salonId}:${params.staffId || 'any'}:${canonicalDate}`;
       const release = await acquireLock(lockKey);
       try {
         const appointment = await executeAtomicBooking();

@@ -7,14 +7,21 @@ import { serviceRepository } from '../repositories/serviceRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
 import { clientRepository } from '../repositories/clientRepository.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
+import { withTransaction } from '../db/pool.ts';
 import { extractClientIp } from '../services/auth/sessionService.ts';
 import { normalizeIranianPhone } from '../utils/phone.ts';
+import { parseBookingDateInput } from '../utils/jalali.ts';
 import {
   addMinutesToTimeString,
   formatIranianDate,
   getIranianDayOfWeek,
   parseBookingDate,
 } from '../utils/bookingTime.ts';
+
+/** Canonical "today" in the Asia/Tehran business timezone (Gregorian YYYY-MM-DD). */
+function tehranTodayIso(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date());
+}
 
 export const salonRouter = express.Router({ mergeParams: true });
 
@@ -116,23 +123,31 @@ salonRouter.patch(
  */
 salonRouter.get('/dashboard/overview', async (req: Request, res: Response): Promise<void> => {
   const salonId = String(req.params.salonId);
-  const targetDateStr = String(req.query.date || formatIranianDate(new Date())).trim();
+  // Canonical target date: Asia/Tehran "today" (Gregorian YYYY-MM-DD) unless a
+  // valid explicit date is supplied. Jalali/ISO input is validated once here.
+  const requestedDate = req.query.date ? parseBookingDateInput(String(req.query.date)) : null;
+  const targetDateStr = requestedDate
+    ? requestedDate.canonical
+    : tehranTodayIso();
 
   try {
     const [allSalonAppointments, workingHours, staffList] = await Promise.all([
-      appointmentRepository.findBySalonId(salonId),
+      appointmentRepository.findBySalonId(salonId, { date: targetDateStr }),
       salonRepository.getWorkingHours(salonId),
       staffRepository.findBySalonId(salonId, true),
     ]);
 
-    // Parse target date to calculate day of week
-    const parsedDate = parseBookingDate(targetDateStr);
-    const dayOfWeek = getIranianDayOfWeek(parsedDate);
+    // Saturday-first weekday of the canonical target date (TZ-independent)
+    const dayOfWeek = requestedDate
+      ? requestedDate.weekday
+      : parseBookingDateInput(targetDateStr)!.weekday;
     const todayWorkingHour = workingHours.find((w) => w.day_of_week === dayOfWeek);
 
-    // Filter appointments for target date
+    // Filter appointments for target date — canonical Gregorian comparison
+    // (in-memory rows store canonical strings since Phase 06; legacy Jalali
+    // strings from older dev sessions no longer alias the same day).
     const todayAppointments = allSalonAppointments.filter(
-      (a) => a.booking_date === targetDateStr || a.booking_date === 'امروز'
+      (a) => (a.booking_date_greg || a.booking_date) === targetDateStr
     );
 
     const completedAppts = todayAppointments.filter((a) => a.status === 'completed');
@@ -317,6 +332,18 @@ salonRouter.post(
     }
     const normalizedPhone = phoneRes.national;
 
+    // Canonical date resolution (Phase 06): accepts Gregorian ISO or Jalali
+    // input; stores and queries only the canonical Gregorian value.
+    const canonicalBookingDay = parseBookingDateInput(String(bookingDate));
+    if (!canonicalBookingDay) {
+      res.status(400).json({
+        error: 'INVALID_BOOKING_DATE',
+        message: 'تاریخ نوبت معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
+      });
+      return;
+    }
+    const canonicalDate = canonicalBookingDay.canonical;
+
     try {
       // 1. Verify service belongs to salon
       const service = await serviceRepository.findById(serviceId);
@@ -346,7 +373,7 @@ salonRouter.post(
       const isSlotFree = await appointmentRepository.checkSlotOverlap(
         salonId,
         staffId,
-        bookingDate,
+        canonicalDate,
         bookingTime,
         endTime
       );
@@ -359,36 +386,37 @@ salonRouter.post(
         return;
       }
 
-      // 5. Create or find client record
-      const client = await clientRepository.createOrUpdate({
-        phone: normalizedPhone,
-        fullName: String(clientName).trim(),
-      });
-      await clientRepository.recordBookingVisit(salonId, client.id, Number(service.price));
-
-      // 6. Generate tracking code
+      // 5-7. Client upsert, visit counter and appointment creation commit or
+      // roll back together (Phase 06 transactional write).
       const trackingSuffix = Math.floor(1000 + Math.random() * 9000);
       const trackingCode = `MAN-${trackingSuffix}`;
       const appointmentId = `apt-${Date.now()}-${trackingSuffix}`;
 
-      // 7. Create appointment
-      const created = await appointmentRepository.create({
-        id: appointmentId,
-        trackingCode,
-        salonId,
-        serviceId: service.id,
-        staffId: staff.id,
-        clientId: client.id,
-        clientName: String(clientName).trim(),
-        clientPhone: normalizedPhone,
-        bookingDate,
-        bookingTime,
-        endTime,
-        price: Number(service.price),
-        status: 'confirmed',
-        paymentMethod: 'in_person',
-        paymentStatus: 'pending',
-        notes: notes ? String(notes).trim() : 'ثبت مستقیم توسط پرسنل سالن',
+      const created = await withTransaction(async (txClient) => {
+        const txClientRecord = await clientRepository.createOrUpdate({
+          phone: normalizedPhone,
+          fullName: String(clientName).trim(),
+        }, txClient);
+        await clientRepository.recordBookingVisit(salonId, txClientRecord.id, Number(service.price), txClient);
+
+        return await appointmentRepository.create({
+          id: appointmentId,
+          trackingCode,
+          salonId,
+          serviceId: service.id,
+          staffId: staff.id,
+          clientId: txClientRecord.id,
+          clientName: String(clientName).trim(),
+          clientPhone: normalizedPhone,
+          bookingDate: canonicalDate,
+          bookingTime,
+          endTime,
+          price: Number(service.price),
+          status: 'confirmed',
+          paymentMethod: 'in_person',
+          paymentStatus: 'pending',
+          notes: notes ? String(notes).trim() : 'ثبت مستقیم توسط پرسنل سالن',
+        }, txClient);
       });
 
       // 8. Record audit log
@@ -513,6 +541,17 @@ salonRouter.patch(
       return;
     }
 
+    // Canonical date resolution (Phase 06)
+    const canonicalRescheduleDay = parseBookingDateInput(String(bookingDate));
+    if (!canonicalRescheduleDay) {
+      res.status(400).json({
+        error: 'INVALID_BOOKING_DATE',
+        message: 'تاریخ جدید نوبت معتبر نیست. قالب صحیح: YYYY-MM-DD یا تاریخ شمسی معتبر.',
+      });
+      return;
+    }
+    const canonicalDate = canonicalRescheduleDay.canonical;
+
     try {
       const appt = await appointmentRepository.findById(appointmentId);
       if (!appt || appt.salon_id !== salonId) {
@@ -542,7 +581,7 @@ salonRouter.patch(
       const isSlotFree = await appointmentRepository.checkSlotOverlap(
         salonId,
         targetStaffId,
-        bookingDate,
+        canonicalDate,
         bookingTime,
         endTime,
         appointmentId // Exclude current appointment
@@ -558,7 +597,7 @@ salonRouter.patch(
 
       const updated = await appointmentRepository.reschedule(
         appointmentId,
-        bookingDate,
+        canonicalDate,
         bookingTime,
         endTime,
         targetStaffId,

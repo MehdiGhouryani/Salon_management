@@ -30,9 +30,15 @@ export function errorHandlerMiddleware(
     return next(err);
   }
 
-  const statusCode = typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 600
-    ? err.statusCode
-    : 500;
+  // Controlled service-unavailable response for a configured-but-offline
+  // PostgreSQL (fail-closed by design, never a silent fallback or fake success).
+  const isDatabaseUnavailable =
+    err?.name === 'DatabaseUnavailableError' || err?.code === 'DATABASE_UNAVAILABLE';
+  const statusCode = isDatabaseUnavailable
+    ? 503
+    : typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 600
+      ? err.statusCode
+      : 500;
 
   // Log error message safely on the server
   console.error(`[ServerError] ${req.method} ${req.path} -> ${statusCode}:`, err.message || err);
@@ -43,10 +49,14 @@ export function errorHandlerMiddleware(
   res.status(statusCode).json({
     success: false,
     error: {
-      code: err.code || (statusCode === 400 ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR'),
-      message: isProduction && statusCode === 500
-        ? 'Internal server error occurred.'
-        : (err.message || 'An unexpected error occurred.'),
+      code: isDatabaseUnavailable
+        ? 'DATABASE_UNAVAILABLE'
+        : err.code || (statusCode === 400 ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR'),
+      message: isDatabaseUnavailable
+        ? 'سامانه در دسترس نیست. لطفاً چند لحظه دیگر دوباره تلاش فرمایید.'
+        : isProduction && statusCode === 500
+          ? 'Internal server error occurred.'
+          : (err.message || 'An unexpected error occurred.'),
       ...(isProduction ? {} : { details: err.details, stack: err.stack }),
     },
   });

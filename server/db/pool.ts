@@ -4,6 +4,34 @@ import { config } from '../config.ts';
 
 const { Pool } = pg;
 
+/**
+ * Raised when PostgreSQL is configured but unreachable. Must NEVER be silently
+ * swallowed or replaced with empty results — callers respond with a controlled
+ * 503 DATABASE_UNAVAILABLE instead of faking success (rule: no silent fallbacks).
+ */
+export class DatabaseUnavailableError extends Error {
+  readonly statusCode = 503;
+  readonly code = 'DATABASE_UNAVAILABLE';
+
+  constructor(message = 'PostgreSQL is configured but currently unreachable.') {
+    super(message);
+    this.name = 'DatabaseUnavailableError';
+  }
+}
+
+function isConnectionFailure(err: any): boolean {
+  return (
+    err?.code === 'ECONNREFUSED' ||
+    err?.code === 'ETIMEDOUT' ||
+    err?.code === 'ECONNRESET' ||
+    err?.code === 'ENOTFOUND' ||
+    err?.code === 'EAI_AGAIN' ||
+    err?.code === '57P01' || // admin shutdown
+    err?.code === '58000' || // system error / cannot connect now
+    (typeof err?.message === 'string' && err.message.includes('connect ECONNREFUSED'))
+  );
+}
+
 export class DatabaseNotConfiguredError extends Error {
   constructor(message = 'Database is not configured. Set DATABASE_URL or DB_HOST in environment.') {
     super(message);
@@ -112,9 +140,12 @@ export async function query<R extends QueryResultRow = any>(
     }
     return result;
   } catch (err: any) {
-    if (err?.code === 'ECONNREFUSED' || err?.message?.includes('connect ECONNREFUSED')) {
-      console.warn('[NobatAra Database] DB offline — mock active query fallback');
-      return { rows: [], command: 'SELECT', rowCount: 0, oid: 0, fields: [] } as QueryResult<R>;
+    // FAIL CLOSED (R4): a configured-but-offline database must produce a loud,
+    // controlled error — never an empty result set that reads as "no data" or
+    // a write that silently did nothing.
+    if (isConnectionFailure(err)) {
+      console.error('[NobatAra Database] Unavailable — failing closed:', (err?.message || '').substring(0, 120));
+      throw new DatabaseUnavailableError();
     }
     // Redact any potential connection string credentials from error output
     const sanitizedMessage = (err?.message || 'Unknown database query error')
@@ -154,9 +185,11 @@ export async function withTransaction<T>(
       client.release();
     }
   } catch (err: any) {
-    if (err?.code === 'ECONNREFUSED' || err?.message?.includes('connect ECONNREFUSED')) {
-      console.warn('[NobatAra Database] DB offline during transaction — mock active fallback');
-      return await callback(mockClient);
+    // FAIL CLOSED (R4): never execute the callback against a mock client — a
+    // transaction run on the mock client commits nothing yet reports success.
+    if (isConnectionFailure(err)) {
+      console.error('[NobatAra Database] Unavailable during transaction — failing closed');
+      throw new DatabaseUnavailableError();
     }
     throw err;
   }
