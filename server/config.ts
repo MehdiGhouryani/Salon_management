@@ -117,6 +117,17 @@ function parseAndValidateConfig(): ServerConfig {
   // Database is configured if a connection URL is present or a non-empty DB_HOST is explicitly set
   const isDatabaseConfigured = Boolean(rawDatabaseUrl || dbHost);
 
+  // Production fail-fast: NobatAra refuses to start without persistent storage.
+  // Simulated/in-memory persistence is a development-only affordance and must
+  // never silently back a production deployment.
+  if (isProduction && !isDatabaseConfigured) {
+    throw new Error(
+      '[ServerConfig] In production, a PostgreSQL database is mandatory. ' +
+        'Set DATABASE_URL (or DB_HOST/DB_NAME/DB_USER/DB_PASSWORD). ' +
+        'NobatAra refuses to start in production without persistent storage.'
+    );
+  }
+
   const database: DatabaseConfig = Object.freeze({
     url: rawDatabaseUrl || undefined,
     host: dbHost || 'localhost',
@@ -162,6 +173,14 @@ function parseAndValidateConfig(): ServerConfig {
     kavenegarApiKey,
     isSmsConfigured,
   });
+
+  if (isProduction && !isSmsConfigured) {
+    // Non-fatal: SMS provider fails closed per request, but operators must know.
+    console.warn(
+      '[ServerConfig] Production warning: KAVENEGAR_API_KEY is not set. ' +
+        'OTP delivery will fail closed until a real SMS provider is configured.'
+    );
+  }
 
   return Object.freeze({
     nodeEnv,
