@@ -52,11 +52,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       if (res.ok) {
         const data = await res.json();
+        // Phase 11 fix: /api/auth/me returns 200 with authenticated:false for
+        // anonymous visitors — trust the FLAG, not the HTTP status. The old
+        // code marked every visitor as authenticated:true (user:null), which
+        // broke production persona gating and fired authenticated API calls
+        // that always 401'd.
         setServerAuth({
-          authenticated: true,
+          authenticated: data.authenticated === true && Boolean(data.user),
           isLoading: false,
-          user: data.user,
-          salonMemberships: data.salonMemberships || [],
+          user: data.authenticated === true ? data.user : null,
+          salonMemberships: data.authenticated === true ? data.salonMemberships || [] : [],
         });
       } else {
         setServerAuth({

@@ -173,10 +173,17 @@ export const sessionService = {
       user = await userRepository.findById(session.user_id);
       memberships = await userRepository.getMemberships(session.user_id);
       if (!user) {
+        // Phase 11 fix: reconstruct the dev-provisioned user faithfully. The
+        // old synthetic fallback hardcoded phone 09121111111, so every dev
+        // login scoped /api/public/bookings/my to the wrong phone and
+        // silently returned an empty history.
+        const devPhone = session.user_id.startsWith('dev-user-')
+          ? session.user_id.slice('dev-user-'.length)
+          : '09121111111';
         user = {
           id: session.user_id,
-          phone: '09121111111',
-          full_name: 'کاربر سیستم',
+          phone: devPhone,
+          full_name: `کاربر ${devPhone.slice(-4)}`,
           email: null,
           platform_role: 'user',
           status: 'active',

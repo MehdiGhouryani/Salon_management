@@ -21,49 +21,69 @@ const fa = (n: number) => toPersianDigits(String(n));
  * salon's photograph beside it. One action ("رزرو نوبت") on a phone and in the first screen.
  */
 export const SalonWebsiteView: React.FC = () => {
-  const { salons, currentSalonSlug, clientSession, customerBookings, addCustomerBooking } = useAdmin();
+  const { salons, currentSalonSlug, setCurrentSalonSlug, clientSession, customerBookings, addCustomerBooking, isDemoMode } = useAdmin();
 
-  // Live server data first, the static catalog as a fallback.
+  // Phase 11 — real URL deep links: /salon/:slug. Refresh and direct links
+  // resolve to the correct salon; the persona itself stays server-guarded.
+  useEffect(() => {
+    const applyPath = () => {
+      const match = window.location.pathname.match(/^\/salon\/([\w-]+)\/?$/);
+      if (match && match[1] && match[1] !== currentSalonSlug) {
+        setCurrentSalonSlug(match[1]);
+      }
+    };
+    applyPath();
+    window.addEventListener('popstate', applyPath);
+    return () => window.removeEventListener('popstate', applyPath);
+  }, [currentSalonSlug, setCurrentSalonSlug]);
+
+  // Keep the URL in sync when the slug changes (shareable storefront links).
+  useEffect(() => {
+    const desired = `/salon/${currentSalonSlug}`;
+    if (window.location.pathname !== desired && /^\/salon\//.test(window.location.pathname + '') !== false) {
+      window.history.replaceState(null, '', desired);
+    }
+  }, [currentSalonSlug]);
+
+  // Phase 11: live server data always wins. In production posture a failed
+  // fetch shows an explicit error state — the static demo catalog is used
+  // ONLY in demo mode, never silently in production.
   const [liveSalon, setLiveSalon] = useState<DetailedSalonData | null>(null);
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   useEffect(() => {
     let alive = true;
+    setLoadState('loading');
+    setLiveSalon(null);
     fetch(`/api/public/salons/${encodeURIComponent(currentSalonSlug)}`)
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('http_' + r.status))))
       .then((data) => {
-        if (alive && data.success && data.salon) setLiveSalon(data.salon);
+        if (alive && data.success && data.salon) {
+          setLiveSalon(data.salon);
+          setLoadState('ready');
+        } else if (alive) {
+          setLoadState(isDemoMode ? 'ready' : 'error');
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (alive) setLoadState(isDemoMode ? 'ready' : 'error');
+      });
     return () => {
       alive = false;
     };
-  }, [currentSalonSlug]);
+  }, [currentSalonSlug, isDemoMode]);
 
-  const salon = useMemo(
-    () => liveSalon ?? getSalonBySlug(currentSalonSlug, salons),
-    [liveSalon, currentSalonSlug, salons]
-  );
+  const salon = useMemo(() => {
+    if (liveSalon) return liveSalon;
+    if (!isDemoMode && loadState !== 'ready') return null; // never show demo catalog as production data
+    return getSalonBySlug(currentSalonSlug, salons);
+  }, [liveSalon, currentSalonSlug, salons, isDemoMode, loadState]);
 
   const [search, setSearch] = useState('');
   const [imgOk, setImgOk] = useState(true);
-  useEffect(() => setImgOk(true), [salon.bannerImage]);
+  useEffect(() => setImgOk(true), [salon?.bannerImage]);
+  const services = salon?.services || [];
+  const showSearch = (salon?.services || []).length > 12;
 
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [serviceId, setServiceId] = useState<string | undefined>(undefined);
-  const [receiptOpen, setReceiptOpen] = useState(false);
-  const [receipt, setReceipt] = useState<CustomerBooking | null>(null);
-  const [accountOpen, setAccountOpen] = useState(false);
-
-  // Only the verified client's own bookings are counted.
-  const myCount = useMemo(
-    () =>
-      clientSession.isLoggedIn && clientSession.phone
-        ? customerBookings.filter((b) => b.clientPhone === clientSession.phone).length
-        : 0,
-    [customerBookings, clientSession]
-  );
-
-  const services = salon.services || [];
-  const showSearch = services.length > 12;
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return services;
@@ -81,6 +101,49 @@ export const SalonWebsiteView: React.FC = () => {
     });
     return [...map.values()];
   }, [shown]);
+
+
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [serviceId, setServiceId] = useState<string | undefined>(undefined);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receipt, setReceipt] = useState<CustomerBooking | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  // Only the verified client's own bookings are counted.
+  const myCount = useMemo(
+    () =>
+      clientSession.isLoggedIn && clientSession.phone
+        ? customerBookings.filter((b) => b.clientPhone === clientSession.phone).length
+        : 0,
+    [customerBookings, clientSession]
+  );
+
+  // Phase 11: explicit loading / error / not-found states (after all hooks).
+  if (loadState === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center" dir="rtl">
+        <div className="animate-pulse text-sm text-[var(--text-secondary)]">در حال بارگذاری سالن…</div>
+      </div>
+    );
+  }
+  if (loadState === 'error' || !salon) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" dir="rtl">
+        <div className="max-w-sm text-center space-y-3">
+          <p className="text-sm font-semibold text-rose-600">
+            {loadState === 'error' ? 'بارگذاری اطلاعات سالن ناموفق بود.' : 'سالن مورد نظر یافت نشد.'}
+          </p>
+          <p className="text-xs text-[var(--text-secondary)]">اتصال اینترنت را بررسی کنید یا دقایقی دیگر تلاش کنید.</p>
+          <button
+            onClick={() => setLoadState('loading')}
+            className="px-4 py-2 rounded-xl bg-[var(--brand-primary)] text-white text-xs font-bold cursor-pointer"
+          >
+            تلاش دوباره
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const book = (id?: string) => {
     setServiceId(id);

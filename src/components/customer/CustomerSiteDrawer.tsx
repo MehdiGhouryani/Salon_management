@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Check, Copy, LogOut, QrCode } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Check, Copy, Loader2, LogOut, QrCode } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { DetailedSalonData } from '../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../types/admin';
 import { toPersianDigits } from '../../utils/formatters';
 import { SalonQrModal } from '../common/SalonQrModal';
 import { ServerAuthModal } from '../common/ServerAuthModal';
+import { api, ApiError } from '../../api/client';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -21,10 +23,12 @@ interface CustomerSiteDrawerProps {
   onOpenReceipt?: (booking: CustomerBooking) => void;
 }
 
-const STATUS = {
+const STATUS: Record<string, { label: string; variant: 'warning' | 'success' | 'neutral' | 'error' }> = {
+  pending: { label: 'در انتظار تایید', variant: 'warning' as const },
   confirmed: { label: 'ثبت شده', variant: 'warning' as const },
   completed: { label: 'انجام شد', variant: 'success' as const },
   cancelled: { label: 'لغو شد', variant: 'neutral' as const },
+  no_show: { label: 'بدون حضور', variant: 'error' as const },
 };
 
 export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
@@ -54,11 +58,140 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
   const [phoneError, setPhoneError] = useState('');
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+
+
 
   // Privacy: only the verified client's own bookings, never every booking of the salon.
-  const mine =
-    clientSession.isLoggedIn && clientSession.phone
+  // Phase 11: production bookings come from the server (/api/public/bookings/my)
+  // after a real OTP login; demo mode keeps the local preview records.
+  const [serverBookings, setServerBookings] = useState<CustomerBooking[]>([]);
+  const [serverLoading, setServerLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [cancellingCode, setCancellingCode] = useState<string | null>(null);
+  const [trackResult, setTrackResult] = useState<CustomerBooking | null>(null);
+  const [trackError, setTrackError] = useState('');
+  const [trackCode, setTrackCode] = useState('');
+  const [trackLoading, setTrackLoading] = useState(false);
+
+  const { serverAuth } = useAuth();
+
+  const fetchMyBookings = useCallback(async () => {
+    if (!isDemoMode && serverAuth.authenticated) {
+      setServerLoading(true);
+      setServerError('');
+      try {
+        const data = await api.get<{ success: boolean; bookings: any[] }>('/api/public/bookings/my');
+        setServerBookings(
+          (data.bookings || []).map((b) => ({
+            id: b.id,
+            trackingCode: b.trackingCode,
+            salonId: b.salonId,
+            salonName: b.salonName || '',
+            serviceName: b.serviceName || b.serviceId || '',
+            serviceCategory: '',
+            staffName: b.staffName || '',
+            clientName: b.clientName,
+            clientPhone: b.clientPhone,
+            date: b.bookingDate,
+            time: b.bookingTime,
+            price: typeof b.price === 'string' ? parseInt(b.price, 10) : b.price,
+            paymentMethod: 'in_person' as const,
+            createdAt: b.createdAt || new Date().toISOString(),
+            status: b.status,
+          }))
+        );
+      } catch (err) {
+        setServerError(
+          err instanceof ApiError ? err.message : 'خطا در دریافت نوبت‌های شما.'
+        );
+      } finally {
+        setServerLoading(false);
+      }
+    }
+  }, [isDemoMode, serverAuth.authenticated]);
+
+  useEffect(() => {
+    if (isOpen && !isDemoMode && serverAuth.authenticated) {
+      fetchMyBookings();
+    }
+  }, [isOpen, fetchMyBookings]);
+
+  if (!isOpen) return null;
+
+  const cancel = async (b: CustomerBooking) => {
+    setConfirmId(null);
+    if (!isDemoMode) {
+      setCancellingCode(b.trackingCode);
+      try {
+        // Server-confirmed cancellation only: the response IS the updated record.
+        const data = await api.post<{ success: boolean; appointment: any }>(
+          `/api/public/bookings/${encodeURIComponent(b.trackingCode)}/cancel`,
+          { reason: 'لغو توسط مشتری در پنل کاربری' }
+        );
+        setServerBookings((prev) =>
+          prev.map((x) =>
+            x.trackingCode === b.trackingCode
+              ? { ...x, status: data.appointment?.status || 'cancelled' }
+              : x
+          )
+        );
+        addToast({ type: 'success', title: 'نوبت لغو شد', message: `کد پیگیری ${b.trackingCode}` });
+      } catch (err) {
+        addToast({
+          type: 'error',
+          title: 'لغو نوبت ناموفق بود',
+          message: err instanceof ApiError ? err.message : 'خطای ارتباط با سرور.',
+        });
+      } finally {
+        setCancellingCode(null);
+      }
+      return;
+    }
+    cancelCustomerBooking(b.id);
+    addToast({ type: 'info', title: '[شبیه‌سازی دمو] نوبت لغو شد', message: b.serviceName });
+  };
+
+  const trackByCode = async () => {
+    const code = trackCode.trim();
+    if (!code) return;
+    setTrackLoading(true);
+    setTrackError('');
+    setTrackResult(null);
+    try {
+      const data = await api.get<{ success: boolean; appointment: any }>(
+        `/api/public/bookings/track/${encodeURIComponent(code)}${
+          isValidMobile(phone) ? `?phone=${encodeURIComponent(phone)}` : ''
+        }`
+      );
+      const a = data.appointment;
+      setTrackResult({
+        id: a.id,
+        trackingCode: a.trackingCode,
+        salonId: a.salonId,
+        salonName: '',
+        serviceName: a.serviceId || '',
+        serviceCategory: '',
+        staffName: '',
+        clientName: a.clientName || '',
+        clientPhone: a.clientPhone || '',
+        date: a.bookingDate,
+        time: a.bookingTime,
+        price: typeof a.price === 'string' ? parseInt(a.price, 10) : a.price,
+        paymentMethod: 'in_person' as const,
+        createdAt: new Date().toISOString(),
+        status: a.status,
+      });
+    } catch (err) {
+      setTrackError(err instanceof ApiError ? err.message : 'خطا در رهگیری نوبت.');
+    } finally {
+      setTrackLoading(false);
+    }
+  };
+
+  // Privacy: server records for logged-in customers (production); local preview records in demo.
+  const mine = !isDemoMode
+    ? serverBookings
+    : clientSession.isLoggedIn && clientSession.phone
       ? customerBookings.filter((b) => b.clientPhone === clientSession.phone)
       : [];
 
@@ -94,19 +227,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const cancel = (b: CustomerBooking) => {
-    if (!isDemoMode) {
-      addToast({
-        type: 'error',
-        title: 'لغو نوبت در محیط عملیاتی مسدود است',
-        message: 'لغو نوبت نیازمند احراز هویت پیامکی در فاز ۵ است.',
-      });
-      return;
-    }
-    cancelCustomerBooking(b.id);
-    setConfirmId(null);
-    addToast({ type: 'info', title: '[شبیه‌سازی دمو] نوبت لغو شد', message: b.serviceName });
-  };
+
 
   return (
     <>
@@ -205,11 +326,65 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
 
         {tab === 'bookings' && (
           <div className="mt-2">
-            {mine.length === 0 ? (
+            {/* Phase 11: public tracking — code + optional verified phone.
+                Anonymous results never include customer PII (server contract). */}
+            <div className="mb-4 p-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-subsurface)] space-y-2">
+              <p className="text-xs text-[var(--text-secondary)]">پیگیری با کد رهگیری</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={trackCode}
+                  onChange={(e) => setTrackCode(e.target.value)}
+                  placeholder="مثلاً GIS-123456"
+                  dir="ltr"
+                  className="flex-1 min-w-0 px-3 py-2 text-sm font-mono rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-accent)]"
+                />
+                <Button size="sm" onClick={trackByCode} disabled={trackLoading || !trackCode.trim()}>
+                  {trackLoading ? '...' : 'پیگیری'}
+                </Button>
+              </div>
+              {trackError && <p className="text-xs text-rose-600">{trackError}</p>}
+              {trackResult && (
+                <div className="p-2.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-secondary)]">خدمت</span>
+                    <span>{trackResult.serviceName || trackResult.serviceId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-secondary)]">زمان</span>
+                    <span className="tabular-nums">{trackResult.date} ساعت {trackResult.time}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--text-secondary)]">وضعیت</span>
+                    <Badge variant={STATUS[trackResult.status]?.variant || 'neutral'}>
+                      {STATUS[trackResult.status]?.label || trackResult.status}
+                    </Badge>
+                  </div>
+                  {!trackResult.clientName && (
+                    <p className="text-[11px] text-[var(--text-muted)] pt-1">
+                      برای مشاهده مشخصات کامل، پس از ورود همین کد را با شماره موبایل خود جستجو کنید.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            {!isDemoMode && serverLoading ? (
+              <div className="py-8 text-center text-sm text-[var(--text-secondary)]">
+                <Loader2 className="w-6 h-6 mx-auto animate-spin text-[var(--brand-accent)]" />
+                <p className="mt-2">در حال دریافت نوبت‌های شما از سرور…</p>
+              </div>
+            ) : !isDemoMode && serverError ? (
+              <div className="py-6 text-center text-sm space-y-2">
+                <p className="text-rose-600">{serverError}</p>
+                <Button variant="outline" size="sm" onClick={() => fetchMyBookings()}>
+                  تلاش دوباره
+                </Button>
+              </div>
+            ) : mine.length === 0 ? (
               <p className="py-8 text-sm text-[var(--text-secondary)]">
-                {clientSession.isLoggedIn
+                {!isDemoMode && serverAuth.authenticated
                   ? 'هنوز نوبتی ثبت نکرده‌اید. از فهرست خدمات، «رزرو» را بزنید.'
-                  : 'بعد از ورود، نوبت‌های شما اینجا فهرست می‌شود.'}
+                  : 'برای مشاهده نوبت‌های خود، با رمز یکبار مصرف وارد شوید.'}
               </p>
             ) : (
               <ul className="divide-y divide-[var(--border-subtle)]">
@@ -228,9 +403,12 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                         {b.date}، ساعت {b.time}
                       </p>
                       <p className="text-sm text-[var(--text-secondary)]">{b.staffName}</p>
+                      <p className="text-xs text-[var(--text-muted)] font-mono mt-0.5" dir="ltr">
+                        {b.trackingCode}
+                      </p>
                       <div className="mt-2.5 flex items-center justify-between gap-3">
-                        <Badge variant={st.variant} size="sm">
-                          {st.label}
+                        <Badge variant={st?.variant || 'neutral'} size="sm">
+                          {st?.label || b.status}
                         </Badge>
                         <div className="flex items-center gap-4 text-sm">
                           {onOpenReceipt && (

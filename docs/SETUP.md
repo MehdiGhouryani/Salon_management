@@ -78,7 +78,7 @@ Framework: **Vitest** (single framework, same pipeline as Vite) + **Playwright**
 | `npm run test:integration` | `tests/integration/` — **real Express app** (`createApp()`) over HTTP + spawned production servers | auth, cookie flags, OTP rate limits, admin/salon authorization, CSRF prod posture, JSON error contracts |
 | `npm run test:db` | `tests/db/` — **real PostgreSQL** (set `TEST_DATABASE_URL`) | migrations, real persistence, transaction rollback, unique constraints, booking concurrency races |
 | `npm test` | all Vitest layers | DB suite reports **skipped/blocked** when `TEST_DATABASE_URL` is unset — never silently passes |
-| `npm run test:e2e` | `e2e/` — Playwright journeys against the real dev server | storefront, full booking wizard with real OTP, customer booking history |
+| `npm run test:e2e` | `e2e/` — Playwright journeys against the real dev server | storefront, full booking wizard with real OTP + grant, customer history + server-confirmed cancellation (CI runs E2E against isolated PostgreSQL) |
 
 Database test rules: `TEST_DATABASE_URL` must point at an isolated database (a URL containing `prod` is refused); a configured-but-unreachable database makes the suite **fail**, not skip; fixtures use the `t3-` prefix and clean up only their own rows. See [e2e/README.md](../e2e/README.md) for which E2E journeys are implemented and which are blocked (mock-driven console surfaces).
 

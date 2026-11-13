@@ -331,6 +331,23 @@ publicRouter.get(
     const userPhone = req.user!.phone;
     const bookings = await bookingService.getMyBookings(userPhone);
 
+    // Phase 11: display enrichment — the frontend should never have to resolve
+    // names from ids. Names come from the authoritative tables only.
+    const salonIds = [...new Set(bookings.map((b) => b.salon_id))];
+    const serviceIds = [...new Set(bookings.map((b) => b.service_id))];
+    const [salonNames, serviceNames, staffNames] = await Promise.all([
+      Promise.all(salonIds.map(async (id) => [id, (await salonRepository.findById(id))?.name] as const)),
+      Promise.all(serviceIds.map(async (id) => [id, (await serviceRepository.findById(id))?.name] as const)),
+      Promise.all(
+        [...new Set(bookings.map((b) => b.staff_id).filter(Boolean))].map(
+          async (id) => [id, (await staffRepository.findById(id))?.name] as const
+        )
+      ),
+    ]);
+    const salonMap = Object.fromEntries(salonNames);
+    const serviceMap = Object.fromEntries(serviceNames);
+    const staffMap = Object.fromEntries(staffNames);
+
     res.status(200).json({
       success: true,
       count: bookings.length,
@@ -342,6 +359,9 @@ publicRouter.get(
         staffId: b.staff_id,
         clientName: b.client_name,
         clientPhone: b.client_phone,
+        salonName: salonMap[b.salon_id] || null,
+        serviceName: serviceMap[b.service_id] || null,
+        staffName: b.staff_id ? staffMap[b.staff_id] || null : null,
         bookingDate: b.booking_date,
         bookingTime: b.booking_time,
         endTime: b.end_time,
