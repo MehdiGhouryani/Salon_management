@@ -35,7 +35,13 @@ export interface AuthConfig {
   readonly bookingGrantTtlMinutes: number;
   readonly kavenegarApiKey?: string;
   readonly isSmsConfigured: boolean;
+  /** Phase 14: provider selection + delivery reliability knobs. */
+  readonly smsProvider: 'kavenegar' | 'null';
+  readonly smsTemplate: string;
+  readonly smsTimeoutMs: number;
+  readonly smsMaxAttempts: number;
 }
+
 
 export interface ServerConfig {
   readonly nodeEnv: SupportedNodeEnv;
@@ -54,6 +60,12 @@ export interface ServerConfig {
   readonly trustProxy: number | false;
   readonly database: DatabaseConfig;
   readonly auth: AuthConfig;
+  readonly sms: {
+    readonly provider: 'kavenegar' | 'null';
+    readonly template: string;
+    readonly timeoutMs: number;
+    readonly maxAttempts: number;
+  };
 }
 
 function parseAndValidateConfig(): ServerConfig {
@@ -186,6 +198,20 @@ function parseAndValidateConfig(): ServerConfig {
   const kavenegarApiKey = process.env.KAVENEGAR_API_KEY ? process.env.KAVENEGAR_API_KEY.trim() : undefined;
   const isSmsConfigured = Boolean(kavenegarApiKey);
 
+  // 8. SMS provider selection + delivery knobs (Phase 14)
+  const rawSmsProvider = (process.env.SMS_PROVIDER || 'kavenegar').trim().toLowerCase();
+  if (!['kavenegar', 'null'].includes(rawSmsProvider)) {
+    throw new Error(
+      `[ServerConfig] Invalid SMS_PROVIDER: "${rawSmsProvider}". Supported: kavenegar, null.`
+    );
+  }
+  const smsProvider = rawSmsProvider as 'kavenegar' | 'null';
+  const smsTemplate = (process.env.SMS_TEMPLATE || 'nobatara-otp').trim();
+  const smsTimeoutMsRaw = parseInt(process.env.SMS_TIMEOUT_MS || '10000', 10);
+  const smsTimeoutMs = isNaN(smsTimeoutMsRaw) || smsTimeoutMsRaw < 1000 || smsTimeoutMsRaw > 60000 ? 10000 : smsTimeoutMsRaw;
+  const smsMaxAttemptsRaw = parseInt(process.env.SMS_MAX_ATTEMPTS || '2', 10);
+  const smsMaxAttempts = isNaN(smsMaxAttemptsRaw) || smsMaxAttemptsRaw < 1 || smsMaxAttemptsRaw > 3 ? 2 : smsMaxAttemptsRaw;
+
   const auth: AuthConfig = Object.freeze({
     sessionSecret,
     sessionCookieName,
@@ -197,6 +223,10 @@ function parseAndValidateConfig(): ServerConfig {
     bookingGrantTtlMinutes: isNaN(bookingGrantTtlMinutes) || bookingGrantTtlMinutes <= 0 ? 15 : bookingGrantTtlMinutes,
     kavenegarApiKey,
     isSmsConfigured,
+    smsProvider,
+    smsTemplate,
+    smsTimeoutMs,
+    smsMaxAttempts,
   });
 
   if (isProduction && !isSmsConfigured) {
@@ -204,6 +234,13 @@ function parseAndValidateConfig(): ServerConfig {
     console.warn(
       '[ServerConfig] Production warning: KAVENEGAR_API_KEY is not set. ' +
         'OTP delivery will fail closed until a real SMS provider is configured.'
+    );
+  }
+  if (isProduction && smsProvider === 'null') {
+    console.warn(
+      '[ServerConfig] Production warning: SMS_PROVIDER=null — OTP delivery is ' +
+        'EXPLICITLY DISABLED. Login and booking flows will reject OTP requests ' +
+        'until a real provider is configured.'
     );
   }
 
@@ -219,6 +256,12 @@ function parseAndValidateConfig(): ServerConfig {
     trustProxy,
     database,
     auth,
+    sms: Object.freeze({
+      provider: smsProvider,
+      template: smsTemplate,
+      timeoutMs: smsTimeoutMs,
+      maxAttempts: smsMaxAttempts,
+    }),
   });
 }
 

@@ -4,6 +4,7 @@ import { config } from '../../config.ts';
 import { query, isDatabaseConfigured } from '../../db/pool.ts';
 import { normalizeIranianPhone } from '../../utils/phone.ts';
 import { getSmsProvider } from '../sms/index.ts';
+import { maskPhone } from '../sms/kavenegarProvider.ts';
 import { userRepository, type DbUser } from '../../repositories/userRepository.ts';
 import { clientRepository } from '../../repositories/clientRepository.ts';
 
@@ -59,6 +60,7 @@ export const otpService = {
     resendAvailableInSeconds: number;
     expiresInSeconds: number;
     error?: string;
+    errorCode?: string;
     statusCode?: number;
   }> {
     const phoneNorm = normalizeIranianPhone(rawPhone);
@@ -130,10 +132,14 @@ export const otpService = {
 
     // Send OTP via SMS provider
     const smsProvider = getSmsProvider();
+    // Phase 14: OTP rate limits already applied above (cooldown + per-IP/phone
+    // counters) BEFORE the provider is called — the provider can never be
+    // leveraged for SMS flooding.
     const sendResult = await smsProvider.sendOtp(phoneNorm.national, code);
 
     if (!sendResult.success) {
-      // In production, failure to deliver via SMS must fail closed
+      // Structured, generic client error — provider internals stay in logs.
+      const genericError = 'ارسال پیامک با خطا مواجه شد. لطفا دقایقی دیگر تلاش کنید.';
       if (config.isProduction) {
         return {
           success: false,
@@ -141,11 +147,14 @@ export const otpService = {
           phoneNational: phoneNorm.national,
           resendAvailableInSeconds: 0,
           expiresInSeconds: 0,
-          error: sendResult.error || 'ارسال پیامک با خطا مواجه شد. لطفا دقایقی دیگر تلاش کنید.',
+          error: genericError,
+          errorCode: sendResult.errorCode || 'SMS_DELIVERY_FAILED',
           statusCode: 503,
         };
       } else {
-        console.warn(`[OTP Service] Dev warning: SMS provider reported error: ${sendResult.error}`);
+        console.warn(
+          `[OTP Service] Dev warning: SMS provider error (${sendResult.errorCode || 'unknown'}) for ${maskPhone(phoneNorm.national)}`
+        );
       }
     }
 

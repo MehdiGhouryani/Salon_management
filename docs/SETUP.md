@@ -82,7 +82,37 @@ Framework: **Vitest** (single framework, same pipeline as Vite) + **Playwright**
 
 Database test rules: `TEST_DATABASE_URL` must point at an isolated database (a URL containing `prod` is refused); a configured-but-unreachable database makes the suite **fail**, not skip; fixtures use the `t3-` prefix and clean up only their own rows. See [e2e/README.md](../e2e/README.md) for which E2E journeys are implemented and which are blocked (mock-driven console surfaces).
 
-## 8. Common Troubleshooting
+## 8. SMS Provider Setup (production OTP delivery)
+
+NobatAra sends OTP codes through **Kavenegar**'s verify/lookup API. No account is created
+by this repository and no live SMS is sent from tests or development.
+
+**Provider modes** (`SMS_PROVIDER`):
+- `kavenegar` — real gateway; requires `KAVENEGAR_API_KEY`
+- `null` — explicitly disabled; OTP requests fail closed with `SMS_PROVIDER_DISABLED`-class errors (never a mock)
+
+**Production setup steps** (no secrets in this repository):
+1. In the Kavenegar dashboard, create/approve a verify/lookup **template** whose name matches
+   `SMS_TEMPLATE` (default `nobatara-otp`). The template must contain the `{token}` placeholder.
+2. Store the API key in the platform secret manager as `KAVENEGAR_API_KEY`.
+3. Set `SMS_PROVIDER=kavenegar`, `SMS_TEMPLATE=<approved-name>`, and optionally tune
+   `SMS_TIMEOUT_MS` (default 10000) and `SMS_MAX_ATTEMPTS` (default 2, transport failures only).
+4. Restart the service. `/api/health/ready` logs a warning until SMS is configured;
+   `SMS_PROVIDER=null` in production logs an explicit "OTP delivery disabled" warning.
+
+**Reliability contract** (enforced in `server/services/sms/kavenegarProvider.ts`):
+- per-attempt timeout, bounded retries for transport failures only
+- business rejections (no credit `SMS_PROVIDER_NO_CREDIT`, unapproved template,
+  throttling `SMS_PROVIDER_RATE_LIMITED`, suspended account) return structured
+  `errorCode`s and are never retried
+- logs mask phone numbers (`0912****89`) and never contain the OTP code
+- OTP rate limits (cooldown + per-phone/IP counters) run BEFORE the provider is called
+
+**Client error contract:** OTP request failures return a generic Persian message plus a
+structured `error` code (`SMS_DELIVERY_FAILED`, `SMS_PROVIDER_TIMEOUT`, …). Provider
+internals (API key, raw responses, full phone) never reach the client.
+
+## 9. Common Troubleshooting
 
 | Symptom | Cause / Fix |
 |---|---|

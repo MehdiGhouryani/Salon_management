@@ -49,7 +49,7 @@ authRouter.post(
 
   if (!result.success) {
     res.status(result.statusCode || 400).json({
-      error: 'OTP_REQUEST_FAILED',
+      error: result.errorCode || 'OTP_REQUEST_FAILED',
       message: result.error,
       resendAvailableInSeconds: result.resendAvailableInSeconds,
     });

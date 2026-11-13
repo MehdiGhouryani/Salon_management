@@ -17,6 +17,15 @@ export function getSmsProvider(): SmsProvider {
     return activeProvider;
   }
 
+  // 0. Explicit provider selection (Phase 14): SMS_PROVIDER=null forces the
+  // fail-closed NullProvider even in development — no silent mock sends.
+  if (config.sms.provider === 'null') {
+    activeProvider = new NullSmsProvider(
+      'ارسال پیامک با تنظیم SMS_PROVIDER=null غیرفعال شده است.'
+    );
+    return activeProvider;
+  }
+
   // 1. If Kavenegar API key is provided, use real Kavenegar integration
   if (config.auth.kavenegarApiKey) {
     activeProvider = new KavenegarSmsProvider(config.auth.kavenegarApiKey);
