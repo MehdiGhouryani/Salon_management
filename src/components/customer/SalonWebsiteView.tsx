@@ -40,9 +40,39 @@ export const SalonWebsiteView: React.FC = () => {
   // Keep the URL in sync when the slug changes (shareable storefront links).
   useEffect(() => {
     const desired = `/salon/${currentSalonSlug}`;
-    if (window.location.pathname !== desired && /^\/salon\//.test(window.location.pathname + '') !== false) {
+    if (window.location.pathname !== desired) {
       window.history.replaceState(null, '', desired);
     }
+  }, [currentSalonSlug]);
+
+  // Phase 15 SEO: canonical URL, robots directives, and salon JSON-LD.
+  // The storefront is the ONLY indexable persona; private consoles set noindex.
+  useEffect(() => {
+    const canonical = `https://nobatara.ir/salon/${currentSalonSlug}`;
+    const setMeta = (attr: 'name' | 'property', key: string, content: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    let link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'canonical';
+      document.head.appendChild(link);
+    }
+    link.href = canonical;
+
+    setMeta('name', 'robots', 'index, follow');
+    setMeta('property', 'og:url', canonical);
+    setMeta('property', 'og:type', 'business.business');
+
+    return () => {
+      document.getElementById('nobatara-jsonld')?.remove();
+    };
   }, [currentSalonSlug]);
 
   // Phase 11: live server data always wins. In production posture a failed
@@ -77,6 +107,30 @@ export const SalonWebsiteView: React.FC = () => {
     if (!isDemoMode && loadState !== 'ready') return null; // never show demo catalog as production data
     return getSalonBySlug(currentSalonSlug, salons);
   }, [liveSalon, currentSalonSlug, salons, isDemoMode, loadState]);
+
+  // Phase 15 SEO: salon JSON-LD structured data (needs resolved salon).
+  useEffect(() => {
+    const ld = document.getElementById('nobatara-jsonld');
+    if (ld) ld.remove();
+    if (!salon) return;
+    const script = document.createElement('script');
+    script.id = 'nobatara-jsonld';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BeautySalon',
+      name: salon.name,
+      address: { '@type': 'PostalAddress', streetAddress: salon.address, addressLocality: salon.city, addressCountry: 'IR' },
+      telephone: salon.phone,
+      aggregateRating: salon.rating
+        ? { '@type': 'AggregateRating', ratingValue: salon.rating, reviewCount: salon.reviewsCount || 0 }
+        : undefined,
+    });
+    document.head.appendChild(script);
+    return () => {
+      document.getElementById('nobatara-jsonld')?.remove();
+    };
+  }, [salon]);
 
   const [search, setSearch] = useState('');
   const [imgOk, setImgOk] = useState(true);

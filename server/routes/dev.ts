@@ -73,3 +73,40 @@ devRouter.post('/seed-salon-membership', async (req: Request, res: Response): Pr
     membership: { salonId: membership.salon_id, role: membership.role },
   });
 });
+
+/**
+ * POST /api/dev/seed-super-admin { phone }
+ *
+ * DEVELOPMENT/TEST ONLY: provisions a platform super_admin so E2E journeys
+ * can exercise the governed admin console. In production this route is not
+ * mounted; super admins are provisioned exclusively by scripts/bootstrapAdmin.ts.
+ */
+devRouter.post('/seed-super-admin', async (req: Request, res: Response): Promise<void> => {
+  if (config.isProduction) {
+    res.status(404).json({ error: 'API_ENDPOINT_NOT_FOUND' });
+    return;
+  }
+  const { phone } = req.body || {};
+  if (!phone) {
+    res.status(400).json({ error: 'PHONE_REQUIRED', message: 'شماره الزامی است.' });
+    return;
+  }
+
+  let user = await userRepository.findByPhone(String(phone));
+  if (!user) {
+    user = await userRepository.create({
+      phone: String(phone),
+      fullName: 'مدیر ارشد E2E',
+      platformRole: 'super_admin',
+      status: 'active',
+    });
+  } else if (user.platform_role !== 'super_admin') {
+    user = await userRepository.update(user.id, { platformRole: 'super_admin' });
+  }
+  if (!user) {
+    res.status(500).json({ error: 'SEED_FAILED', message: 'خطا در ایجاد مدیر ارشد.' });
+    return;
+  }
+
+  res.status(200).json({ success: true, userId: user.id, role: user.platform_role });
+});

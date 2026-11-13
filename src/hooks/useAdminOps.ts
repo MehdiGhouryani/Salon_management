@@ -19,11 +19,16 @@ export interface AdminSalon {
   name: string;
   slug: string;
   status: string;
-  city: string | null;
-  province: string | null;
+  city: string;
+  province: string;
   plan: string;
-  ownerName?: string | null;
-  phone?: string | null;
+  ownerName: string;
+  phone: string;
+  /** Server rows carry no financial aggregates yet — zero-filled so the
+   *  console's sorting/filtering never crashes on missing fields. */
+  monthlyRevenue: number;
+  totalAppointments: number;
+  activeStaffCount: number;
   createdAt?: string;
 }
 
@@ -94,14 +99,32 @@ export function useAdminOps(enabled: boolean) {
       qs.set('limit', String(opts.limit ?? 50));
       qs.set('offset', String(opts.offset ?? 0));
       try {
-        const data = await api.get<{ salons: AdminSalon[]; total?: number }>(
+        const data = await api.get<{ salons: Record<string, any>[]; total?: number }>(
           `/api/admin/salons?${qs.toString()}`
         );
+        // Normalize server rows to the console's Salon shape: the API returns
+        // snake-ish fields and NO financial aggregates — zero-fill them so
+        // filters/sorting never crash on undefined.
+        const normalized: AdminSalon[] = (data.salons || []).map((sv) => ({
+          id: sv.id,
+          name: sv.name || '',
+          slug: sv.slug || '',
+          status: sv.status || 'pending',
+          city: sv.city || '',
+          province: sv.province || '',
+          plan: sv.plan || 'bronze',
+          ownerName: sv.owner_name || sv.ownerName || '',
+          phone: sv.phone || '',
+          monthlyRevenue: 0,
+          totalAppointments: 0,
+          activeStaffCount: 0,
+          createdAt: sv.created_at,
+        }));
         if (mounted.current) {
-          setSalons(data.salons || []);
-          setSalonsTotal(data.total ?? (data.salons || []).length);
+          setSalons(normalized);
+          setSalonsTotal(data.total ?? normalized.length);
         }
-        return { items: data.salons || [], total: data.total ?? 0 };
+        return { items: normalized, total: data.total ?? 0 };
       } catch (err) {
         if (mounted.current) setError(safe(err, 'خطا در بارگذاری سالن‌ها.'));
         return { items: [], total: 0 };

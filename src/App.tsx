@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { AdminProvider, useAdmin } from './context/AdminContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/common/Header';
@@ -110,6 +110,17 @@ const PERSONA_OPTIONS: { key: 'salon_website' | 'salon_app' | 'super_admin'; lab
 
 const MainSwitcher: React.FC = () => {
   const { persona, setPersona, isDemoMode, serverAuth, serverLogout } = useAdmin();
+
+  // Phase 15 SEO: private consoles and auth screens must never be indexed.
+  useEffect(() => {
+    let el = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute('name', 'robots');
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', persona === 'salon_website' ? 'index, follow' : 'noindex, nofollow');
+  }, [persona]);
   const [mobilePersonaOpen, setMobilePersonaOpen] = useState(false);
 
   const renderContent = () => {
