@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { config } from '../config.ts';
+import { logRequest } from './correlation.ts';
 
 /**
  * Applies security headers while preserving AI Studio iframe embedding in development
@@ -74,11 +75,9 @@ export function requestLoggerMiddleware(req: Request, res: Response, next: NextF
     // Only log API routes or top-level documents to avoid log spam for static assets
     if (req.path.startsWith('/api') || res.statusCode >= 400) {
       const durationMs = Date.now() - startTime;
-      const status = res.statusCode;
-      const method = req.method;
-      const url = req.path; // Use path only, omitting raw query parameters that might carry sensitive data
-
-      console.log(`[HTTP] ${method} ${url} ${status} - ${durationMs}ms`);
+      // Phase 16: structured JSON log with correlation ID (log-shipper friendly).
+      // Path only — query strings can carry sensitive data and are omitted.
+      logRequest(req, res, durationMs);
     }
   });
 

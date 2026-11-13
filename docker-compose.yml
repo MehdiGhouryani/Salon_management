@@ -1,0 +1,52 @@
+# =============================================================================
+# NobatAra local development stack (Phase 16)
+# Provides an isolated PostgreSQL with a persistent volume. The app itself
+# usually runs on the host via `npm run dev`; `docker compose up nobatara-db`
+# is all a developer needs. `--profile full` also runs the app container.
+#
+# SECURITY: PostgreSQL binds to 127.0.0.1 ONLY — never exposed publicly.
+# =============================================================================
+
+services:
+  nobatara-db:
+    image: postgres:16-alpine
+    container_name: nobatara-db
+    environment:
+      POSTGRES_USER: nobatara_dev
+      POSTGRES_PASSWORD: nobatara_dev_local_pw   # local-only, never production
+      POSTGRES_DB: nobatara_dev
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - nobatara_pgdata:/var/lib/postgresql/data   # persistent local volume
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nobatara_dev -d nobatara_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  nobatara-app:
+    image: nobatara:latest
+    build: .
+    profiles: ["full"]
+    container_name: nobatara-app
+    depends_on:
+      nobatara-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://nobatara_dev:nobatara_dev_local_pw@nobatara-db:5432/nobatara_dev
+      # Production values MUST come from a secret manager — placeholders only:
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in your shell/.env}
+      KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
+      SMS_PROVIDER: ${SMS_PROVIDER:-kavenegar}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      TRUST_PROXY_COUNT: ${TRUST_PROXY_COUNT:-1}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  nobatara_pgdata:

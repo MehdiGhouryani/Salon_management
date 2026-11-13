@@ -2,6 +2,7 @@ import express from 'express';
 import type { Express } from 'express';
 import { config } from './config.ts';
 import cookieParser from 'cookie-parser';
+import { correlationIdMiddleware } from './middleware/correlation.ts';
 import {
   securityHeadersMiddleware,
   corsMiddleware,
@@ -27,6 +28,9 @@ export function createApp(): Express {
   // the deployment environment when running behind a known proxy. Default:
   // trust nothing — client-supplied X-Forwarded-For cannot influence req.ip.
   app.set('trust proxy', config.trustProxy);
+
+  // Correlation ID first so every log line carries it (Phase 16)
+  app.use(correlationIdMiddleware);
 
   // Security & Logging Middlewares
   app.use(securityHeadersMiddleware);
