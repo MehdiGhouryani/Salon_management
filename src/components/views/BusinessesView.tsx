@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Store,
   Plus,
@@ -15,6 +15,7 @@ import {
   List,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useAdminOps } from '../../hooks/useAdminOps';
 import { Salon, SalonStatus, PlanType } from '../../types/admin';
 import {
   toPersianDigits,
@@ -33,7 +34,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 
 export const BusinessesView: React.FC = () => {
   const {
-    salons,
+    salons: demoSalons,
     approveSalon,
     suspendSalon,
     updateSalonPlan,
@@ -41,7 +42,19 @@ export const BusinessesView: React.FC = () => {
     inspectedSalon,
     setInspectedSalon,
     addToast,
+    isDemoMode,
   } = useAdmin();
+
+  // Phase 13: production reads /api/admin/salons and mutates through the
+  // audited admin endpoints. Demo mode keeps local preview records.
+  const adminOps = useAdminOps(!isDemoMode);
+  const salons = isDemoMode ? demoSalons : (adminOps.salons as unknown as typeof demoSalons);
+  const adminError = adminOps.error;
+
+  useEffect(() => {
+    if (!isDemoMode) adminOps.loadSalons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemoMode]);
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
@@ -1094,10 +1107,27 @@ export const BusinessesView: React.FC = () => {
         actionVariant={statusModal.variant}
         onConfirm={async (reason) => {
           if (!statusModal.salon) return;
-          if (statusModal.targetStatus === 'active') {
-            await approveSalon(statusModal.salon.id, reason);
-          } else if (statusModal.targetStatus === 'suspended') {
-            await suspendSalon(statusModal.salon.id, reason);
+          if (!isDemoMode) {
+            const ok = await adminOps.changeSalonStatus(
+              statusModal.salon.id,
+              statusModal.targetStatus as 'active' | 'suspended' | 'rejected',
+              reason
+            );
+            if (!ok) {
+              addToast({ type: 'error', title: 'تغییر وضعیت ناموفق بود', message: adminOps.error });
+              return;
+            }
+            addToast({
+              type: 'success',
+              title: 'وضعیت سالن تغییر یافت',
+              message: `${statusModal.salon.name} → ${statusModal.targetStatus} · در گزارش ممیزی ثبت شد`,
+            });
+          } else {
+            if (statusModal.targetStatus === 'active') {
+              await approveSalon(statusModal.salon.id, reason);
+            } else if (statusModal.targetStatus === 'suspended') {
+              await suspendSalon(statusModal.salon.id, reason);
+            }
           }
           if (inspectedSalon && inspectedSalon.id === statusModal.salon.id) {
             setInspectedSalon({ ...inspectedSalon, status: statusModal.targetStatus });

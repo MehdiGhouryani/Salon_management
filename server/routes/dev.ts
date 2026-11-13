@@ -2,6 +2,7 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import { config } from '../config.ts';
 import { getDevMockSmsProvider } from '../services/sms/index.ts';
+import { userRepository } from '../repositories/userRepository.ts';
 
 export const devRouter = express.Router();
 
@@ -29,5 +30,46 @@ devRouter.get('/otp-peek', (req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
     otp: record ?? null,
+  });
+});
+
+/**
+ * POST /api/dev/seed-salon-membership { phone, salonId, role }
+ *
+ * DEVELOPMENT/TEST ONLY (in-memory adapter): provisions a user + salon
+ * membership so E2E journeys can exercise the salon panel. In production this
+ * route is not mounted; memberships are provisioned by the admin bootstrap /
+ * database seeding only.
+ */
+devRouter.post('/seed-salon-membership', async (req: Request, res: Response): Promise<void> => {
+  if (config.isProduction) {
+    res.status(404).json({ error: 'API_ENDPOINT_NOT_FOUND' });
+    return;
+  }
+  const { phone, salonId, role } = req.body || {};
+  if (!phone || !salonId) {
+    res.status(400).json({ error: 'PHONE_AND_SALON_REQUIRED', message: 'شماره و شناسه سالن الزامی است.' });
+    return;
+  }
+
+  let user = await userRepository.findByPhone(String(phone));
+  if (!user) {
+    user = await userRepository.create({
+      phone: String(phone),
+      fullName: 'کاربر E2E سالن',
+      platformRole: 'user',
+      status: 'active',
+    });
+  }
+  const membership = await userRepository.addMembership(
+    user.id,
+    String(salonId),
+    role === 'owner' || role === 'manager' || role === 'staff' || role === 'receptionist' ? role : 'owner'
+  );
+
+  res.status(200).json({
+    success: true,
+    userId: user.id,
+    membership: { salonId: membership.salon_id, role: membership.role },
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -10,6 +10,7 @@ import {
   Laptop,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
+import { useAdminOps } from '../../hooks/useAdminOps';
 import { AuditSeverity } from '../../types/admin';
 import { toPersianDigits } from '../../utils/formatters';
 import { ConfirmModal } from '../common/ConfirmModal';
@@ -23,8 +24,12 @@ import { Modal } from '../ui/Modal';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export const SecurityView: React.FC = () => {
+  const { isDemoMode, auditLogs: demoAuditLogs } = useAdmin();
+  const adminOps = useAdminOps(!isDemoMode);
+  // Phase 13: production reads the audited server log; demo keeps local preview.
+  const auditLogs = (isDemoMode ? demoAuditLogs : adminOps.auditLogs) as typeof demoAuditLogs;
+
   const {
-    auditLogs,
     sessions,
     securitySettings,
     terminateSession,
@@ -34,6 +39,11 @@ export const SecurityView: React.FC = () => {
   } = useAdmin();
 
   const [activeSubTab, setActiveSubTab] = useState<'audit' | 'sessions' | 'firewall'>('audit');
+
+  useEffect(() => {
+    if (!isDemoMode) adminOps.loadAuditLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemoMode]);
   const [logSearch, setLogSearch] = useState('');
   const debouncedSearch = useDebounce(logSearch, 300);
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -133,12 +143,25 @@ export const SecurityView: React.FC = () => {
         </div>
       </div>
 
+      {!isDemoMode && adminOps.error && (
+        <div className="mb-4 p-3 rounded-xl border border-[var(--status-error)] bg-rose-500/5 text-sm text-[var(--status-error)] flex items-center justify-between gap-3">
+          <span>{adminOps.error}</span>
+          <button
+            type="button"
+            onClick={() => adminOps.loadAuditLogs()}
+            className="text-xs font-semibold text-[var(--brand-accent)] hover:underline cursor-pointer"
+          >
+            تلاش دوباره
+          </button>
+        </div>
+      )}
+
       {/* Subtab Navigation */}
       <div className="flex items-center gap-2 border-b border-[var(--border-subtle)] pb-2 text-xs">
         <button
           onClick={() => setActiveSubTab('audit')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-semibold transition-colors cursor-pointer ${
-            activeSubTab === 'audit'
+activeSubTab === 'audit'
               ? 'bg-[var(--brand-subdued)] text-[var(--brand-accent)] border border-[var(--brand-border)]'
               : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
           }`}

@@ -10,10 +10,18 @@ export interface WalkInValues {
   clientName: string;
   clientPhone: string;
   serviceName: string;
+  serviceId: string;
   staffName: string;
+  staffId: string;
+  /** Persian digits normalized to Latin HH:MM for the engine. */
   time: string;
+  /** Canonical Gregorian date (Asia/Tehran) selected in the sheet. */
+  bookingDate: string;
   price: number;
 }
+
+const toLatinDigits = (v: string) =>
+  v.replace(/[۰-۹]/g, (ch) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(ch)));
 
 interface WalkInSheetProps {
   isOpen: boolean;
@@ -21,7 +29,7 @@ interface WalkInSheetProps {
   services: SalonServiceItem[];
   staff: SalonStaffItem[];
   /** returns true when the appointment was really created (the sheet then closes) */
-  onSubmit: (v: WalkInValues) => boolean;
+  onSubmit: (v: WalkInValues) => boolean | Promise<boolean>;
 }
 
 /** Name and phone, one service, one time. Staff and price are filled in; both can be changed. */
@@ -37,6 +45,9 @@ export const WalkInSheet: React.FC<WalkInSheetProps> = ({
   const [serviceId, setServiceId] = useState('');
   const [staffName, setStaffName] = useState('');
   const [time, setTime] = useState('۱۶:۰۰');
+  const [bookingDate, setBookingDate] = useState(() =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date())
+  );
   const [price, setPrice] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -47,6 +58,7 @@ export const WalkInSheet: React.FC<WalkInSheetProps> = ({
     setServiceId(services[0]?.id ?? '');
     setStaffName(staff[0]?.name ?? '');
     setTime('۱۶:۰۰');
+    setBookingDate(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date()));
     setPrice(services[0] ? String(services[0].price) : '');
     setSubmitted(false);
   }, [isOpen, services, staff]);
@@ -68,8 +80,11 @@ export const WalkInSheet: React.FC<WalkInSheetProps> = ({
       clientName: name.trim(),
       clientPhone: phone.trim(),
       serviceName: service?.name ?? '',
+      serviceId: service?.id ?? '',
       staffName,
-      time,
+      staffId: staff.find((st) => st.name === staffName)?.id ?? staff[0]?.id ?? '',
+      time: toLatinDigits(time),
+      bookingDate,
       price: Math.max(0, parseInt(price, 10) || 0),
     });
     if (ok) onClose();
@@ -137,7 +152,17 @@ export const WalkInSheet: React.FC<WalkInSheetProps> = ({
         </div>
 
         <fieldset>
-          <legend className="text-sm font-medium text-[var(--text-primary)] mb-2">ساعت</legend>
+          <Select
+            label="تاریخ نوبت"
+            value={bookingDate}
+            onChange={(e) => setBookingDate(e.target.value)}
+            options={[
+              { value: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date()), label: 'امروز' },
+              { value: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date(Date.now() + 86_400_000)), label: 'فردا' },
+              { value: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date(Date.now() + 2 * 86_400_000)), label: 'پس‌فردا' },
+            ]}
+          />
+          <div className="mt-4" />
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {SLOTS.map((s) => (
               <button

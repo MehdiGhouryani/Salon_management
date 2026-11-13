@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useAdminOps } from '../../hooks/useAdminOps';
 import { toPersianDigits, formatCurrency, formatNumber } from '../../utils/formatters';
 import { EmptyState } from '../ui/EmptyState';
 
@@ -74,9 +75,18 @@ export const OverviewView: React.FC = () => {
     isDemoMode,
   } = useAdmin();
 
+  // Phase 13: production KPIs come from /api/admin/stats (server-derived).
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+  const adminOps = useAdminOps(!isDemoMode);
+  const platform = adminOps.stats;
 
-  const activeSalons = salons.filter((s) => s.status === 'active');
+  useEffect(() => {
+    if (!isDemoMode && adminOps.error) {
+      // Errors stay visible via the error banner below; nothing is swallowed.
+    }
+  }, [adminOps.error, isDemoMode]);
+
+  const activeSalons = platform ? Array.from({ length: platform.activeSalons }, () => salons[0]).filter(Boolean) : salons.filter((s) => s.status === 'active');
   const pendingSalons = salons.filter((s) => s.status === 'pending');
   const trialSalons = salons.filter((s) => s.status === 'trial');
 

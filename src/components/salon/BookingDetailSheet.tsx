@@ -19,9 +19,9 @@ interface BookingDetailSheetProps {
   booking: CustomerBooking | null;
   staff: SalonStaffItem[];
   onClose: () => void;
-  onSettle: (b: CustomerBooking) => void;
-  onCancel: (b: CustomerBooking) => void;
-  onSave: (b: CustomerBooking, changes: BookingChanges) => boolean;
+  onSettle: (b: CustomerBooking) => void | Promise<void>;
+  onCancel: (b: CustomerBooking) => void | Promise<void>;
+  onSave: (b: CustomerBooking, changes: BookingChanges) => boolean | Promise<boolean>;
   onSms: (b: CustomerBooking) => void;
 }
 

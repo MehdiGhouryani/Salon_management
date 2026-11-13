@@ -14,8 +14,22 @@ type Filter = 'all' | 'pending' | 'done' | 'cancelled';
 const fa = (n: number) => toPersianDigits(String(n));
 const sum = (list: CustomerBooking[]) => list.reduce((s, b) => s + (b.price || 0), 0);
 
+interface TodayStats {
+  completed: number;
+  confirmed: number;
+  pending: number;
+  cancelled: number;
+  collectedRevenue: number;
+  upcomingCount: number;
+}
+
 interface TodayTabProps {
   bookings: CustomerBooking[];
+  /** Server-derived statistics (production); undefined in demo (computed locally). */
+  stats?: TodayStats;
+  loading?: boolean;
+  error?: string;
+  onRetry?: () => void;
   onOpenBooking: (b: CustomerBooking) => void;
   onSettle: (b: CustomerBooking) => void;
   onNewBooking: () => void;
@@ -112,6 +126,10 @@ const Row: React.FC<{
 
 export const TodayTab: React.FC<TodayTabProps> = ({
   bookings,
+  stats,
+  loading = false,
+  error = '',
+  onRetry,
   onOpenBooking,
   onSettle,
   onNewBooking,
@@ -178,23 +196,43 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         }
       />
 
+      {loading && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <span className="w-4 h-4 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
+          در حال دریافت نوبت‌ها از سرور…
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 flex items-center justify-between gap-3 p-3 rounded-xl border border-[var(--status-error)] bg-rose-500/5">
+          <p className="text-sm text-[var(--status-error)]">{error}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="text-xs font-semibold text-[var(--brand-primary)] hover:underline cursor-pointer"
+            >
+              تلاش دوباره
+            </button>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-3 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] overflow-hidden">
         <Figure
           lead
           label="در انتظار تسویه"
-          value={money(sum(pending))}
+          value={stats ? money(stats.collectedRevenue) : money(sum(pending))}
           unit="تومان"
           className="col-span-2 sm:col-span-1"
         />
         <Figure
-          label="تسویه‌شده"
-          value={money(sum(done))}
+          label={stats ? `تکمیل‌شده (${fa(stats.completed)})` : 'تسویه‌شده'}
+          value={stats ? money(sum(done)) : money(sum(done))}
           unit="تومان"
           className="border-t sm:border-t-0 sm:border-s border-[var(--border-subtle)]"
         />
         <Figure
           label="نوبت‌های امروز"
-          value={fa(active.length)}
+          value={fa(stats ? stats.confirmed + stats.pending + stats.completed : active.length)}
           className="border-t sm:border-t-0 border-s border-[var(--border-subtle)]"
         />
       </div>

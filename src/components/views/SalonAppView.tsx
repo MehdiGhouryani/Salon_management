@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { CustomerBooking } from '../../types/admin';
 import {
   getSalonBySlug,
-  updateSalonDetails,
   luxuryBannerPresets,
   DetailedSalonData,
+  SalonServiceItem,
+  SalonStaffItem,
 } from '../../mock/salonDirectoryData';
 import { SalonQrModal } from '../common/SalonQrModal';
 import { SalonShell, SalonTab } from '../salon/SalonShell';
@@ -18,10 +20,13 @@ import { WalkInSheet, WalkInValues } from '../salon/WalkInSheet';
 import { BookingDetailSheet, BookingChanges } from '../salon/BookingDetailSheet';
 import { SubscriptionSheet } from '../salon/SubscriptionSheet';
 import { GatewayId, PlanId } from '../salon/plans';
+import { useSalonOps } from '../../hooks/useSalonOps';
 
 /**
- * The salon manager's app. This file holds state and the actions; every screen lives in
- * components/salon/. Behaviour is unchanged: the same context actions, the same demo-mode guards.
+ * The salon manager's app (Phase 12): every operational surface is served by
+ * the real, tenant-scoped /api/salon/* endpoints through useSalonOps.
+ * Toasts fire only after the server confirms; failures stay visible.
+ * Demo mode keeps the previous local-preview behavior, clearly labeled.
  */
 export const SalonAppView: React.FC = () => {
   const {
@@ -30,28 +35,59 @@ export const SalonAppView: React.FC = () => {
     currentSalonSlug,
     setCurrentSalonSlug,
     customerBookings,
-    completeCustomerBookingInSalon,
-    cancelCustomerBooking,
-    addCustomerBooking,
-    updateCustomerBooking,
     updateSalonPlan,
     setPersona,
     addToast,
+    addCustomerBooking,
+    updateCustomerBooking,
+    completeCustomerBookingInSalon,
+    cancelCustomerBooking,
   } = useAdmin();
   const { theme, toggleTheme } = useTheme();
+  const { serverAuth } = useAuth();
   const isDark = theme === 'dark';
 
+  // The panel operates on the salon the authenticated user is a member of.
+  const membershipSalonId = serverAuth.salonMemberships?.[0]?.salonId || '';
+  const viewingSalon = salons.find((s) => s.slug === currentSalonSlug);
+  const salonId = isDemoMode ? viewingSalon?.id || salons[0]?.id || '' : membershipSalonId || viewingSalon?.id || '';
   const currentSalon = useMemo(
-    () => salons.find((s) => s.slug === currentSalonSlug) || salons[0],
-    [salons, currentSalonSlug]
+    () => salons.find((s) => s.id === salonId) || salons.find((s) => s.slug === currentSalonSlug) || salons[0],
+    [salons, salonId, currentSalonSlug]
   );
+
+  const ops = useSalonOps(salonId, true);
+  const tehranTodayIso = () =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date());
+  const serverProfile = ops.profile;
 
   const [salonDetailed, setSalonDetailed] = useState<DetailedSalonData>(() =>
     getSalonBySlug(currentSalon.slug || 'gisara', salons)
   );
   useEffect(() => {
-    setSalonDetailed(getSalonBySlug(currentSalon.slug || 'gisara', salons));
-  }, [currentSalon, salons]);
+    if (serverProfile) {
+      // Server truth overlays the static catalog shape (v11 UI intact).
+      const base = getSalonBySlug(serverProfile.slug || currentSalon.slug || 'gisara', salons);
+      setSalonDetailed({
+        ...base,
+        id: serverProfile.id,
+        name: serverProfile.name,
+        slug: serverProfile.slug,
+        tagline: serverProfile.tagline || base.tagline,
+        phone: serverProfile.phone || base.phone,
+        city: serverProfile.city || base.city,
+        address: serverProfile.address || base.address,
+        bannerImage: serverProfile.bannerImage || base.bannerImage,
+        features: serverProfile.features || base.features,
+        rating: serverProfile.rating ?? base.rating,
+        reviewsCount: serverProfile.reviewsCount ?? base.reviewsCount,
+        services: ops.services,
+        staff: ops.staff.map((st) => ({ ...st, avatar: (st as any).avatar || '' })),
+      });
+    } else {
+      setSalonDetailed(getSalonBySlug(currentSalon.slug || 'gisara', salons));
+    }
+  }, [serverProfile, ops.services, ops.staff, currentSalon, salons]);
 
   const [activeTab, setActiveTab] = useState<SalonTab>('appointments');
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -88,76 +124,102 @@ export const SalonAppView: React.FC = () => {
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
+  const applyShowcase = async (payload: Record<string, unknown>, successTitle: string, successMessage?: string) => {
+    if (isDemoMode) {
+      setSalonDetailed((prev) => ({ ...prev, ...(payload as Partial<DetailedSalonData>) }));
+      addToast({ type: 'info', title: `[شبیه‌سازی دمو] ${successTitle}` });
+      return;
+    }
+    const ok = await ops.saveProfile(payload);
+    if (ok) {
+      addToast({ type: 'success', title: successTitle, message: successMessage });
+    } else {
+      addToast({ type: 'error', title: 'ذخیره ناموفق بود', message: ops.error });
+    }
+  };
+
   const handleSelectBanner = (url: string) => {
-    setSalonDetailed(updateSalonDetails(currentSalon.slug || 'gisara', { bannerImage: url }));
-    addToast({
-      type: 'success',
-      title: 'تصویر هدر سایت سالن تغییر یافت',
-      message: 'تغییرات بلافاصله در وب‌سایت مشتریان اعمال گردید.',
-    });
+    applyShowcase({ bannerImage: url }, 'تصویر هدر سایت سالن تغییر یافت', 'تغییرات بلافاصله در وب‌سایت مشتریان اعمال گردید.');
   };
 
   const handleSaveCustomBanner = (url: string) => {
     if (!url.trim()) return;
-    setSalonDetailed(updateSalonDetails(currentSalon.slug || 'gisara', { bannerImage: url.trim() }));
-    addToast({ type: 'success', title: 'تصویر اختصاصی بنر سالن ذخیره شد' });
+    applyShowcase({ bannerImage: url.trim() }, 'تصویر اختصاصی بنر سالن ذخیره شد');
   };
 
   const handleSaveShowcase = (v: { tagline: string; workingHours: string; address: string }) => {
-    setSalonDetailed(updateSalonDetails(currentSalon.slug || 'gisara', v));
-    addToast({
-      type: 'success',
-      title: 'مشخصات ویترین سالن ذخیره شد',
-      message: 'اطلاعات در وب‌سایت به‌روزرسانی شدند.',
-    });
+    applyShowcase(
+      { tagline: v.tagline, address: v.address },
+      'مشخصات ویترین سالن ذخیره شد',
+      'اطلاعات در وب‌سایت به‌روزرسانی شدند.'
+    );
   };
 
-  const handleCreateWalkIn = (v: WalkInValues): boolean => {
-    if (!isDemoMode) {
+  // Walk-in (manual) booking — the SAME engine as the public path, on both modes.
+  // Demo mode keeps a local preview record in addition.
+  const handleCreateWalkIn = async (v: WalkInValues): Promise<boolean> => {
+    const result = await ops.createManualBooking({
+      clientName: v.clientName,
+      clientPhone: v.clientPhone,
+      serviceId: v.serviceId || salonDetailed.services[0]?.id || '',
+      staffId: v.staffId || salonDetailed.staff[0]?.id || '',
+      bookingDate: v.bookingDate,
+      bookingTime: v.time,
+      notes: 'ثبت حضوری توسط پرسنل سالن',
+    });
+    if (!result.ok) {
       addToast({
         type: 'error',
-        title: 'ثبت در نسخه عملیاتی مسدود است',
-        message: 'در محیط عملیاتی، ثبت نوبت منوط به اتصال پایگاه‌داده و سرور در فاز ۳ تا ۵ است.',
+        title: 'ثبت نوبت ناموفق بود',
+        message: result.message || result.code || 'خطای نامشخص.',
       });
       return false;
     }
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const trackingPrefix = currentSalon.slug ? currentSalon.slug.slice(0, 3).toUpperCase() : 'ARA';
-    addCustomerBooking({
-      id: `manual-${Date.now()}`,
-      trackingCode: `${trackingPrefix}-${randomSuffix}`,
-      salonId: currentSalon.id,
-      salonName: currentSalon.name,
-      clientName: v.clientName,
-      clientPhone: v.clientPhone,
-      serviceName: v.serviceName || 'خدمت حضوری سالن',
-      serviceCategory: 'نوبت حضوری سالن',
-      staffName: v.staffName || salonDetailed.staff[0]?.name || 'پرسنل سالن',
-      date: 'امروز',
-      time: v.time,
-      price: v.price,
-      paymentMethod: 'in_person',
-      createdAt: 'هم‌اکنون',
-      status: 'confirmed',
-      isDemo: true,
-      notes: 'ثبت دستی در حافظه آزمایشی',
-    });
+    if (isDemoMode) {
+      addCustomerBooking({
+        id: `manual-${Date.now()}`,
+        trackingCode: result.trackingCode || `ARA-${Math.floor(1000 + Math.random() * 9000)}`,
+        salonId: currentSalon.id,
+        salonName: currentSalon.name,
+        clientName: v.clientName,
+        clientPhone: v.clientPhone,
+        serviceName: v.serviceName || 'خدمت حضوری سالن',
+        serviceCategory: 'نوبت حضوری سالن',
+        staffName: v.staffName || salonDetailed.staff[0]?.name || 'پرسنل سالن',
+        date: 'امروز',
+        time: v.time,
+        price: v.price,
+        paymentMethod: 'in_person',
+        createdAt: 'هم‌اکنون',
+        status: 'confirmed',
+        isDemo: true,
+        notes: 'ثبت دستی در حافظه آزمایشی',
+      });
+      addToast({ type: 'info', title: '[شبیه‌سازی دمو] نوبت جدید در حافظه مرورگر ثبت شد', message: `${v.clientName} · ساعت ${v.time}` });
+      return true;
+    }
     addToast({
-      type: 'info',
-      title: '[شبیه‌سازی دمو] نوبت جدید در حافظه مرورگر ثبت شد',
-      message: `${v.clientName} · ساعت ${v.time}`,
+      type: 'success',
+      title: 'نوبت با موفقیت ثبت شد',
+      message: `${v.clientName} · کد پیگیری ${result.trackingCode}`,
     });
     return true;
   };
 
-  const handleSaveBooking = (b: CustomerBooking, changes: BookingChanges): boolean => {
+  // Reschedule through the engine (rules + advisory lock + overlap in-transaction)
+  const handleSaveBooking = async (b: CustomerBooking, changes: BookingChanges): Promise<boolean> => {
     if (!isDemoMode) {
-      addToast({
-        type: 'error',
-        title: 'ویرایش نوبت در محیط عملیاتی مسدود است',
-        message: 'پایدارسازی تغییرات نوبت در فاز ۴ با پایگاه‌داده انجام خواهد شد.',
-      });
-      return false;
+      const staffId = changes.staffName
+        ? ops.staff.find((st) => st.name === changes.staffName)?.id
+        : undefined;
+      const ok = await ops.rescheduleAppointment(b.id, tehranTodayIso(), changes.time, staffId);
+      if (!ok) {
+        addToast({ type: 'error', title: 'جابجایی نوبت ناموفق بود', message: ops.error });
+        return false;
+      }
+      setSelectedBooking({ ...b, ...changes });
+      addToast({ type: 'success', title: 'نوبت جابجا شد', message: `ساعت جدید: ${changes.time}` });
+      return true;
     }
     updateCustomerBooking(b.id, changes);
     setSelectedBooking({ ...b, ...changes });
@@ -165,14 +227,24 @@ export const SalonAppView: React.FC = () => {
     return true;
   };
 
-  const handleSettle = (b: CustomerBooking) => {
-    completeCustomerBookingInSalon(b.id);
-    setSelectedBooking(null);
+  const handleSettle = async (b: CustomerBooking) => {
+    const ok = await ops.updateAppointmentStatus(b.id, 'completed', 'تسویه حضوری توسط پرسنل');
+    if (ok) {
+      addToast({ type: 'success', title: 'نوبت تکمیل و تسویه شد', message: b.clientName });
+      setSelectedBooking(null);
+    } else {
+      addToast({ type: 'error', title: 'تکمیل نوبت ناموفق بود', message: ops.error });
+    }
   };
 
-  const handleCancel = (b: CustomerBooking) => {
-    cancelCustomerBooking(b.id);
-    setSelectedBooking(null);
+  const handleCancel = async (b: CustomerBooking) => {
+    const ok = await ops.updateAppointmentStatus(b.id, 'cancelled', 'لغو توسط پرسنل سالن');
+    if (ok) {
+      addToast({ type: 'success', title: 'نوبت لغو شد', message: b.clientName });
+      setSelectedBooking(null);
+    } else {
+      addToast({ type: 'error', title: 'لغو نوبت ناموفق بود', message: ops.error });
+    }
   };
 
   const handleSms = (b: CustomerBooking) => {
@@ -240,7 +312,26 @@ export const SalonAppView: React.FC = () => {
     >
       {activeTab === 'appointments' && (
         <TodayTab
-          bookings={salonBookings}
+          bookings={isDemoMode ? salonBookings : ops.appointments}
+          stats={
+            isDemoMode
+              ? undefined
+              : {
+                  completed: ops.stats?.completedCount ?? 0,
+                  confirmed: ops.stats?.confirmedCount ?? 0,
+                  pending: ops.stats?.pendingCount ?? 0,
+                  cancelled: ops.stats?.cancelledCount ?? 0,
+                  collectedRevenue: ops.stats?.collectedRevenue ?? 0,
+                  upcomingCount: ops.stats?.upcomingAppointments?.length ?? 0,
+                }
+          }
+          loading={!isDemoMode && ops.loading}
+          error={!isDemoMode ? ops.error : ''}
+          onRetry={!isDemoMode ? () => {
+            ops.clearError();
+            ops.loadAppointments();
+            ops.loadStats();
+          } : undefined}
           onOpenBooking={setSelectedBooking}
           onSettle={handleSettle}
           onNewBooking={() => setWalkInOpen(true)}
@@ -248,7 +339,10 @@ export const SalonAppView: React.FC = () => {
         />
       )}
       {activeTab === 'services' && (
-        <ServicesTab services={salonDetailed.services} staff={salonDetailed.staff} />
+        <ServicesTab
+          services={salonDetailed.services}
+          staff={salonDetailed.staff}
+        />
       )}
       {activeTab === 'showcase' && (
         <ShowcaseTab

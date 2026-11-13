@@ -218,7 +218,7 @@ salonRouter.get('/dashboard/overview', async (req: Request, res: Response): Prom
                     timeZone: 'Asia/Tehran',
                     hour: '2-digit',
                     minute: '2-digit',
-                    hour12: false,
+                    hourCycle: 'h23',
                   }).format(new Date())
                 )))
         )
@@ -285,9 +285,25 @@ salonRouter.get('/appointments', async (req: Request, res: Response) => {
       );
     }
 
+    // Phase 12: display enrichment — names from the authoritative tables.
+    const serviceMap: Record<string, string> = {};
+    const staffMap: Record<string, string> = {};
+    try {
+      const services = await serviceRepository.findBySalonId(salonId, false);
+      for (const sv of services) serviceMap[sv.id] = sv.name;
+      const staffList = await staffRepository.findBySalonId(salonId, false);
+      for (const st of staffList) staffMap[st.id] = st.name;
+    } catch {
+      // names are best-effort enrichment only
+    }
+
     res.status(200).json({
       success: true,
-      appointments,
+      appointments: appointments.map((a) => ({
+        ...a,
+        serviceName: serviceMap[a.service_id] || a.service_id,
+        staffName: staffMap[a.staff_id] || a.staff_id,
+      })),
       total,
       limit,
       offset,

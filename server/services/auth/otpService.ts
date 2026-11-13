@@ -353,8 +353,15 @@ export const otpService = {
       return user;
     }
 
-    // Fallback for development without DB
-    return {
+    // Fallback for development without DB: FIRST check the in-memory user
+    // store — memberships and other relations attach to the real user id, and
+    // the old code here always returned a synthetic dev-user-<phone> identity,
+    // silently detaching every dev login from its salon memberships.
+    const existing = await userRepository.findByPhone(nationalPhone);
+    if (existing) {
+      return existing;
+    }
+    const fallback: DbUser = {
       id: `dev-user-${nationalPhone}`,
       phone: nationalPhone,
       full_name: `کاربر ${nationalPhone.slice(-4)}`,
@@ -366,6 +373,13 @@ export const otpService = {
       created_at: new Date(),
       updated_at: new Date(),
     };
+    await userRepository.create({
+      phone: nationalPhone,
+      fullName: fallback.full_name,
+      platformRole: 'user',
+      status: 'active',
+    }).catch(() => {});
+    return fallback;
   },
 
   async findLatestChallenge(phone: string, purpose: OtpPurpose): Promise<OtpChallenge | null> {

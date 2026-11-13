@@ -19,8 +19,18 @@ export const timeToMinutes = (t: string) => {
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 };
 
-/** The customer flow stores "امروز (یکشنبه ۴ آبان)"; the walk-in form stores plain "امروز". */
-export const isTodayLabel = (date: string) => date.startsWith('امروز');
+/** The customer flow stores "امروز (یکشنبه ۴ آبان)"; the walk-in form stores plain "امروز".
+ *  Phase 12: server appointments use canonical Gregorian dates — Tehran-today
+ *  ISO counts as today. */
+export const isTodayLabel = (date: string) => {
+  if (date.startsWith('امروز')) return true;
+  try {
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date());
+    return date === today;
+  } catch {
+    return false;
+  }
+};
 
 /** "امروز (یکشنبه ۴ آبان)" -> "امروز" for compact rows. */
 export const shortDate = (date: string) => date.split(' (')[0];
