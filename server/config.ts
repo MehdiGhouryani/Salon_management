@@ -45,6 +45,15 @@ export interface AuthConfig {
 }
 
 
+export interface PaymentConfig {
+  readonly zarinpalMerchantId?: string;
+  readonly zarinpalSandbox: boolean;
+  readonly publicBaseUrl?: string;
+  readonly returnUrl?: string;
+  readonly timeoutMs: number;
+  readonly isZarinpalConfigured: boolean;
+}
+
 export interface ServerConfig {
   readonly nodeEnv: SupportedNodeEnv;
   readonly appMode: SupportedAppMode;
@@ -64,6 +73,7 @@ export interface ServerConfig {
   readonly trustProxy: number | false;
   readonly database: DatabaseConfig;
   readonly auth: AuthConfig;
+  readonly payments: PaymentConfig;
   readonly sms: {
     readonly provider: 'kavenegar' | 'null';
     readonly template: string;
@@ -114,6 +124,51 @@ export function parseDatabaseSslSettings(
   }
 
   return Object.freeze({ ssl, sslRejectUnauthorized, sslCa });
+}
+
+export function parsePaymentSettings(env: NodeJS.ProcessEnv, isProduction: boolean): PaymentConfig {
+  const merchantId = (env.ZARINPAL_MERCHANT_ID || '').trim() || undefined;
+  if (merchantId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(merchantId)) {
+    throw new Error('[ServerConfig] ZARINPAL_MERCHANT_ID must be a UUID merchant identifier.');
+  }
+
+  const rawSandbox = (env.ZARINPAL_SANDBOX || (isProduction ? 'false' : 'true')).trim().toLowerCase();
+  if (!['true', 'false'].includes(rawSandbox)) {
+    throw new Error('[ServerConfig] Invalid ZARINPAL_SANDBOX: expected true or false.');
+  }
+  const zarinpalSandbox = rawSandbox === 'true';
+  if (isProduction && zarinpalSandbox) {
+    throw new Error('[ServerConfig] ZARINPAL_SANDBOX=true is forbidden in production.');
+  }
+
+  const parsePublicUrl = (raw: string | undefined, label: string): string | undefined => {
+    if (!raw?.trim()) return undefined;
+    let url: URL;
+    try { url = new URL(raw.trim()); } catch {
+      throw new Error(`[ServerConfig] ${label} must be an absolute HTTP(S) URL.`);
+    }
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
+      throw new Error(`[ServerConfig] ${label} must be a clean absolute HTTP(S) URL.`);
+    }
+    if (isProduction && url.protocol !== 'https:') {
+      throw new Error(`[ServerConfig] ${label} must use HTTPS in production.`);
+    }
+    return url.toString().replace(/\/$/, '');
+  };
+
+  const publicBaseUrl = parsePublicUrl(env.PAYMENT_PUBLIC_BASE_URL, 'PAYMENT_PUBLIC_BASE_URL');
+  const returnUrl = parsePublicUrl(env.PAYMENT_RETURN_URL, 'PAYMENT_RETURN_URL') || publicBaseUrl;
+  const rawTimeout = Number.parseInt(env.PAYMENT_GATEWAY_TIMEOUT_MS || '12000', 10);
+  const timeoutMs = Number.isSafeInteger(rawTimeout) && rawTimeout >= 1000 && rawTimeout <= 30000 ? rawTimeout : 12000;
+
+  return Object.freeze({
+    zarinpalMerchantId: merchantId,
+    zarinpalSandbox,
+    publicBaseUrl,
+    returnUrl,
+    timeoutMs,
+    isZarinpalConfigured: Boolean(merchantId && publicBaseUrl && returnUrl),
+  });
 }
 
 function parseAndValidateConfig(): ServerConfig {
@@ -304,6 +359,8 @@ function parseAndValidateConfig(): ServerConfig {
     );
   }
 
+  const payments = parsePaymentSettings(process.env, isProduction);
+
   return Object.freeze({
     nodeEnv,
     appMode,
@@ -317,6 +374,7 @@ function parseAndValidateConfig(): ServerConfig {
     trustProxy,
     database,
     auth,
+    payments,
     sms: Object.freeze({
       provider: smsProvider,
       template: smsTemplate,
