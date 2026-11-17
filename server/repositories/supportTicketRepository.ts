@@ -252,7 +252,7 @@ export const supportTicketRepository = {
       return true;
     }
     const result = await query(
-      "UPDATE support_tickets SET status = $2, updated_at = NOW(), closed_at = CASE WHEN $2 = 'closed' THEN NOW() ELSE NULL END WHERE id = $1",
+      "UPDATE support_tickets SET status = $2::varchar(16), updated_at = NOW(), closed_at = CASE WHEN $2::varchar(16) = 'closed' THEN NOW() ELSE NULL END WHERE id = $1",
       [ticketId, status],
       client
     );
