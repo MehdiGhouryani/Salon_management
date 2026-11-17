@@ -1,14 +1,15 @@
 import React from 'react';
-import { Calendar, Scissors, Store, User, QrCode, Sun, Moon } from 'lucide-react';
+import { Calendar, Scissors, Store, User, MessageSquare, QrCode, Sun, Moon } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 
-export type SalonTab = 'appointments' | 'services' | 'showcase' | 'profile';
+export type SalonTab = 'appointments' | 'services' | 'showcase' | 'profile' | 'support';
 
 const NAV: { id: SalonTab; label: string; icon: React.ElementType }[] = [
   { id: 'appointments', label: 'نوبت‌ها', icon: Calendar },
   { id: 'services', label: 'خدمات', icon: Scissors },
   { id: 'showcase', label: 'ویترین', icon: Store },
   { id: 'profile', label: 'پروفایل', icon: User },
+  { id: 'support', label: 'پشتیبانی', icon: MessageSquare },
 ];
 
 interface SalonShellProps {
@@ -19,6 +20,7 @@ interface SalonShellProps {
   onOpenQr: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
+  supportEnabled?: boolean;
   children: React.ReactNode;
 }
 
@@ -35,8 +37,12 @@ export const SalonShell: React.FC<SalonShellProps> = ({
   onOpenQr,
   isDark,
   onToggleTheme,
+  supportEnabled = false,
   children,
-}) => (
+}) => {
+  const navItems = supportEnabled ? NAV : NAV.filter((item) => item.id !== 'support');
+  const mobileGridClass = supportEnabled ? 'grid-cols-5' : 'grid-cols-4';
+  return (
   <div dir="rtl" className="min-h-dvh bg-[var(--bg-canvas)] text-[var(--text-primary)] md:flex">
     <aside
       className="hidden md:flex md:flex-col md:w-60 md:shrink-0 md:sticky md:top-0 md:h-dvh border-e border-[var(--border-default)] px-3 py-5 gap-6"
@@ -51,7 +57,7 @@ export const SalonShell: React.FC<SalonShellProps> = ({
       </div>
 
       <nav className="flex flex-col gap-1">
-        {NAV.map(({ id, label, icon: Icon }) => {
+        {navItems.map(({ id, label, icon: Icon }) => {
           const active = id === activeTab;
           return (
             <button
@@ -121,8 +127,8 @@ export const SalonShell: React.FC<SalonShellProps> = ({
       className="md:hidden fixed inset-x-0 bottom-0 z-30 bg-[var(--bg-surface)] border-t border-[var(--border-default)] pb-[env(safe-area-inset-bottom)]"
       aria-label="بخش‌های برنامه"
     >
-      <div className="grid grid-cols-4">
-        {NAV.map(({ id, label, icon: Icon }) => {
+      <div className={"grid " + mobileGridClass}>
+        {navItems.map(({ id, label, icon: Icon }) => {
           const active = id === activeTab;
           return (
             <button
@@ -145,4 +151,5 @@ export const SalonShell: React.FC<SalonShellProps> = ({
       </div>
     </nav>
   </div>
-);
+  );
+};
