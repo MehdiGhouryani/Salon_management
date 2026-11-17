@@ -1,4 +1,5 @@
 import express from 'express';
+import { safeInternalErrorMessage } from '../middleware/errorHandler.ts';
 import type { Request, Response } from 'express';
 import { otpService, type OtpPurpose } from '../services/auth/otpService.ts';
 import { sessionService, extractClientIp } from '../services/auth/sessionService.ts';
@@ -302,7 +303,7 @@ authRouter.get('/sessions', requireAuth, async (req: Request, res: Response): Pr
   } catch (err: any) {
     res.status(500).json({
       error: 'SESSIONS_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });

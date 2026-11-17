@@ -2,6 +2,20 @@ import type { Request, Response, NextFunction } from 'express';
 import { config } from '../config.ts';
 
 /**
+ * Client-visible message for unexpected route failures.
+ * Production callers only receive a stable fallback; full details remain
+ * available to server-side logs and development diagnostics.
+ */
+export function safeInternalErrorMessage(
+  err: unknown,
+  fallback = 'خطای داخلی سرور رخ داد. لطفاً بعداً تلاش کنید.',
+  production = config.isProduction
+): string {
+  if (production) return fallback;
+  return err instanceof Error ? err.message : fallback;
+}
+
+/**
  * 404 Handler for the /api namespace
  * Guarantees that unknown API endpoints return structured JSON error instead of HTML SPA.
  */

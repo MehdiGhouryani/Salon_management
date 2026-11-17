@@ -1,4 +1,5 @@
 import express from 'express';
+import { safeInternalErrorMessage } from '../middleware/errorHandler.ts';
 import type { Request, Response } from 'express';
 import { requireAuth, csrfProtection } from '../middleware/auth.ts';
 import { rateLimit } from '../middleware/rateLimit.ts';
@@ -45,7 +46,7 @@ publicRouter.get('/salons', async (_req: Request, res: Response): Promise<void> 
   } catch (err: any) {
     res.status(500).json({
       error: 'SALONS_FETCH_ERROR',
-      message: err.message || 'خطا در بارگذاری فهرست سالن‌ها.',
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -128,7 +129,7 @@ publicRouter.get('/salons/:slugOrId', async (req: Request, res: Response): Promi
   } catch (err: any) {
     res.status(500).json({
       error: 'SALON_PROFILE_ERROR',
-      message: err.message || 'خطا در دریافت پروفایل عمومی سالن.',
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -174,7 +175,7 @@ publicRouter.get('/salons/:salonId/availability', async (req: Request, res: Resp
 
     res.status(500).json({
       error: 'AVAILABILITY_CALCULATION_ERROR',
-      message: err.message || 'خطا در محاسبه زمان‌های آزاد.',
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -312,7 +313,7 @@ publicRouter.post(
 
       res.status(500).json({
         error: 'BOOKING_CREATION_FAILED',
-        message: err.message || 'خطا در ثبت نوبت در سرور.',
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -378,7 +379,7 @@ publicRouter.get(
   } catch (err: any) {
     res.status(500).json({
       error: 'MY_BOOKINGS_ERROR',
-      message: err.message || 'خطا در دریافت لیست نوبت‌ها.',
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -457,7 +458,7 @@ publicRouter.get(
 
     res.status(500).json({
       error: 'TRACKING_ERROR',
-      message: err.message || 'خطا در رهگیری نوبت.',
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -493,7 +494,7 @@ publicRouter.post(
 
       res.status(500).json({
         error: 'CANCELLATION_FAILED',
-        message: err.message || 'خطا در لغو نوبت.',
+        message: safeInternalErrorMessage(err),
       });
     }
   }

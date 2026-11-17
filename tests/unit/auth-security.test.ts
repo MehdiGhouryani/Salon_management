@@ -12,6 +12,7 @@ import { otpService } from '../../server/services/auth/otpService.ts';
 import { sessionService, hashSessionToken } from '../../server/services/auth/sessionService.ts';
 import { getDevMockSmsProvider } from '../../server/services/sms/index.ts';
 import { NullSmsProvider } from '../../server/services/sms/nullProvider.ts';
+import { safeInternalErrorMessage } from '../../server/middleware/errorHandler.ts';
 import {
   requirePlatformRole,
   requireSalonMembership,
@@ -55,6 +56,24 @@ let createdRawToken = '';
 beforeAll(() => {
   otpService.clearInMemory();
   sessionService.clearInMemory();
+});
+
+describe('Safe internal error responses', () => {
+  it('hides unexpected server error details in production', () => {
+    expect(
+      safeInternalErrorMessage(new Error('relation users_private does not exist'), 'خطای عمومی', true)
+    ).toBe('خطای عمومی');
+  });
+
+  it('keeps actionable error details in development', () => {
+    expect(
+      safeInternalErrorMessage(new Error('development diagnostic'), 'خطای عمومی', false)
+    ).toBe('development diagnostic');
+  });
+
+  it('uses a safe fallback for non-Error values', () => {
+    expect(safeInternalErrorMessage('sensitive raw text', 'خطای عمومی', false)).toBe('خطای عمومی');
+  });
 });
 
 describe('Phone normalization (unit)', () => {

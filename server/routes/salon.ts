@@ -1,4 +1,5 @@
 import express from 'express';
+import { safeInternalErrorMessage } from '../middleware/errorHandler.ts';
 import type { Request, Response } from 'express';
 import { requireSalonMembership, requireSalonPermission, csrfProtection } from '../middleware/auth.ts';
 import { salonRepository } from '../repositories/salonRepository.ts';
@@ -56,7 +57,7 @@ salonRouter.get('/profile', async (req: Request, res: Response): Promise<void> =
   } catch (err: any) {
     res.status(500).json({
       error: 'SALON_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -111,7 +112,7 @@ salonRouter.patch(
     } catch (err: any) {
       res.status(500).json({
         error: 'SALON_UPDATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -245,7 +246,7 @@ salonRouter.get('/dashboard/overview', async (req: Request, res: Response): Prom
   } catch (err: any) {
     res.status(500).json({
       error: 'DASHBOARD_OVERVIEW_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -342,7 +343,7 @@ salonRouter.get('/appointments/:appointmentId', async (req: Request, res: Respon
   } catch (err: any) {
     res.status(500).json({
       error: 'APPOINTMENT_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -818,7 +819,7 @@ salonRouter.get('/services', async (req: Request, res: Response): Promise<void> 
   } catch (err: any) {
     res.status(500).json({
       error: 'SERVICES_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -884,7 +885,7 @@ salonRouter.post(
     } catch (err: any) {
       res.status(500).json({
         error: 'SERVICE_CREATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -942,7 +943,7 @@ salonRouter.patch(
     } catch (err: any) {
       res.status(500).json({
         error: 'SERVICE_UPDATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -990,7 +991,7 @@ salonRouter.delete(
     } catch (err: any) {
       res.status(500).json({
         error: 'SERVICE_DELETE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -1027,7 +1028,7 @@ salonRouter.get('/staff', async (req: Request, res: Response): Promise<void> => 
   } catch (err: any) {
     res.status(500).json({
       error: 'STAFF_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -1085,7 +1086,7 @@ salonRouter.post(
     } catch (err: any) {
       res.status(500).json({
         error: 'STAFF_CREATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -1143,7 +1144,7 @@ salonRouter.patch(
     } catch (err: any) {
       res.status(500).json({
         error: 'STAFF_UPDATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -1192,7 +1193,7 @@ salonRouter.post(
     } catch (err: any) {
       res.status(500).json({
         error: 'STAFF_SERVICES_ASSIGN_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -1230,7 +1231,7 @@ salonRouter.get('/working-hours', async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     res.status(500).json({
       error: 'WORKING_HOURS_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -1294,7 +1295,7 @@ salonRouter.put(
     } catch (err: any) {
       res.status(500).json({
         error: 'WORKING_HOURS_UPDATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -1360,7 +1361,7 @@ salonRouter.post(
     } catch (err: any) {
       res.status(500).json({
         error: 'EXCEPTION_CREATE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }
@@ -1406,7 +1407,7 @@ salonRouter.delete(
     } catch (err: any) {
       res.status(500).json({
         error: 'EXCEPTION_DELETE_ERROR',
-        message: err.message,
+        message: safeInternalErrorMessage(err),
       });
     }
   }

@@ -1,4 +1,5 @@
 import express from 'express';
+import { safeInternalErrorMessage } from '../middleware/errorHandler.ts';
 import type { Request, Response } from 'express';
 import { authenticateSession, requireAuth, requirePlatformRole } from '../middleware/auth.ts';
 import { withTransaction } from '../db/pool.ts';
@@ -45,7 +46,7 @@ adminRouter.get('/stats', async (_req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({
       error: 'ADMIN_STATS_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -99,7 +100,7 @@ adminRouter.get('/salons', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({
       error: 'SALON_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -177,7 +178,7 @@ adminRouter.put('/salons/:id/status',
   } catch (err: any) {
     res.status(500).json({
       error: 'SALON_STATUS_UPDATE_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -214,7 +215,7 @@ adminRouter.get('/users', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({
       error: 'USERS_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -308,7 +309,7 @@ adminRouter.put('/users/:id/status',
   } catch (err: any) {
     res.status(500).json({
       error: 'USER_STATUS_UPDATE_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -400,7 +401,7 @@ adminRouter.put('/users/:id/role',
   } catch (err: any) {
     res.status(500).json({
       error: 'USER_ROLE_UPDATE_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
@@ -440,7 +441,7 @@ adminRouter.get('/audit-logs', async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(500).json({
       error: 'AUDIT_LOG_FETCH_ERROR',
-      message: err.message,
+      message: safeInternalErrorMessage(err),
     });
   }
 });
