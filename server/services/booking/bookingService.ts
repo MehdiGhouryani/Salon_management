@@ -591,7 +591,7 @@ export const bookingService = {
       });
     } else {
       // In-Memory Dev/Test: Mutex lock per (salon, staff, date) to prevent parallel race conditions
-      const lockKey = `${params.salonId}:${params.staffId || 'any'}:${canonicalDate}`;
+      const lockKey = `${params.salonId}:${canonicalDate}`;
       const release = await acquireLock(lockKey);
       try {
         if (params.bookingGrant) {

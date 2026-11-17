@@ -156,6 +156,38 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL booking rules & rollback (Phase 0
     ).rejects.toMatchObject({ code: 'SLOT_ALREADY_TAKEN' });
   });
 
+  it('legacy appointments with a null end_time still block the 60-minute default interval', async () => {
+    const legacy = await db.bookingService.createBooking({
+      salonId: db.fixtures.salonId,
+      serviceId: db.fixtures.serviceId,
+      staffId: db.fixtures.staffId,
+      bookingDate: '2026-11-28',
+      bookingTime: '10:00',
+      clientName: 'نوبت قدیمی بدون ساعت پایان',
+      clientPhone: '09370000511',
+      ipAddress: '127.0.0.1',
+      userAgent: 'legacy-null-end-time-probe',
+    });
+
+    await db.raw.query('UPDATE appointments SET end_time = NULL WHERE id = $1', [
+      legacy.appointment.id,
+    ]);
+
+    await expect(
+      db.bookingService.createBooking({
+        salonId: db.fixtures.salonId,
+        serviceId: db.fixtures.serviceId,
+        staffId: db.fixtures.staffId,
+        bookingDate: '2026-11-28',
+        bookingTime: '10:30',
+        clientName: 'متقاضی بازه هم‌پوشان',
+        clientPhone: '09370000512',
+        ipAddress: '127.0.0.1',
+        userAgent: 'legacy-null-end-time-probe',
+      })
+    ).rejects.toMatchObject({ code: 'SLOT_ALREADY_TAKEN' });
+  });
+
   it('fail-safe: bookings without configured working hours are rejected', async () => {
     await db.salonRepository.create({
       id: 't3-salon-nohours', slug: 't3-nohours', name: 'سالن بدون ساعات کاری',

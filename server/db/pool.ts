@@ -96,17 +96,20 @@ export function getPool(): pg.Pool {
           connectionTimeoutMillis: config.database.connectionTimeoutMs,
         };
 
-    activePool = new Pool(poolConfig);
+    const pool = new Pool(poolConfig);
 
     // Pool error listener to prevent uncaught exceptions on idle clients
-    activePool.on('error', (err: Error) => {
+    pool.on('error', (err: Error) => {
       console.error('[NobatAra Database Pool] Unexpected error on idle client:', err.message);
     });
 
+    activePool = pool;
     return activePool;
-  } catch (err: any) {
-    console.warn('[NobatAra Database] Pool initialization failed — mock active:', err.message);
-    return mockPool;
+  } catch {
+    // A configured database must never degrade into a no-op/mock pool. Doing
+    // so makes writes appear successful while no data is actually persisted.
+    console.error('[NobatAra Database] Pool initialization failed; refusing database operations.');
+    throw new DatabaseUnavailableError('PostgreSQL connection pool initialization failed.');
   }
 }
 

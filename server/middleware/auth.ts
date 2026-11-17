@@ -53,8 +53,8 @@ export async function authenticateSession(
       req.session = validation.session;
       req.salonMemberships = validation.memberships || [];
     }
-  } catch (err: any) {
-    console.error('[NobatAra Auth Middleware] Session validation error:', err.message);
+  } catch (err) {
+    return next(err);
   }
 
   next();

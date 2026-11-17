@@ -336,8 +336,8 @@ export const appointmentRepository = {
       'staff_id = $2',
       'booking_date_greg = $3::date',
       "status NOT IN ('cancelled')",
-      'booking_time < $4',
-      'COALESCE(end_time, booking_time) > $5',
+      'booking_time::time < $4::time',
+      "COALESCE(NULLIF(end_time, '')::time, booking_time::time + INTERVAL '60 minutes') > $5::time",
     ];
     const values: any[] = [salonId, staffId, bookingDate, endTime, bookingTime];
 

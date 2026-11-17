@@ -35,23 +35,44 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
 }
 
 /**
- * Safe CORS Middleware that avoids open wildcard access in production
+ * Normalizes an HTTP(S) origin for exact allowlist comparison.
+ * Paths and trailing slashes are intentionally discarded.
+ */
+function normalizeOrigin(value: string): string | null {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.origin.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safe CORS Middleware that avoids open wildcard access in production.
+ * Custom headers are required by the booking and authenticated client flows.
  */
 export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const origin = req.headers.origin;
 
   if (origin) {
-    if (config.isDevelopment) {
-      // In development, reflect origin for local testing
+    res.vary('Origin');
+    const normalizedOrigin = normalizeOrigin(origin);
+    const isAllowed =
+      normalizedOrigin !== null &&
+      (config.isDevelopment ||
+        config.corsOrigins.some((allowed) => normalizeOrigin(allowed) === normalizedOrigin));
+
+    if (isAllowed) {
+      // Reflect the original browser origin (never '*') so credentials remain scoped.
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization, X-Requested-With, X-NobatAra-Client, X-NobatAra-Booking-Grant, X-Salon-Id'
+      );
       res.setHeader('Access-Control-Allow-Credentials', 'true');
-    } else if (config.corsOrigins.length > 0 && config.corsOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Max-Age', '600');
     }
   }
 

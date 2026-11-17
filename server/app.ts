@@ -23,6 +23,7 @@ import { apiRouter } from './routes/index.ts';
  */
 export function createApp(): Express {
   const app = express();
+  app.disable('x-powered-by');
 
   // Explicit reverse-proxy trust policy (Phase 07): set TRUST_PROXY_COUNT in
   // the deployment environment when running behind a known proxy. Default:
