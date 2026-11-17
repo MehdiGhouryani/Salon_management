@@ -10,6 +10,7 @@ import { salonRepository } from '../repositories/salonRepository.ts';
 import { userRepository } from '../repositories/userRepository.ts';
 import { appointmentRepository } from '../repositories/appointmentRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
+import { supportTicketRepository, type SupportTicketStatus, type SupportTicketPriority } from '../repositories/supportTicketRepository.ts';
 
 export const adminRouter = express.Router();
 
@@ -446,3 +447,143 @@ adminRouter.get('/audit-logs', async (req: Request, res: Response) => {
   }
 });
 
+
+
+/** Persistent support queue, restricted by the router-level super-admin gate. */
+adminRouter.get('/support/tickets', async (req: Request, res: Response): Promise<void> => {
+  const rawLimit = Number.parseInt(String(req.query.limit || '50'), 10);
+  const rawOffset = Number.parseInt(String(req.query.offset || '0'), 10);
+  const status = String(req.query.status || '');
+  const priority = String(req.query.priority || '');
+  const search = String(req.query.search || '').trim();
+
+  if (status && status !== 'all' && !['open', 'in_progress', 'resolved', 'closed'].includes(status)) {
+    res.status(400).json({ error: 'INVALID_TICKET_STATUS', message: 'وضعیت تیکت نامعتبر است.' });
+    return;
+  }
+  if (priority && priority !== 'all' && !['low', 'medium', 'high', 'critical'].includes(priority)) {
+    res.status(400).json({ error: 'INVALID_TICKET_PRIORITY', message: 'اولویت تیکت نامعتبر است.' });
+    return;
+  }
+  if (search.length > 100) {
+    res.status(400).json({ error: 'SEARCH_TOO_LONG', message: 'عبارت جستجو بیش از حد طولانی است.' });
+    return;
+  }
+
+  const filter = {
+    status: status && status !== 'all' ? status as SupportTicketStatus : undefined,
+    priority: priority && priority !== 'all' ? priority as SupportTicketPriority : undefined,
+    search: search || undefined,
+    limit: Number.isSafeInteger(rawLimit) ? Math.min(100, Math.max(1, rawLimit)) : 50,
+    offset: Number.isSafeInteger(rawOffset) ? Math.max(0, Math.min(1_000_000, rawOffset)) : 0,
+  };
+
+  try {
+    const [tickets, total] = await Promise.all([
+      supportTicketRepository.findAll(filter),
+      supportTicketRepository.count(filter),
+    ]);
+    res.status(200).json({ success: true, tickets, total, limit: filter.limit, offset: filter.offset });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SUPPORT_TICKETS_FETCH_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
+
+adminRouter.post(
+  '/support/tickets/:id/messages',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 30,
+    keyFor: (req) => String(req.user?.id || req.ip || 'unknown'),
+    code: 'SUPPORT_REPLY_RATE_LIMIT',
+  }),
+  async (req: Request, res: Response): Promise<void> => {
+    const ticketId = String(req.params.id);
+    const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+    if (!content || content.length > 5000) {
+      res.status(400).json({ error: 'INVALID_SUPPORT_MESSAGE', message: 'متن پاسخ باید بین ۱ تا ۵۰۰۰ نویسه باشد.' });
+      return;
+    }
+
+    try {
+      const ticket = await supportTicketRepository.findById(ticketId);
+      if (!ticket) {
+        res.status(404).json({ error: 'SUPPORT_TICKET_NOT_FOUND', message: 'تیکت مورد نظر یافت نشد.' });
+        return;
+      }
+
+      const message = await withTransaction(async (client) => {
+        const created = await supportTicketRepository.addMessage(ticketId, {
+          senderUserId: req.user!.id,
+          senderName: req.user!.full_name,
+          senderRole: 'admin',
+          content,
+        }, client);
+        await supportTicketRepository.updateStatus(ticketId, 'in_progress', client);
+        await auditLogRepository.create({
+          actor: req.user!.full_name,
+          actorRole: req.user!.platform_role,
+          action: 'SUPPORT_TICKET_REPLY',
+          target: 'support-ticket:' + ticket.ticketNumber,
+          ipAddress: req.ip || '127.0.0.1',
+          userAgent: String(req.headers['user-agent'] || 'Unknown'),
+          severity: 'info',
+          category: 'system',
+          details: { ticketId, ticketNumber: ticket.ticketNumber, messageId: created.id },
+        }, client);
+        return created;
+      });
+
+      res.status(201).json({ success: true, message: 'پاسخ با موفقیت ثبت شد.', ticketMessage: message });
+    } catch (err: any) {
+      res.status(500).json({
+        error: 'SUPPORT_TICKET_REPLY_ERROR',
+        message: safeInternalErrorMessage(err),
+      });
+    }
+  }
+);
+
+adminRouter.patch('/support/tickets/:id/status', async (req: Request, res: Response): Promise<void> => {
+  const ticketId = String(req.params.id);
+  const status = String(req.body?.status || '');
+  if (!['open', 'in_progress', 'resolved', 'closed'].includes(status)) {
+    res.status(400).json({ error: 'INVALID_TICKET_STATUS', message: 'وضعیت تیکت نامعتبر است.' });
+    return;
+  }
+
+  try {
+    const ticket = await supportTicketRepository.findById(ticketId);
+    if (!ticket) {
+      res.status(404).json({ error: 'SUPPORT_TICKET_NOT_FOUND', message: 'تیکت مورد نظر یافت نشد.' });
+      return;
+    }
+
+    await withTransaction(async (client) => {
+      const updated = await supportTicketRepository.updateStatus(ticketId, status as SupportTicketStatus, client);
+      if (!updated) throw new Error('Support ticket disappeared during status update.');
+      await auditLogRepository.create({
+        actor: req.user!.full_name,
+        actorRole: req.user!.platform_role,
+        action: 'SUPPORT_TICKET_STATUS_CHANGE',
+        target: 'support-ticket:' + ticket.ticketNumber,
+        ipAddress: req.ip || '127.0.0.1',
+        userAgent: String(req.headers['user-agent'] || 'Unknown'),
+        severity: status === 'closed' ? 'warning' : 'info',
+        category: 'system',
+        details: { ticketId, ticketNumber: ticket.ticketNumber, oldStatus: ticket.status, newStatus: status },
+      }, client);
+    });
+
+    const updatedTicket = await supportTicketRepository.findById(ticketId);
+    res.status(200).json({ success: true, ticket: updatedTicket });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SUPPORT_TICKET_STATUS_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
