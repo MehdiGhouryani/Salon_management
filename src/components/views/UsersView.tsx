@@ -409,7 +409,7 @@ export const UsersView: React.FC = () => {
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
-                totalItems={filteredUsers.length}
+                totalItems={usersTotal}
                 pageSize={PAGE_SIZE}
                 onPageChange={setPage}
                 onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
@@ -520,7 +520,7 @@ export const UsersView: React.FC = () => {
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
-                totalItems={filteredUsers.length}
+                totalItems={usersTotal}
                 pageSize={PAGE_SIZE}
                 onPageChange={setPage}
                 onLoadMore={page < totalPages ? () => setPage((p) => p + 1) : undefined}
