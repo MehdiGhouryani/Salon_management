@@ -6,6 +6,7 @@ import { salonRepository } from '../repositories/salonRepository.ts';
 import { appointmentRepository, type AppointmentStatus } from '../repositories/appointmentRepository.ts';
 import { serviceRepository } from '../repositories/serviceRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
+import { supportTicketRepository, type SupportTicketCategory, type SupportTicketPriority } from '../repositories/supportTicketRepository.ts';
 import { clientRepository } from '../repositories/clientRepository.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 import { withTransaction } from '../db/pool.ts';
@@ -1407,6 +1408,151 @@ salonRouter.delete(
     } catch (err: any) {
       res.status(500).json({
         error: 'EXCEPTION_DELETE_ERROR',
+        message: safeInternalErrorMessage(err),
+      });
+    }
+  }
+);
+
+
+/** Lists support requests owned by the current salon tenant only. */
+salonRouter.get('/support/tickets', requireSalonMembership('owner', 'manager'), async (req: Request, res: Response): Promise<void> => {
+  const salonId = String(req.params.salonId);
+  try {
+    const [tickets, total] = await Promise.all([
+      supportTicketRepository.findAll({ salonId, limit: 50 }),
+      supportTicketRepository.count({ salonId }),
+    ]);
+    res.status(200).json({ success: true, tickets, total });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SALON_SUPPORT_TICKETS_FETCH_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
+
+/** Opens a ticket and stores its first message within one transaction. */
+salonRouter.post('/support/tickets', requireSalonMembership('owner', 'manager'), async (req: Request, res: Response): Promise<void> => {
+  const salonId = String(req.params.salonId);
+  const { subject, message, category, priority = 'medium' } = req.body || {};
+  const cleanSubject = typeof subject === 'string' ? subject.trim() : '';
+  const cleanMessage = typeof message === 'string' ? message.trim() : '';
+
+  if (cleanSubject.length < 5 || cleanSubject.length > 160 || cleanMessage.length < 3 || cleanMessage.length > 5000) {
+    res.status(400).json({
+      error: 'INVALID_SUPPORT_TICKET',
+      message: 'عنوان باید بین ۵ تا ۱۶۰ نویسه و متن درخواست بین ۳ تا ۵۰۰۰ نویسه باشد.',
+    });
+    return;
+  }
+  if (!['technical', 'financial', 'sms', 'account'].includes(category)) {
+    res.status(400).json({ error: 'INVALID_SUPPORT_CATEGORY', message: 'دسته‌بندی درخواست نامعتبر است.' });
+    return;
+  }
+  if (!['low', 'medium', 'high'].includes(priority)) {
+    res.status(400).json({ error: 'INVALID_SUPPORT_PRIORITY', message: 'اولویت درخواستی نامعتبر است.' });
+    return;
+  }
+
+  try {
+    const salonRecord = await salonRepository.findById(salonId);
+    if (!salonRecord) {
+      res.status(404).json({ error: 'SALON_NOT_FOUND', message: 'سالن مورد نظر یافت نشد.' });
+      return;
+    }
+
+    const ticketId = await withTransaction(async (client) => {
+      const created = await supportTicketRepository.create({
+        salonId,
+        salonName: salonRecord.name,
+        creatorUserId: req.user!.id,
+        creatorName: req.user!.full_name,
+        creatorRole: 'salon',
+        subject: cleanSubject,
+        category: category as SupportTicketCategory,
+        priority: priority as SupportTicketPriority,
+      }, client);
+
+      const firstMessage = await supportTicketRepository.addMessage(created.id, {
+        senderUserId: req.user!.id,
+        senderName: req.user!.full_name,
+        senderRole: 'salon',
+        content: cleanMessage,
+      }, client);
+
+      await auditLogRepository.create({
+        actor: req.user!.full_name,
+        actorRole: 'salon_member',
+        action: 'SUPPORT_TICKET_CREATED',
+        target: 'support-ticket:' + created.ticketNumber,
+        ipAddress: extractClientIp(req),
+        userAgent: String(req.headers['user-agent'] || 'Unknown'),
+        severity: 'info',
+        category: 'system',
+        details: { ticketId: created.id, ticketNumber: created.ticketNumber, salonId, initialMessageId: firstMessage.id },
+      }, client);
+      return created.id;
+    });
+
+    const ticket = await supportTicketRepository.findById(ticketId, salonId);
+    res.status(201).json({ success: true, ticket });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SALON_SUPPORT_TICKET_CREATE_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
+
+/** Replies are scoped by salon_id, so another tenant's ticket appears as 404. */
+salonRouter.post(
+  '/support/tickets/:ticketId/messages',
+  requireSalonMembership('owner', 'manager'),
+  async (req: Request, res: Response): Promise<void> => {
+    const salonId = String(req.params.salonId);
+    const ticketId = String(req.params.ticketId);
+    const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+    if (!content || content.length > 5000) {
+      res.status(400).json({ error: 'INVALID_SUPPORT_MESSAGE', message: 'متن پیام باید بین ۱ تا ۵۰۰۰ نویسه باشد.' });
+      return;
+    }
+
+    try {
+      const ticket = await supportTicketRepository.findById(ticketId, salonId);
+      if (!ticket) {
+        res.status(404).json({ error: 'SUPPORT_TICKET_NOT_FOUND', message: 'تیکت مورد نظر یافت نشد.' });
+        return;
+      }
+
+      const message = await withTransaction(async (client) => {
+        const created = await supportTicketRepository.addMessage(ticketId, {
+          senderUserId: req.user!.id,
+          senderName: req.user!.full_name,
+          senderRole: 'salon',
+          content,
+        }, client);
+        if (ticket.status === 'closed' || ticket.status === 'resolved') {
+          await supportTicketRepository.updateStatus(ticketId, 'open', client);
+        }
+        await auditLogRepository.create({
+          actor: req.user!.full_name,
+          actorRole: 'salon_member',
+          action: 'SUPPORT_TICKET_CUSTOMER_REPLY',
+          target: 'support-ticket:' + ticket.ticketNumber,
+          ipAddress: extractClientIp(req),
+          userAgent: String(req.headers['user-agent'] || 'Unknown'),
+          severity: 'info',
+          category: 'system',
+          details: { ticketId, ticketNumber: ticket.ticketNumber, salonId, messageId: created.id },
+        }, client);
+        return created;
+      });
+
+      res.status(201).json({ success: true, ticketMessage: message });
+    } catch (err: any) {
+      res.status(500).json({
+        error: 'SALON_SUPPORT_REPLY_ERROR',
         message: safeInternalErrorMessage(err),
       });
     }
