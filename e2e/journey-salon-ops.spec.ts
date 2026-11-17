@@ -40,6 +40,14 @@ test('salon member logs in, reads real dashboard, books walk-in, settles it', as
   await expect(page.getByRole('navigation').getByRole('button', { name: 'نوبت‌ها' }).first()).toBeVisible({ timeout: 20000 });
   await expect(page.locator('h1', { hasText: 'نوبت‌های امروز' })).toBeVisible({ timeout: 15000 });
 
+  // Owner/manager-only support entry is visible and opens the real ticket UI.
+  await page.getByRole('button', { name: 'پشتیبانی' }).first().click();
+  await expect(page.getByRole('heading', { name: 'پشتیبانی و درخواست‌ها' })).toBeVisible();
+  await page.getByRole('button', { name: 'درخواست جدید' }).click();
+  await expect(page.getByRole('heading', { name: 'ثبت درخواست پشتیبانی' })).toBeVisible();
+  await page.getByRole('button', { name: 'انصراف' }).click();
+  await page.getByRole('button', { name: 'نوبت‌ها' }).first().click();
+
   // Phase 12 schedule management: persist working hours through the real API
   // (sal-101 closes Fridays; a walk-in for TODAY needs the day opened first).
   const allDaysOpen = [0, 1, 2, 3, 4, 5, 6].map((d) => ({
