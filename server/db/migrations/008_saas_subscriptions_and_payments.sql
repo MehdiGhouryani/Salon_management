@@ -73,3 +73,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_salon_active_subscription
   ON salon_subscriptions(salon_id) WHERE status = 'active';
 CREATE INDEX IF NOT EXISTS idx_salon_subscriptions_history
   ON salon_subscriptions(salon_id, created_at DESC);
+
+-- Link the existing platform finance ledger to its durable subscription payment.
+ALTER TABLE payment_records
+  ADD COLUMN IF NOT EXISTS subscription_payment_attempt_id UUID NULL
+  REFERENCES subscription_payment_attempts(id) ON DELETE RESTRICT;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_records_subscription_attempt
+  ON payment_records(subscription_payment_attempt_id)
+  WHERE subscription_payment_attempt_id IS NOT NULL;
