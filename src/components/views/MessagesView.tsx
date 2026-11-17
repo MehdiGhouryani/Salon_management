@@ -28,6 +28,7 @@ export const MessagesView: React.FC = () => {
     retryAllFailedMessages,
     sendBroadcastMessage,
     updateTemplate,
+    isDemoMode,
   } = useAdmin();
 
   const [activeSubTab, setActiveSubTab] = useState<'queue' | 'templates'>('queue');
@@ -109,6 +110,7 @@ export const MessagesView: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => setIsBroadcastModalOpen(true)}
+            disabled={!isDemoMode}
             leftIcon={<Send className="w-3.5 h-3.5" />}
           >
             پیامک همگانی
@@ -119,12 +121,17 @@ export const MessagesView: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={retryAllFailedMessages}
+              disabled={!isDemoMode}
               leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
             >
               تلاش مجدد ناموفق‌ها ({toPersianDigits(failedCount)})
             </Button>
           )}
         </div>
+      </div>
+
+      <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+        صف پیامک، گزارش تحویل و قالب‌های نمایش‌داده‌شده دادهٔ نمونه‌اند؛ اتصال ارسال همگانی، صف و مدیریت قالب‌ها به سرویس واقعی هنوز موجود نیست.
       </div>
 
       {/* KPI Stats Bar */}
@@ -282,6 +289,7 @@ export const MessagesView: React.FC = () => {
                                   variant="outline"
                                   size="xs"
                                   onClick={() => retryFailedMessage(msg.id)}
+                                  disabled={!isDemoMode}
                                 >
                                   ارسال مجدد
                                 </Button>
@@ -351,6 +359,7 @@ export const MessagesView: React.FC = () => {
                   variant="secondary"
                   size="xs"
                   onClick={() => openTemplateEdit(tpl)}
+                  disabled={!isDemoMode}
                 >
                   ویرایش الگو
                 </Button>
@@ -423,7 +432,7 @@ export const MessagesView: React.FC = () => {
               <Button variant="secondary" size="sm" onClick={() => setEditingTemplate(null)}>
                 انصراف
               </Button>
-              <Button variant="primary" size="sm" onClick={handleSaveTemplate}>
+              <Button variant="primary" size="sm" onClick={handleSaveTemplate} disabled={!isDemoMode}>
                 ذخیره الگو
               </Button>
             </div>

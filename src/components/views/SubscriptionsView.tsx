@@ -21,7 +21,7 @@ import { Plan, PlanType } from '../../types/admin';
 import { toPersianDigits, formatCurrency } from '../../utils/formatters';
 
 export const SubscriptionsView: React.FC = () => {
-  const { plans, salons, transactions, updateSalonPlan, addToast } = useAdmin();
+  const { plans, salons, transactions, updateSalonPlan, addToast, isDemoMode } = useAdmin();
 
   const [assignSalonId, setAssignSalonId] = useState(salons[0]?.id || '');
   const [assignPlanType, setAssignPlanType] = useState<PlanType>('gold_vip');
@@ -46,6 +46,10 @@ export const SubscriptionsView: React.FC = () => {
 
   const handleAssignPlan = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isDemoMode) {
+      addToast({ type: 'warning', title: 'تخصیص اشتراک در سرور پیاده‌سازی نشده است', message: 'هیچ تغییری ثبت نشد.' });
+      return;
+    }
     if (!assignSalonId) return;
     const targetSalon = salons.find((s) => s.id === assignSalonId);
     if (!targetSalon) return;
@@ -59,6 +63,10 @@ export const SubscriptionsView: React.FC = () => {
   };
 
   const openPlanEditor = (p: Plan) => {
+    if (!isDemoMode) {
+      addToast({ type: 'warning', title: 'ویرایش تعرفه در سرور پیاده‌سازی نشده است', message: 'هیچ تغییری ثبت نشد.' });
+      return;
+    }
     setEditingPlan(p);
     setEditPriceMonthly(p.priceMonthly);
     setEditMaxStaff(p.maxStaff);
@@ -78,6 +86,10 @@ export const SubscriptionsView: React.FC = () => {
             تعرفه‌گذاری نرم‌افزار، تمدید اشتراک سالن‌ها و سوابق تراکنش‌ها
           </p>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+        پلن‌ها، آمار درآمد و تراکنش‌های این صفحه فعلاً دادهٔ نمونه هستند؛ اشتراک و درگاه پرداخت هنوز به سرویس مالی واقعی متصل نشده‌اند.
       </div>
 
       {/* Financial Metrics Cards */}
@@ -343,7 +355,9 @@ export const SubscriptionsView: React.FC = () => {
                 انصراف
               </button>
               <button
+                disabled={!isDemoMode}
                 onClick={() => {
+                  if (!isDemoMode) return;
                   editingPlan.priceMonthly = editPriceMonthly;
                   editingPlan.maxStaff = editMaxStaff;
                   editingPlan.smsIncluded = editSmsCount;

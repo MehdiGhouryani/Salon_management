@@ -99,12 +99,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>(initialSecuritySettings);
   const [customerBookings, setCustomerBookings] = useState<CustomerBooking[]>([]);
 
+  const denyOutsideDemo = (operation: string): boolean => {
+    if (isDemoMode) return false;
+    addToast({
+      type: 'warning',
+      title: 'عملیات به سرور متصل نیست',
+      message: `${operation} هنوز API و ذخیره‌سازی سمت سرور ندارد؛ هیچ تغییری اعمال نشد.`,
+    });
+    return true;
+  };
+
   // Salon handlers
   const changeSalonStatusApi = async (
     id: string,
     status: 'active' | 'suspended' | 'rejected',
     reason?: string
   ) => {
+    if (!serverAuth.authenticated) {
+      if (denyOutsideDemo('تغییر وضعیت سالن')) return false;
+      return true;
+    }
     if (serverAuth.authenticated) {
       try {
         const res = await fetch(`/api/admin/salons/${id}/status`, {
@@ -216,11 +230,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateSalonPlan = (id: string, plan: PlanType) => {
+    if (denyOutsideDemo('تغییر پلن اشتراک')) return;
     setSalons((prev) => prev.map((s) => (s.id === id ? { ...s, plan } : s)));
     addToast({ type: 'info', title: 'پلن ارتقا یافت', message: 'پلن سالن تغییر کرد.' });
   };
 
   const saveSalon = (updated: Salon) => {
+    if (denyOutsideDemo('ذخیره اطلاعات سالن')) return;
     setSalons((prev) => {
       const exists = prev.some((s) => s.id === updated.id);
       if (exists) {
@@ -232,12 +248,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteSalon = (id: string) => {
+    if (denyOutsideDemo('حذف سالن')) return;
     setSalons((prev) => prev.filter((s) => s.id !== id));
     addToast({ type: 'warning', title: 'سالن حذف شد' });
   };
 
   // User handlers
   const changeUserStatusApi = async (id: string, status: 'active' | 'banned', reason?: string) => {
+    if (!serverAuth.authenticated) {
+      if (denyOutsideDemo('تغییر وضعیت کاربر')) return false;
+      return true;
+    }
     if (serverAuth.authenticated) {
       try {
         const res = await fetch(`/api/admin/users/${id}/status`, {
@@ -246,7 +267,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'Content-Type': 'application/json',
             'X-NobatAra-Client': 'web',
           },
-          body: JSON.stringify({ status, reason }),
+          body: JSON.stringify({ status: status === 'banned' ? 'suspended' : status, reason }),
         });
         if (!res.ok) {
           const err = await res.json();
@@ -304,17 +325,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUserRole = (id: string, role: UserRole) => {
+    if (denyOutsideDemo('تغییر نقش کاربر')) return;
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
     addToast({ type: 'info', title: 'تغییر نقش', message: 'نقش کاربر به‌روزرسانی شد.' });
   };
 
   const toggleUser2FA = (id: string) => {
+    if (denyOutsideDemo('تغییر تنظیم ۲FA')) return;
     setUsers((prev) =>
       prev.map((u) => (u.id === id ? { ...u, twoFactorEnabled: !u.twoFactorEnabled } : u))
     );
   };
 
   const saveUser = (user: User) => {
+    if (denyOutsideDemo('ایجاد یا ویرایش کاربر')) return;
     setUsers((prev) => {
       const exists = prev.some((u) => u.id === user.id);
       if (exists) {
@@ -327,6 +351,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Messages
   const retryFailedMessage = (id: string) => {
+    if (denyOutsideDemo('ارسال مجدد پیامک')) return;
     setMessages((prev) =>
       prev.map((m) => (m.id === id ? { ...m, status: 'delivered' } : m))
     );
@@ -334,6 +359,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const retryAllFailedMessages = () => {
+    if (denyOutsideDemo('ارسال مجدد پیامک‌ها')) return;
     setMessages((prev) =>
       prev.map((m) => (m.status === 'failed' || m.status === 'retrying' ? { ...m, status: 'delivered' } : m))
     );
@@ -341,6 +367,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendBroadcastMessage = (salonName: string, text: string) => {
+    if (denyOutsideDemo('ارسال پیامک همگانی')) return;
     const newMsg: DispatchMessage = {
       id: `msg-${Date.now()}`,
       recipientPhone: '09120000000',
@@ -358,6 +385,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateTemplate = (id: string, pattern: string, enabled: boolean) => {
+    if (denyOutsideDemo('ویرایش قالب پیامک')) return;
     setTemplates((prev) =>
       prev.map((t) => (t.id === id ? { ...t, pattern, enabled } : t))
     );
@@ -366,6 +394,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Tickets
   const replyToTicket = (id: string, text: string) => {
+    if (denyOutsideDemo('ارسال پاسخ تیکت')) return;
     setTickets((prev) =>
       prev.map((t) =>
         t.id === id
@@ -390,22 +419,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resolveTicket = (id: string) => {
+    if (denyOutsideDemo('حل تیکت')) return;
     setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: 'resolved' } : t)));
     addToast({ type: 'success', title: 'تیکت حل شد' });
   };
 
   const closeTicket = (id: string) => {
+    if (denyOutsideDemo('بستن تیکت')) return;
     setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: 'closed' } : t)));
     addToast({ type: 'info', title: 'تیکت بسته شد' });
   };
 
   // Sessions
   const terminateSession = (id: string) => {
+    if (denyOutsideDemo('ابطال نشست کاربر')) return;
     setSessions((prev) => prev.filter((s) => s.id !== id));
     addToast({ type: 'warning', title: 'نشست ابطال شد' });
   };
 
   const terminateAllOtherSessions = () => {
+    if (denyOutsideDemo('ابطال نشست‌های دیگر')) return;
     setSessions((prev) => prev.filter((s) => s.isCurrent));
     addToast({ type: 'warning', title: 'تمام نشست‌های دیگر ابطال شدند' });
   };
@@ -452,11 +485,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Security Settings
   const updateSecuritySettings = (settings: Partial<SecuritySettings>) => {
+    if (denyOutsideDemo('ذخیره تنظیمات امنیتی')) return;
     setSecuritySettings((prev) => ({ ...prev, ...settings }));
     addToast({ type: 'info', title: 'تنظیمات امنیتی بروزرسانی شد' });
   };
 
   const addIpToBlacklist = (ip: string) => {
+    if (denyOutsideDemo('افزودن IP به فهرست مسدود')) return;
     setSecuritySettings((prev) => ({
       ...prev,
       ipBlacklist: [...new Set([...prev.ipBlacklist, ip])],
@@ -465,6 +500,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeIpFromBlacklist = (ip: string) => {
+    if (denyOutsideDemo('حذف IP از فهرست مسدود')) return;
     setSecuritySettings((prev) => ({
       ...prev,
       ipBlacklist: prev.ipBlacklist.filter((item) => item !== ip),
@@ -474,11 +510,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Customer Bookings
   const addCustomerBooking = (booking: CustomerBooking) => {
+    if (denyOutsideDemo('ثبت نوبت مشتری')) return;
     setCustomerBookings((prev) => [booking, ...prev]);
     addToast({ type: 'success', title: 'نوبت ثبت شد' });
   };
 
   const updateCustomerBooking = (id: string, updates: Partial<CustomerBooking>) => {
+    if (denyOutsideDemo('به‌روزرسانی نوبت مشتری')) return;
     setCustomerBookings((prev) =>
       prev.map((b) => (b.id === id ? { ...b, ...updates } : b))
     );
@@ -486,6 +524,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const cancelCustomerBooking = (id: string) => {
+    if (denyOutsideDemo('لغو نوبت مشتری')) return;
     setCustomerBookings((prev) =>
       prev.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b))
     );
@@ -493,6 +532,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const completeCustomerBookingInSalon = (bookingId: string) => {
+    if (denyOutsideDemo('تکمیل نوبت در سالن')) return;
     setCustomerBookings((prev) =>
       prev.map((b) => (b.id === bookingId ? { ...b, status: 'completed' } : b))
     );

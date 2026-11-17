@@ -25,7 +25,7 @@ const CANNED_RESPONSES = [
 ];
 
 export const SupportView: React.FC = () => {
-  const { tickets, replyToTicket, resolveTicket, closeTicket, addToast } = useAdmin();
+  const { tickets, replyToTicket, resolveTicket, closeTicket, addToast, isDemoMode } = useAdmin();
 
   const [selectedTicketId, setSelectedTicketId] = useState<string>(tickets[0]?.id || '');
   const [replyText, setReplyText] = useState('');
@@ -100,6 +100,10 @@ export const SupportView: React.FC = () => {
         </div>
       </div>
 
+      <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+        تیکت‌ها و پیام‌های این صفحه نمونه هستند؛ API و ذخیره‌سازی تیکت پشتیبانی هنوز پیاده‌سازی نشده است.
+      </div>
+
       {/* Main Split: Ticket List & Conversation View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Ticket List */}
@@ -163,6 +167,7 @@ export const SupportView: React.FC = () => {
                   {selectedTicket.status !== 'resolved' && (
                     <button
                       onClick={() => resolveTicket(selectedTicket.id)}
+                      disabled={!isDemoMode}
                       className="px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition-colors cursor-pointer"
                     >
                       حل تیکت
@@ -171,6 +176,7 @@ export const SupportView: React.FC = () => {
                   {selectedTicket.status !== 'closed' && (
                     <button
                       onClick={() => closeTicket(selectedTicket.id)}
+                      disabled={!isDemoMode}
                       className="px-3 py-1 text-xs text-text-muted hover:text-zinc-800 rounded-lg cursor-pointer"
                     >
                       بستن
@@ -224,6 +230,7 @@ export const SupportView: React.FC = () => {
                 />
                 <button
                   type="submit"
+                  disabled={!isDemoMode}
                   className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl cursor-pointer flex items-center gap-1.5"
                 >
                   <Send className="w-3.5 h-3.5" />
