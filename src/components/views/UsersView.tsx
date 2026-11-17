@@ -2,12 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   Search,
-  Lock,
-  Unlock,
-  CheckCircle2,
   X,
   Edit2,
-  UserPlus,
   LayoutGrid,
   List,
   MoreVertical,
@@ -15,7 +11,6 @@ import {
 import { useAdmin } from '../../context/AdminContext';
 import { User, UserRole } from '../../types/admin';
 import { toPersianDigits, getRoleBadge, maskPhone } from '../../utils/formatters';
-import { ConfirmModal } from '../common/ConfirmModal';
 import { StatusReasonModal } from '../common/StatusReasonModal';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../ui/EmptyState';
@@ -25,16 +20,27 @@ import { Modal } from '../ui/Modal';
 import { Badge } from '../ui/Badge';
 import { Input } from '../ui/Input';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useAdminOps } from '../../hooks/useAdminOps';
 
 export const UsersView: React.FC = () => {
-  const { users, banUser, unbanUser, updateUserRole, toggleUser2FA, saveUser, salons, addToast } = useAdmin();
+  const { serverAuth, addToast } = useAdmin();
+  const isPlatformAdmin =
+    serverAuth.authenticated && serverAuth.user?.platformRole === 'super_admin';
+  const {
+    users: serverUsers,
+    usersTotal,
+    usersLoading,
+    error,
+    loadUsers,
+    changeUserStatus,
+    changeUserRole,
+  } = useAdminOps(isPlatformAdmin);
 
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 12;
 
@@ -43,9 +49,9 @@ export const UsersView: React.FC = () => {
 
   // Role edit modal
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('staff');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('user');
 
-  // Mandatory Reason Modal state for User Suspension/Activation
+  // Mandatory Reason Modal state for user suspension/activation
   const [statusModal, setStatusModal] = useState<{
     isOpen: boolean;
     user: User | null;
@@ -60,130 +66,85 @@ export const UsersView: React.FC = () => {
     variant: 'danger',
   });
 
-  // Confirmation modal
-  const [confirmData, setConfirmData] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    variant: 'danger' | 'warning';
-    onConfirm: () => void;
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    variant: 'warning',
-    onConfirm: () => {},
-  });
-
-  // New user form state
-  const [formData, setFormData] = useState<Partial<User>>({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'staff',
-    salonId: salons[0]?.id || '',
-    twoFactorEnabled: false,
-  });
-
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch =
-        u.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        u.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        u.phone.includes(debouncedSearch) ||
-        (u.salonName && u.salonName.toLowerCase().includes(debouncedSearch.toLowerCase()));
-
-      const matchRole = roleFilter === 'all' || u.role === roleFilter;
-      const matchStatus = statusFilter === 'all' || u.status === statusFilter;
-
-      return matchSearch && matchRole && matchStatus;
-    });
-  }, [users, debouncedSearch, roleFilter, statusFilter]);
+  const users = useMemo<User[]>(() => serverUsers.map((row) => {
+    const rawRole = row.platform_role || row.platformRole || 'user';
+    const rawStatus = row.status || 'pending';
+    const createdAt = row.created_at ? new Date(row.created_at) : null;
+    return {
+      id: row.id,
+      name: row.full_name || row.fullName || 'بدون نام',
+      email: row.email || '—',
+      phone: row.phone,
+      role: rawRole as UserRole,
+      status: rawStatus === 'suspended' ? 'banned' : rawStatus === 'active' ? 'active' : 'inactive',
+      twoFactorEnabled: Boolean(row.two_factor_enabled),
+      lastLogin: 'در داده‌های فعلی ثبت نمی‌شود',
+      lastIp: 'در داده‌های فعلی ثبت نمی‌شود',
+      createdAt: createdAt && !Number.isNaN(createdAt.getTime())
+        ? createdAt.toLocaleDateString('fa-IR')
+        : '—',
+    };
+  }), [serverUsers]);
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, roleFilter, statusFilter]);
 
-  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
-  const paginatedUsers = useMemo(() => {
-    return filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  }, [filteredUsers, page]);
+  const apiStatusFilter =
+    statusFilter === 'banned' ? 'suspended' :
+    statusFilter === 'inactive' ? 'pending' : undefined;
 
-  const handleCreateUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name?.trim() || !formData.email?.trim() || !formData.phone?.trim()) {
-      addToast({
-        type: 'error',
-        title: 'اطلاعات ناقص است',
-        message: 'نام، ایمیل و شماره تماس الزامی هستند.',
-      });
-      return;
-    }
-
-    const assignedSalon = salons.find((s) => s.id === formData.salonId);
-
-    const newUser: User = {
-      id: `usr-${Date.now().toString().slice(-4)}`,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      role: formData.role || 'staff',
-      salonId: formData.salonId,
-      salonName: assignedSalon ? assignedSalon.name : undefined,
-      status: 'active',
-      twoFactorEnabled: !!formData.twoFactorEnabled,
-      lastLogin: 'ثبت جدید',
-      lastIp: '185.120.24.12',
-      createdAt: 'امروز',
-    };
-
-    saveUser(newUser);
-    setIsAddModalOpen(false);
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      role: 'staff',
-      salonId: salons[0]?.id || '',
-      twoFactorEnabled: false,
+  useEffect(() => {
+    void loadUsers({
+      search: debouncedSearch.trim() || undefined,
+      role: roleFilter === 'all' ? undefined : roleFilter,
+      status: apiStatusFilter,
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
     });
-    addToast({
-      type: 'success',
-      title: 'کاربر جدید با موفقیت ایجاد شد',
-    });
-  };
+  }, [loadUsers, debouncedSearch, roleFilter, apiStatusFilter, page]);
+
+  // Filtering and pagination are authoritative on the server.
+  const filteredUsers = users;
+  const paginatedUsers = users;
+  const totalPages = Math.ceil(usersTotal / PAGE_SIZE);
 
   const openRoleModal = (user: User) => {
+    if (user.role === 'super_admin') return;
     setEditingUser(user);
     setSelectedRole(user.role);
     setActiveUserMenu(null);
   };
 
-  const handleSaveRole = () => {
+  const handleSaveRole = async () => {
     if (!editingUser) return;
-    updateUserRole(editingUser.id, selectedRole);
+    const success = await changeUserRole(editingUser.id, selectedRole);
+    if (!success) {
+      addToast({ type: 'error', title: 'تغییر نقش انجام نشد', message: 'سرور تغییر نقش را تأیید نکرد. سطح دسترسی تغییر نکرد.' });
+      return;
+    }
+    await loadUsers({
+      search: debouncedSearch.trim() || undefined,
+      role: roleFilter === 'all' ? undefined : roleFilter,
+      status: apiStatusFilter,
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
+    });
     setEditingUser(null);
   };
 
   const openStatusChangeModal = (user: User, targetStatus: 'active' | 'banned') => {
     setActiveUserMenu(null);
+    if (user.id === serverAuth.user?.id) {
+      addToast({ type: 'warning', title: 'تغییر وضعیت حساب خودتان مجاز نیست' });
+      return;
+    }
     setStatusModal({
       isOpen: true,
       user,
       targetStatus,
-      title: targetStatus === 'active' ? `فعال‌سازی کاربر «${user.name}»` : `مسدودسازی حساب کاربر «${user.name}»`,
+      title: targetStatus === 'active' ? `فعال‌سازی کاربر «${user.name}»` : `تعلیق حساب کاربر «${user.name}»`,
       variant: targetStatus === 'active' ? 'success' : 'danger',
-    });
-  };
-
-  const handleToggle2FA = (user: User) => {
-    setActiveUserMenu(null);
-    setConfirmData({
-      isOpen: true,
-      title: user.twoFactorEnabled ? 'غیرفعال‌سازی ۲FA' : 'فعال‌سازی ۲FA',
-      message: `آیا از تغییر وضعیت احراز هویت دومرحله‌ای برای «${user.name}» اطمینان دارید؟`,
-      variant: 'warning',
-      onConfirm: () => toggleUser2FA(user.id),
     });
   };
 
@@ -231,25 +192,43 @@ export const UsersView: React.FC = () => {
           </div>
 
           <Button
-            variant="primary"
+            variant="secondary"
             size="sm"
-            onClick={() => setIsAddModalOpen(true)}
-            leftIcon={<UserPlus className="w-4 h-4" />}
+            disabled
+            title="ایجاد و دعوت کاربر از پنل هنوز در API پیاده‌سازی نشده است."
           >
-            افزودن کاربر
+            ایجاد کاربر (غیرفعال)
           </Button>
         </div>
       </div>
+
+      {!isPlatformAdmin && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+          برای مشاهده و مدیریت کاربران، ورود با حساب Super Admin لازم است. دادهٔ نمونه جایگزین اطلاعات سرور نمی‌شود.
+        </div>
+      )}
+      {error && (
+        <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
+          {error}
+        </div>
+      )}
+      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+        ایجاد دستی کاربر و الزام واقعی ۲FA هنوز در API و فرایند احراز هویت پیاده‌سازی نشده‌اند؛ این کنترل‌ها عمداً غیرفعال‌اند.
+      </div>
+      {usersLoading && (
+        <p className="text-xs text-[var(--text-muted)]" aria-live="polite">در حال دریافت اطلاعات کاربران از سرور…</p>
+      )}
 
       {/* Role Filter Tabs & Result Count */}
       <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs">
         <div className="flex flex-wrap items-center gap-1">
           {[
-            { id: 'all', label: 'همه کاربران', count: users.length },
-            { id: 'super_admin', label: 'ادمین کل', count: users.filter((u) => u.role === 'super_admin').length },
-            { id: 'salon_admin', label: 'مدیران سالن', count: users.filter((u) => u.role === 'salon_admin').length },
-            { id: 'staff', label: 'پرسنل سالن', count: users.filter((u) => u.role === 'staff').length },
-            { id: 'support_auditor', label: 'پشتیبان و بازرس', count: users.filter((u) => u.role === 'support_auditor').length },
+            { id: 'all', label: 'همه کاربران' },
+            { id: 'super_admin', label: 'ادمین کل' },
+            { id: 'user', label: 'کاربران' },
+            { id: 'platform_support', label: 'پشتیبانی' },
+            { id: 'platform_auditor', label: 'بازرسان' },
+            { id: 'financial_manager', label: 'مالی' },
           ].map((tab) => {
             const isSelected = roleFilter === tab.id;
             return (
@@ -263,13 +242,7 @@ export const UsersView: React.FC = () => {
                 }`}
               >
                 <span>{tab.label}</span>
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[11px] font-bold tabular-nums ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
-                  }`}
-                >
-                  {toPersianDigits(tab.count)}
-                </span>
+
               </button>
             );
           })}
@@ -285,7 +258,8 @@ export const UsersView: React.FC = () => {
               options={[
                 { value: 'all', label: 'همه وضعیت‌ها' },
                 { value: 'active', label: 'کاربران فعال' },
-                { value: 'banned', label: 'کاربران مسدود' },
+                { value: 'banned', label: 'حساب‌های تعلیق‌شده' },
+                { value: 'inactive', label: 'در انتظار فعال‌سازی' },
               ]}
             />
           </div>
@@ -293,7 +267,7 @@ export const UsersView: React.FC = () => {
           <div className="text-[11px] font-semibold text-[var(--text-secondary)] px-2.5 py-1 rounded-lg bg-[var(--bg-elevated)] tabular-nums shrink-0">
             <span>نمایش </span>
             <strong className="text-[var(--brand-accent)]">{toPersianDigits(filteredUsers.length)}</strong>
-            <span> از {toPersianDigits(users.length)}</span>
+            <span> از {toPersianDigits(usersTotal)}</span>
           </div>
         </div>
       </div>
@@ -348,7 +322,7 @@ export const UsersView: React.FC = () => {
                                 {user.name}
                               </h3>
                               <p className="text-[11px] text-[var(--text-secondary)] truncate mt-0.5">
-                                {user.salonName || 'پرسنل ستادی'}
+                                {user.salonName || 'اطلاعات عضویت سالن موجود نیست'}
                               </p>
                             </div>
                           </div>
@@ -375,11 +349,8 @@ export const UsersView: React.FC = () => {
                           </div>
 
                           <div className="flex items-center justify-between text-[var(--text-secondary)]">
-                            <span>امنیت ۲FA:</span>
-                            <span className={`flex items-center gap-1 font-semibold ${user.twoFactorEnabled ? 'text-[var(--status-success)]' : 'text-[var(--text-muted)]'}`}>
-                              {user.twoFactorEnabled ? <CheckCircle2 className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                              <span>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
-                            </span>
+                            <span>احراز هویت دومرحله‌ای:</span>
+                            <span className="font-semibold text-[var(--text-muted)]">در ورود enforce نشده</span>
                           </div>
                         </div>
 
@@ -405,10 +376,10 @@ export const UsersView: React.FC = () => {
                           <Button
                             variant="secondary"
                             size="xs"
-                            onClick={() => handleToggle2FA(user)}
-                            title={user.twoFactorEnabled ? 'غیرفعال‌سازی تایید دومرحله‌ای' : 'فعال‌سازی تایید دومرحله‌ای'}
+                            disabled
+                            title="تنظیم ۲FA به‌تنهایی کافی نیست؛ الزام آن در جریان ورود هنوز پیاده‌سازی نشده است."
                           >
-                            {user.twoFactorEnabled ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                            ۲FA غیرفعال
                           </Button>
 
                           {isBanned ? (
@@ -477,7 +448,7 @@ export const UsersView: React.FC = () => {
                       <th className="py-3 px-4 hidden sm:table-cell">ایمیل و تماس</th>
                       <th className="py-3 px-4 hidden md:table-cell">سالن مربوطه</th>
                       <th className="py-3 px-4">نقش سیستمی</th>
-                      <th className="py-3 px-4 hidden lg:table-cell">امنیت ۲FA</th>
+                      <th className="py-3 px-4 hidden lg:table-cell">احراز هویت دومرحله‌ای</th>
                       <th className="py-3 px-4">وضعیت</th>
                       <th className="py-3 px-4 text-center">عملیات</th>
                     </tr>
@@ -506,11 +477,14 @@ export const UsersView: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-3 px-4 hidden lg:table-cell">
-                            <span className={`text-xs ${user.twoFactorEnabled ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>{user.twoFactorEnabled ? 'فعال' : 'غیرفعال'}</span>
+                            <span className="text-xs text-[var(--text-muted)]">در ورود enforce نشده</span>
                           </td>
                           <td className="py-3 px-4">
-                            <Badge variant={user.status === 'active' ? 'success' : 'error'} size="sm">
-                              {user.status === 'active' ? 'فعال' : 'مسدود'}
+                            <Badge
+                              variant={user.status === 'active' ? 'success' : user.status === 'banned' ? 'error' : 'warning'}
+                              size="sm"
+                            >
+                              {user.status === 'active' ? 'فعال' : user.status === 'banned' ? 'تعلیق‌شده' : 'در انتظار'}
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-center">
@@ -594,15 +568,9 @@ export const UsersView: React.FC = () => {
               تغییر نقش کاربری ({getRoleBadge(activeUserMenu.role).label})
             </Button>
 
-            <Button
-              variant="outline"
-              size="md"
-              fullWidth
-              onClick={() => handleToggle2FA(activeUserMenu)}
-              leftIcon={activeUserMenu.twoFactorEnabled ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-            >
-              {activeUserMenu.twoFactorEnabled ? 'غیرفعال‌سازی ۲FA' : 'فعال‌سازی احراز هویت دومرحله‌ای'}
-            </Button>
+            <p className="text-[11px] text-[var(--text-muted)] px-2 py-1">
+              الزام واقعی ۲FA در جریان ورود هنوز پیاده‌سازی نشده است.
+            </p>
 
             {activeUserMenu.status === 'active' ? (
               <Button
@@ -652,97 +620,16 @@ export const UsersView: React.FC = () => {
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as UserRole)}
               options={[
-                { value: 'staff', label: 'پرسنل سالن (مشاهده نوبت‌ها و ثبت مشتری)' },
-                { value: 'salon_admin', label: 'مدیر سالن (مدیریت صندوق، پرسنل و تعرفه‌ها)' },
-                { value: 'support_auditor', label: 'پشتیبان و بازرس (مشاهده مدارک و پاسخگویی تیکت)' },
-                { value: 'super_admin', label: 'ادمین کل (دسترسی نامحدود به تمام بخش‌های شبکه)' },
+                { value: 'user', label: 'کاربر عادی' },
+                { value: 'platform_support', label: 'پشتیبان پلتفرم' },
+                { value: 'platform_auditor', label: 'بازرس پلتفرم' },
+                { value: 'financial_manager', label: 'مدیر مالی' },
               ]}
             />
             <p className="text-[11px] text-[var(--text-muted)] leading-relaxed">
-              تغییر سطح دسترسی بلافاصله در نشست‌های فعال کاربر اعمال می‌گردد.
+              نقش‌های قابل انتخاب از نقش‌های واقعی API گرفته می‌شوند؛ انتساب Super Admin فقط از مسیر بوت‌استرپ امن مجاز است.
             </p>
           </div>
-        </Modal>
-      )}
-
-      {/* Add User Modal */}
-      {isAddModalOpen && (
-        <Modal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          title="افزودن کاربر جدید به شبکه نوبت‌آرا"
-          description="ایجاد حساب برای مدیران، پرسنل یا ادمین‌های سامانه"
-          size="md"
-        >
-          <form onSubmit={handleCreateUser} className="space-y-3.5 text-xs">
-            <Input
-              label="نام و نام خانوادگی *"
-              required
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="مثال: نرگس رضایی"
-            />
-
-            <Input
-              label="ایمیل *"
-              type="email"
-              required
-              dir="ltr"
-              value={formData.email || ''}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="name@example.com"
-              tabularNums
-            />
-
-            <Input
-              label="شماره تماس *"
-              type="tel"
-              required
-              dir="ltr"
-              value={formData.phone || ''}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="09121234567"
-              tabularNums
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Select
-                label="نقش کاربری"
-                value={formData.role || 'staff'}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                options={[
-                  { value: 'staff', label: 'پرسنل سالن' },
-                  { value: 'salon_admin', label: 'مدیر سالن' },
-                  { value: 'support_auditor', label: 'پشتیبان' },
-                  { value: 'super_admin', label: 'ادمین کل' },
-                ]}
-              />
-
-              <Select
-                label="سالن مربوطه"
-                value={formData.salonId || salons[0]?.id}
-                onChange={(e) => setFormData({ ...formData, salonId: e.target.value })}
-                options={salons.map((s) => ({ value: s.id, label: s.name }))}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsAddModalOpen(false)}
-              >
-                انصراف
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-              >
-                افزودن کاربر
-              </Button>
-            </div>
-          </form>
         </Modal>
       )}
 
@@ -751,27 +638,27 @@ export const UsersView: React.FC = () => {
         isOpen={statusModal.isOpen}
         title={statusModal.title}
         entityName={statusModal.user?.name || 'کاربر'}
-        targetStatusLabel={statusModal.targetStatus === 'active' ? 'فعال' : 'مسدود'}
+        targetStatusLabel={statusModal.targetStatus === 'active' ? 'فعال' : 'تعلیق‌شده'}
         actionVariant={statusModal.variant}
         onConfirm={async (reason) => {
           if (!statusModal.user) return;
-          if (statusModal.targetStatus === 'active') {
-            await unbanUser(statusModal.user.id, reason);
-          } else {
-            await banUser(statusModal.user.id, reason);
+          const updated = await changeUserStatus(
+            statusModal.user.id,
+            statusModal.targetStatus === 'active' ? 'active' : 'suspended',
+            reason
+          );
+          if (!updated) {
+            throw new Error('سرور تغییر وضعیت را تأیید نکرد؛ وضعیت حساب تغییر نکرد.');
           }
+          await loadUsers({
+            search: debouncedSearch.trim() || undefined,
+            role: roleFilter === 'all' ? undefined : roleFilter,
+            status: apiStatusFilter,
+            limit: PAGE_SIZE,
+            offset: (page - 1) * PAGE_SIZE,
+          });
         }}
         onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
-      />
-
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmData.isOpen}
-        title={confirmData.title}
-        message={confirmData.message}
-        variant={confirmData.variant}
-        onConfirm={confirmData.onConfirm}
-        onClose={() => setConfirmData({ ...confirmData, isOpen: false })}
       />
     </div>
   );

@@ -34,9 +34,14 @@ export interface AdminSalon {
 export interface AdminUser {
   id: string;
   phone: string;
-  fullName: string;
-  platformRole: string;
+  email?: string | null;
+  full_name?: string;
+  fullName?: string;
+  platform_role?: string;
+  platformRole?: string;
   status: string;
+  two_factor_enabled?: boolean;
+  created_at?: string;
 }
 
 export interface AdminAuditLog {
@@ -65,6 +70,8 @@ export function useAdminOps(enabled: boolean) {
   const [salons, setSalons] = useState<AdminSalon[]>([]);
   const [salonsTotal, setSalonsTotal] = useState(0);
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -143,15 +150,26 @@ export function useAdminOps(enabled: boolean) {
       if (opts.status) qs.set('status', opts.status);
       qs.set('limit', String(opts.limit ?? 50));
       qs.set('offset', String(opts.offset ?? 0));
+      if (mounted.current) setUsersLoading(true);
       try {
         const data = await api.get<{ users: AdminUser[]; total?: number }>(`/api/admin/users?${qs.toString()}`);
+        const items = data.users || [];
+        const total = data.total ?? items.length;
         if (mounted.current) {
-          setUsers(data.users || []);
+          setUsers(items);
+          setUsersTotal(total);
+          setError('');
         }
-        return { items: data.users || [], total: data.total ?? 0 };
+        return { items, total };
       } catch (err) {
-        if (mounted.current) setError(safe(err, 'خطا در بارگذاری کاربران.'));
+        if (mounted.current) {
+          setError(safe(err, 'خطا در بارگذاری کاربران.'));
+          setUsers([]);
+          setUsersTotal(0);
+        }
         return { items: [], total: 0 };
+      } finally {
+        if (mounted.current) setUsersLoading(false);
       }
     },
     [enabled]
@@ -238,6 +256,8 @@ export function useAdminOps(enabled: boolean) {
     salons,
     salonsTotal,
     users,
+    usersTotal,
+    usersLoading,
     auditLogs,
     loading,
     error,

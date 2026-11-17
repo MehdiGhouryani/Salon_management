@@ -121,6 +121,12 @@ export function getStatusBadge(status: string): { label: string; bg: string; tex
 
 export function getRoleBadge(role: string): { label: string; color: string } {
   switch (role) {
+    case 'user':
+      return { label: 'کاربر مشتری', color: 'text-slate-700 dark:text-[#9AAAC2] bg-slate-100 dark:bg-[#18243A] border-slate-200 dark:border-[#344258]' };
+    case 'platform_support':
+      return { label: 'پشتیبان پلتفرم', color: 'text-amber-800 dark:text-[#FBBF24] bg-amber-500/10 dark:bg-[#FBBF24]/15 border-amber-500/20 dark:border-[#FBBF24]/30' };
+    case 'platform_auditor':
+      return { label: 'بازرس پلتفرم', color: 'text-sky-700 dark:text-[#38BDF8] bg-sky-500/10 dark:bg-[#38BDF8]/15 border-sky-500/20 dark:border-[#38BDF8]/30' };
     case 'super_admin':
       return { label: 'ادمین کل سیستم', color: 'text-rose-700 dark:text-[#FB7185] bg-rose-500/10 dark:bg-[#F43F7A]/15 border-rose-500/20 dark:border-[#F43F7A]/30' };
     case 'salon_admin':
