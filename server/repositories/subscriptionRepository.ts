@@ -134,6 +134,117 @@ export const subscriptionRepository = {
     );
     return result.rows;
   },
+  async getAdminOverview(limit = 20, offset = 0) {
+    const [plans, metrics, payments, total] = await Promise.all([
+      query<DbSubscriptionPlan & { active_subscribers: number; mrr_toman: string | number }>(
+        `SELECT
+           p.*,
+           COUNT(s.id) FILTER (
+             WHERE s.status = 'active' AND s.ends_at > NOW()
+           )::int AS active_subscribers,
+           COALESCE(
+             SUM(ROUND(s.price_toman::numeric / p.duration_months)) FILTER (
+               WHERE s.status = 'active' AND s.ends_at > NOW()
+             ),
+             0
+           )::bigint AS mrr_toman
+         FROM subscription_plans p
+         LEFT JOIN salon_subscriptions s ON s.plan_code = p.code
+         WHERE p.is_active = TRUE
+         GROUP BY p.code
+         ORDER BY p.sort_order ASC`,
+        []
+      ),
+      query<{
+        active_subscriptions: string;
+        pending_payments: string;
+        failed_payments: string;
+        total_attempts: string;
+        revenue_mtd_toman: string;
+        active_mrr_toman: string;
+      }>(
+        `SELECT
+           (SELECT COUNT(*)::text FROM salon_subscriptions
+             WHERE status = 'active' AND ends_at > NOW()) AS active_subscriptions,
+           COUNT(*) FILTER (WHERE status IN ('creating', 'pending'))::text AS pending_payments,
+           COUNT(*) FILTER (WHERE status = 'failed')::text AS failed_payments,
+           COUNT(*)::text AS total_attempts,
+           COALESCE(SUM(amount_toman) FILTER (
+             WHERE status = 'paid' AND verified_at >= date_trunc('month', NOW())
+           ), 0)::text AS revenue_mtd_toman,
+           (SELECT COALESCE(SUM(ROUND(s.price_toman::numeric / p.duration_months)), 0)::text
+            FROM salon_subscriptions s
+            JOIN subscription_plans p ON p.code = s.plan_code
+            WHERE s.status = 'active' AND s.ends_at > NOW()) AS active_mrr_toman
+         FROM subscription_payment_attempts`,
+        []
+      ),
+      query<{
+        id: string;
+        salon_id: string;
+        salon_name: string;
+        plan_code: SubscriptionPlanCode;
+        plan_title: string;
+        amount_toman: string | number;
+        gateway: string;
+        status: SubscriptionPaymentStatus;
+        gateway_reference: string | null;
+        created_at: Date;
+        verified_at: Date | null;
+      }>(
+        `SELECT
+           a.id, a.salon_id, s.name AS salon_name, a.plan_code,
+           p.title AS plan_title, a.amount_toman, a.gateway, a.status,
+           a.gateway_reference, a.created_at, a.verified_at
+         FROM subscription_payment_attempts a
+         JOIN salons s ON s.id = a.salon_id
+         JOIN subscription_plans p ON p.code = a.plan_code
+         ORDER BY a.created_at DESC
+         LIMIT $1 OFFSET $2`,
+        [Math.min(100, Math.max(1, limit)), Math.max(0, offset)]
+      ),
+      query<{ count: string }>('SELECT COUNT(*)::text AS count FROM subscription_payment_attempts', []),
+    ]);
+
+    const summary = metrics.rows[0];
+    return {
+      plans: plans.rows.map((plan) => ({
+        code: plan.code,
+        title: plan.title,
+        offer: plan.offer,
+        priceToman: Number(plan.price_toman),
+        durationMonths: Number(plan.duration_months),
+        monthlyPriceToman: Math.round(Number(plan.price_toman) / Number(plan.duration_months)),
+        maxStaff: Number(plan.max_staff),
+        smsIncluded: Number(plan.sms_included),
+        features: plan.features,
+        activeSubscribers: Number(plan.active_subscribers || 0),
+        mrrToman: Number(plan.mrr_toman || 0),
+      })),
+      summary: {
+        activeSubscriptions: Number(summary?.active_subscriptions || 0),
+        pendingPayments: Number(summary?.pending_payments || 0),
+        failedPayments: Number(summary?.failed_payments || 0),
+        totalAttempts: Number(summary?.total_attempts || 0),
+        revenueMtdToman: Number(summary?.revenue_mtd_toman || 0),
+        mrrToman: Number(summary?.active_mrr_toman || 0),
+      },
+      transactions: payments.rows.map((payment) => ({
+        id: payment.id,
+        salonId: payment.salon_id,
+        salonName: payment.salon_name,
+        planCode: payment.plan_code,
+        planName: payment.plan_title,
+        amountToman: Number(payment.amount_toman),
+        gateway: payment.gateway,
+        status: payment.status,
+        reference: payment.gateway_reference,
+        createdAt: payment.created_at,
+        verifiedAt: payment.verified_at,
+      })),
+      totalPayments: Number.parseInt(total.rows[0]?.count || '0', 10),
+    };
+  },
   async countPaymentAttempts(client?: PoolClient): Promise<number> {
     const result = await query<{ count: string }>(
       'SELECT COUNT(*)::text AS count FROM subscription_payment_attempts', [], client

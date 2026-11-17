@@ -11,6 +11,9 @@ import { userRepository } from '../repositories/userRepository.ts';
 import { appointmentRepository } from '../repositories/appointmentRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
 import { supportTicketRepository, type SupportTicketStatus, type SupportTicketPriority } from '../repositories/supportTicketRepository.ts';
+import { subscriptionRepository } from '../repositories/subscriptionRepository.ts';
+import { config } from '../config.ts';
+import { isDatabaseConfigured } from '../db/pool.ts';
 
 export const adminRouter = express.Router();
 
@@ -583,6 +586,39 @@ adminRouter.patch('/support/tickets/:id/status', async (req: Request, res: Respo
   } catch (err: any) {
     res.status(500).json({
       error: 'SUPPORT_TICKET_STATUS_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
+
+
+/** Real subscription, revenue and gateway state for the platform finance console. */
+adminRouter.get('/subscriptions/overview', async (req: Request, res: Response): Promise<void> => {
+  if (!isDatabaseConfigured()) {
+    res.status(503).json({
+      error: 'SUBSCRIPTION_DATABASE_UNAVAILABLE',
+      message: 'برای نمایش گزارش مالی واقعی، اتصال PostgreSQL لازم است.',
+    });
+    return;
+  }
+
+  const limit = Number.parseInt(String(req.query.limit || '20'), 10);
+  const offset = Number.parseInt(String(req.query.offset || '0'), 10);
+  try {
+    const overview = await subscriptionRepository.getAdminOverview(
+      Number.isSafeInteger(limit) ? Math.min(100, Math.max(1, limit)) : 20,
+      Number.isSafeInteger(offset) ? Math.max(0, Math.min(1_000_000, offset)) : 0
+    );
+    res.status(200).json({
+      success: true,
+      ...overview,
+      paymentEnabled: config.payments.isZarinpalConfigured,
+      paymentSandbox: config.payments.zarinpalSandbox,
+      availableGateway: 'zarinpal',
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SUBSCRIPTION_OVERVIEW_ERROR',
       message: safeInternalErrorMessage(err),
     });
   }
