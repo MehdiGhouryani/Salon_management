@@ -29,17 +29,28 @@ test('customer logs in via OTP and manages a real booking end-to-end', async ({ 
   const { bookingGrant } = await verifyRes.json();
   expect(bookingGrant).toBeTruthy();
 
-  const tomorrow = new Date(Date.now() + 3 * 86_400_000).toISOString().split('T')[0];
-  // Pick a genuinely FREE slot from the server's real availability — the suite
-  // must be idempotent against a persistent database (CI parity): the previous
-  // run's booking occupies its slot, and a hardcoded time would 409 on reruns.
-  const availRes = await page.request.get(
-    `/api/public/salons/sal-101/availability?serviceId=srv-101&date=${tomorrow}&staffId=stf-101`
-  );
-  const availJson = await availRes.json();
-  const freeSlots: Array<{ time: string; available: boolean }> = availJson.slots || [];
-  const bookingTime = freeSlots.find((s) => s.available)?.time;
-  expect(bookingTime, 'server must report at least one free slot for the fixture salon').toBeTruthy();
+  // Find the next OPEN day with a genuinely FREE slot. The seed closes sal-101
+  // on Fridays, so a blind "today + N days" lands on a closed day whenever the
+  // calendar says so (first CI execution hit exactly that: +3d = Friday).
+  // Iterating candidates keeps the journey calendar-proof AND idempotent
+  // against a persistent database: earlier runs' bookings are skipped, too.
+  let bookingDate = '';
+  let bookingTime = '';
+  for (let dayOffset = 3; dayOffset <= 9; dayOffset++) {
+    const candidate = new Date(Date.now() + dayOffset * 86_400_000).toISOString().split('T')[0];
+    const availRes = await page.request.get(
+      `/api/public/salons/sal-101/availability?serviceId=srv-101&date=${candidate}&staffId=stf-101`
+    );
+    const availJson = await availRes.json();
+    const firstFree: Array<{ time: string; available: boolean }> = availJson.slots || [];
+    const free = firstFree.find((s) => s.available);
+    if (free) {
+      bookingDate = candidate;
+      bookingTime = free.time;
+      break;
+    }
+  }
+  expect(bookingDate, 'server must report an open day with at least one free slot within a week').toBeTruthy();
 
   const bookingRes = await page.request.post('/api/public/bookings', {
     headers: { 'X-NobatAra-Booking-Grant': bookingGrant },
@@ -47,7 +58,7 @@ test('customer logs in via OTP and manages a real booking end-to-end', async ({ 
       salonId: 'sal-101',
       serviceId: 'srv-101',
       staffId: 'stf-101',
-      bookingDate: tomorrow,
+      bookingDate,
       bookingTime,
       clientName: 'کاربر تاریخچه',
       clientPhone: HISTORY_PHONE,
