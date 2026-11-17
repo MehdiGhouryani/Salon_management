@@ -22,7 +22,7 @@ Reviewed at start of Phase 19:
 
 **Phase 19 additions** (reviewed the same way, then committed): `server/config.ts`, `Dockerfile`, `playwright.config.ts`, `vitest.config.ts`, `tests/unit/test-endpoints-flag.test.ts` (new), `tests/integration/production-posture.test.ts`, `server/repositories/appointmentRepository.ts`, `server/routes/dev.ts`, `docs/DEPLOYMENT.md`, `docs/KNOWN_ISSUES.md`, `.env.example`. Committed tree: **34 modified files + 3 new files, ~1480 insertions / 118 deletions** — no secrets, no local PostgreSQL data, no test artifacts (`.gitignore` already excludes `*.png`, `test-results/`, `playwright-report/`, `dist/`, `.env*`).
 
-**Commit:** created on `work/db-reliability` (local only). **NOT pushed** — per the strict rules, every remote operation awaits explicit authorization.
+**Commit:** `ed2fb95` — `fix(hardening): Phase 18/19 — real-PG reliability, E2E isolation, honest admin data, runtime security` on `work/db-reliability` (parent `5d2ddbb`; 38 files, 1942 insertions, 118 deletions). **NOT pushed** — per the strict rules, every remote operation awaits explicit authorization.
 
 ## 2. Test-only endpoint security findings
 
