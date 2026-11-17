@@ -45,7 +45,7 @@ export const subscriptionRepository = {
       `INSERT INTO subscription_payment_attempts (
          salon_id, created_by_user_id, plan_code, amount_toman, amount_rial,
          gateway, status, idempotency_key
-       ) VALUES ($1, $2, $3, $4, $4 * 10, 'zarinpal', 'creating', $5)
+       ) VALUES ($1, $2, $3, $4::bigint, $4::bigint * 10::bigint, 'zarinpal', 'creating', $5)
        ON CONFLICT (salon_id, idempotency_key) DO NOTHING RETURNING *`,
       [input.salonId, input.userId, input.planCode, input.amountToman, input.idempotencyKey], client
     );
