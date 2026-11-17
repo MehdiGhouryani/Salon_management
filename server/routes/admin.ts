@@ -8,6 +8,7 @@ import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 import { salonRepository } from '../repositories/salonRepository.ts';
 import { userRepository } from '../repositories/userRepository.ts';
 import { appointmentRepository } from '../repositories/appointmentRepository.ts';
+import { staffRepository } from '../repositories/staffRepository.ts';
 
 export const adminRouter = express.Router();
 
@@ -51,7 +52,13 @@ adminRouter.get('/stats', async (_req: Request, res: Response) => {
 
 /**
  * GET /api/admin/salons
- * Search and filter salons list for Super Admin panel
+ * Search and filter salons list for Super Admin panel.
+ * Each row carries REAL operational aggregates (Phase 18) computed from the
+ * appointments/staff tables — the console never receives fabricated numbers:
+ *  - monthlyRevenue: sum of confirmed/completed appointment prices inside the
+ *    current Asia/Tehran calendar month
+ *  - totalAppointments: all appointment rows for the salon
+ *  - activeStaffCount: staff rows with is_active = TRUE
  */
 adminRouter.get('/salons', async (req: Request, res: Response) => {
   const limit = parseInt(String(req.query.limit || '50'), 10);
@@ -69,12 +76,25 @@ adminRouter.get('/salons', async (req: Request, res: Response) => {
     const salons = await salonRepository.findAll(filter);
     const total = await salonRepository.count(filter);
 
+    // Real per-salon aggregates for the returned page (missing entry = zero).
+    const salonIds = salons.map((s) => s.id);
+    const [bookingAggregates, staffCounts] = await Promise.all([
+      appointmentRepository.getSalonBookingAggregates(salonIds),
+      staffRepository.getActiveStaffCounts(salonIds),
+    ]);
+    const withAggregates = salons.map((s) => ({
+      ...s,
+      monthlyRevenue: bookingAggregates.get(s.id)?.monthlyRevenue ?? 0,
+      totalAppointments: bookingAggregates.get(s.id)?.totalAppointments ?? 0,
+      activeStaffCount: staffCounts.get(s.id) ?? 0,
+    }));
+
     res.status(200).json({
       success: true,
       total,
       limit,
       offset,
-      salons,
+      salons: withAggregates,
     });
   } catch (err: any) {
     res.status(500).json({

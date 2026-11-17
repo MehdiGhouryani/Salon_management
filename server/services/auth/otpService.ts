@@ -553,4 +553,63 @@ export const otpService = {
   clearInMemory(): void {
     inMemoryChallenges.clear();
   },
+
+  /**
+   * Dev/test-only (Phase 18): deletes ALL challenge rows for the given
+   * national phone numbers in whichever store is active (in-memory or
+   * PostgreSQL), optionally also every challenge created from the given
+   * client IP. This clears the resend-cooldown AND both sides of the
+   * 5-per-10-minute counter (phone AND ip) so sequential E2E tests — which
+   * share one deterministic test IP — never trip security limits that exist
+   * for REAL traffic distribution, not for one sequential test client.
+   *
+   * Reachability: exposed ONLY through /api/dev/reset-rate-limiters, which is
+   * mounted exclusively when config.isProduction is false and re-checks the
+   * flag itself (returns a standard 404 in production). Production OTP
+   * cooldowns and counters are never weakened — no production code path calls
+   * this method.
+   */
+  async resetChallengesForPhones(nationalPhones: string[], clientIp?: string): Promise<number> {
+    const phones = Array.from(
+      new Set(
+        nationalPhones
+          .map((p) => normalizeIranianPhone(String(p)))
+          .filter((n) => n.isValid)
+          .map((n) => n.national)
+      )
+    );
+    const hasIp = Boolean(clientIp);
+    if (phones.length === 0 && !hasIp) return 0;
+
+    if (isDatabaseConfigured()) {
+      // Phone-scoped rows for listed phones + every row from the caller IP
+      // (the E2E suite's shared 127.0.0.1 counter must reset too).
+      const conditions: string[] = [];
+      const values: any[] = [];
+      if (phones.length > 0) {
+        values.push(phones);
+        conditions.push(`phone = ANY($${values.length}::text[])`);
+      }
+      if (hasIp) {
+        values.push(String(clientIp));
+        conditions.push(`ip_address = $${values.length}::text`);
+      }
+      const res = await query(
+        `DELETE FROM otp_challenges WHERE ${conditions.join(' OR ')}`,
+        values
+      );
+      return res.rowCount ?? 0;
+    }
+
+    let removed = 0;
+    for (const [key, challenge] of [...inMemoryChallenges.entries()]) {
+      const phoneHit = phones.some((p) => key.startsWith(`${p}:`));
+      const ipHit = hasIp && challenge.ip_address === clientIp;
+      if (phoneHit || ipHit) {
+        inMemoryChallenges.delete(key);
+        removed++;
+      }
+    }
+    return removed;
+  },
 };

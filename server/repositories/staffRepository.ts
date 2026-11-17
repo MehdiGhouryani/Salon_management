@@ -164,6 +164,37 @@ export const staffRepository = {
     return res.rows;
   },
 
+  /**
+   * Count of ACTIVE staff per salon for the Super Admin console (Phase 18).
+   * Salons with no staff are absent from the returned map; callers treat a
+   * missing entry as zero.
+   */
+  async getActiveStaffCounts(salonIds: string[], client?: PoolClient): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    if (salonIds.length === 0) return counts;
+
+    if (!isDatabaseConfigured()) {
+      for (const staff of inMemoryStaff.values()) {
+        if (!salonIds.includes(staff.salon_id) || !staff.is_active) continue;
+        counts.set(staff.salon_id, (counts.get(staff.salon_id) || 0) + 1);
+      }
+      return counts;
+    }
+
+    const res = await query<{ salon_id: string; active_staff: string }>(
+      `SELECT salon_id, COUNT(*)::text AS active_staff
+       FROM staff
+       WHERE is_active = TRUE AND salon_id = ANY($1::text[])
+       GROUP BY salon_id`,
+      [salonIds],
+      client
+    );
+    for (const row of res.rows) {
+      counts.set(row.salon_id, parseInt(row.active_staff, 10) || 0);
+    }
+    return counts;
+  },
+
   async create(dto: CreateStaffDto, client?: PoolClient): Promise<DbStaff> {
     if (!isDatabaseConfigured()) {
       const created: DbStaff = {

@@ -6,7 +6,7 @@
  * reactivate) through the BusinessesView UI, confirms the audit trail
  * records the mutations, and verifies a non-admin role is forbidden.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/testIsolation';
 
 const ADMIN_PHONE = '09361000020';
 const TARGET_SALON = 'sal-101';

@@ -12,7 +12,8 @@
  * (server/routes/auth.ts:75 + server/services/auth/otpService.ts:266).
  * No booking API is stubbed anywhere in this spec.
  */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from './helpers/testIsolation';
+import type { Page } from '@playwright/test';
 
 const CUSTOMER_PHONE = '09364567890';
 const COMPLETION_PHONE = '09364567891';

@@ -570,6 +570,15 @@ Returns paginated list of salons with status filter and search term.
 
 **Parameters**: `status` (`all`|`active`|`pending`|`suspended`|`rejected`), `search`, `limit`, `offset`.
 
+Each salon row additionally carries **real operational aggregates** computed
+server-side (Phase 18 — the console never fabricates numbers):
+- `monthlyRevenue` — sum of confirmed/completed appointment prices whose
+  canonical `booking_date_greg` falls inside the current Asia/Tehran calendar month
+- `totalAppointments` — count of every appointment row for the salon
+- `activeStaffCount` — count of staff rows with `is_active = TRUE`
+
+Rows with no activity report honest zeros.
+
 ---
 
 ### `PUT /api/admin/salons/:id/status`

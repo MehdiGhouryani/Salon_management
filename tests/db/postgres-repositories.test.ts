@@ -110,6 +110,41 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL repositories — migrations & per
     expect(pgError).toBeTruthy();
     expect(pgError.code).toBe('23505');
   });
+
+  it('updateStatus transitions persist on real PostgreSQL (Phase 18 regression)', async () => {
+    // Phase 18 regression: the UPDATE bound $1 both as the status column and
+    // inside the CASE comparison — PostgreSQL rejected every transition with
+    // "inconsistent types deduced for parameter $1". The in-memory adapter
+    // masked this until the DB suite exercised the real query.
+    await db.appointmentRepository.create({
+      id: 't3-appt-status',
+      trackingCode: 'T3-STAT',
+      salonId: db.fixtures.salonId,
+      serviceId: db.fixtures.serviceId,
+      staffId: db.fixtures.staffId,
+      clientName: 'مشتری تغییر وضعیت',
+      clientPhone: '09370000105',
+      bookingDate: '2026-11-22',
+      bookingTime: '09:00',
+      endTime: '10:00',
+      price: 250000,
+      status: 'confirmed',
+    });
+
+    const cancelled = await db.appointmentRepository.updateStatus(
+      't3-appt-status',
+      'cancelled',
+      'مشتری تغییر وضعیت',
+      'لغو آزمایشی فاز ۱۸'
+    );
+    expect(cancelled?.status).toBe('cancelled');
+    expect(cancelled?.cancellation_reason).toBe('لغو آزمایشی فاز ۱۸');
+
+    const hist = await db.raw.query(
+      `SELECT new_status FROM appointment_status_history WHERE appointment_id = 't3-appt-status' ORDER BY created_at DESC LIMIT 1`
+    );
+    expect(hist.rows[0]?.new_status).toBe('cancelled');
+  });
 });
 
 describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL schema integrity & canonical dates (Phase 06)', () => {
@@ -142,6 +177,20 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL schema integrity & canonical date
       [db.fixtures.salonId, db.fixtures.serviceId, db.fixtures.staffId]
     );
 
+    // Legacy-style rows are canonicalized by migration 004's backfill UPDATE
+    // (the repository's create() writes booking_date_greg directly for new
+    // bookings). Reproduce that exact SQL conversion for this row so the test
+    // verifies the SQL function against the TS util — the migration contract.
+    await db.raw.query(
+      `UPDATE appointments
+       SET booking_date_greg = nobatara_jalali_to_gregorian(
+             SPLIT_PART(booking_date, '/', 1)::INT,
+             SPLIT_PART(booking_date, '/', 2)::INT,
+             SPLIT_PART(booking_date, '/', 3)::INT
+       )
+       WHERE id = 't3-appt-jalali' AND booking_date_greg IS NULL`
+    );
+
     const row = await db.raw.query(
       `SELECT booking_date, booking_date_greg::text AS greg FROM appointments WHERE id = 't3-appt-jalali'`
     );
@@ -154,17 +203,20 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL schema integrity & canonical date
     const { jalaliToGregorian } = await import('../../server/utils/jalali.ts');
 
     // 1403 IS a Jalali leap year: Esfand 30 exists and both implementations
-    // must agree on its Gregorian value.
+    // must agree on its Gregorian value. The SQL result is cast to ::text so
+    // the comparison is string-to-string — the pg driver returns DATE columns
+    // as JS Date objects whose String() form never matches an ISO string
+    // (Phase 18: this assertion previously compared a Date to a string).
     const tsLeap = jalaliToGregorian(1403, 12, 30);
     expect(tsLeap).toBeTruthy();
-    const sqlLeap = await db.raw.query(`SELECT nobatara_jalali_to_gregorian(1403, 12, 30) AS g`);
+    const sqlLeap = await db.raw.query(`SELECT nobatara_jalali_to_gregorian(1403, 12, 30)::text AS g`);
     const tsIso = `${tsLeap!.gy}-${String(tsLeap!.gm).padStart(2, '0')}-${String(tsLeap!.gd).padStart(2, '0')}`;
-    expect(String(sqlLeap.rows[0].g)).toBe(tsIso);
+    expect(sqlLeap.rows[0].g).toBe(tsIso);
 
     // 1404 is NOT a leap year: Esfand 30 does not exist — both implementations
     // must reject it (NULL/null) instead of silently rolling over to Farvardin.
     const tsImpossible = jalaliToGregorian(1404, 12, 30);
-    const sqlImpossible = await db.raw.query(`SELECT nobatara_jalali_to_gregorian(1404, 12, 30) AS g`);
+    const sqlImpossible = await db.raw.query(`SELECT nobatara_jalali_to_gregorian(1404, 12, 30)::text AS g`);
     expect(tsImpossible).toBeNull();
     expect(sqlImpossible.rows[0].g).toBeNull();
   });
@@ -300,8 +352,20 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL booking grants (Phase 08, real pe
       code: 'BOOKING_GRANT_ALREADY_USED',
     });
 
-    const { token: expired } = await bookingGrantService.issueGrant('09370000403', -1000);
-    await expect(bookingGrantService.consumeGrant(expired, '09370000403')).rejects.toMatchObject({
+    // An EXPIRED grant must look like a naturally aged one: migration 005
+    // enforces `expires_at > created_at`, so a grant can never be BORN
+    // expired. Insert one that was legitimately issued 16 minutes ago and
+    // aged past its expiry (Phase 18: the previous negative-TTL insert
+    // violated the check constraint on real PostgreSQL).
+    const { createHash, randomBytes } = await import('crypto');
+    const expiredRaw = randomBytes(32).toString('hex');
+    const expiredHash = createHash('sha256').update(expiredRaw).digest('hex');
+    await db.raw.query(
+      `INSERT INTO booking_grants (token_hash, phone, purpose, created_at, expires_at)
+       VALUES ($1, '09370000403', 'booking', NOW() - INTERVAL '16 minutes', NOW() - INTERVAL '1 minute')`,
+      [expiredHash]
+    );
+    await expect(bookingGrantService.consumeGrant(expiredRaw, '09370000403')).rejects.toMatchObject({
       code: 'BOOKING_GRANT_EXPIRED',
     });
   });

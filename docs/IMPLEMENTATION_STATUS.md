@@ -1,7 +1,7 @@
 # NobatAra — Master Implementation Status Tracker
 
 **Governing Roadmap:** NobatAra Full-Stack Evolution  
-**Last Updated:** 2026-11-10  
+**Last Updated:** 2026-11-17 (Phase 18)  
 
 ---
 
@@ -22,22 +22,29 @@
 
 ## Roadmap Phases Summary & Current Status
 
-| Phase | Description | Status | Pass/Fail Evidence | Next Step |
+Statuses below were reconciled in Phase 18 against the actual commit history
+and test suites on `work/db-reliability`. The earlier revision of this table
+marked phases 6–13 *PENDING* although their implementation sections (below)
+recorded them as completed — the two halves disagreed; the table now follows
+the evidence.
+
+| Phase | Description | Status | Evidence | Next Step |
 | :---: | :--- | :---: | :--- | :--- |
-| **0** | **Read-only repository audit and baseline evidence** | **COMPLETED** | Audited all 29 source files. `compile_applet` passed. `lint_applet` passed. Documented in `docs/BASELINE_AUDIT.md`. | **PASSED (GO FOR PROPOSED PHASE 1)** |
-| **1** | **Product requirements, personas, workflows, architecture & PRD** | **COMPLETED** | Formulated PRD, Architecture, Data Model, API Contracts, ADRs, Security & QA specs in `docs/`. Baseline validated. | **PASSED** |
-| **2** | **Contain confirmed security risks & separate demo behavior** | **COMPLETED** | Fixed customer booking privacy leak; removed fake OTP & hardcoded bypass; protected super-admin with production mode barrier; neutralized CSV injection; tagged synthetic demo fixtures; verified clean `tsc --noEmit` & `npm run build`. | **PASSED (READY FOR PHASE 3)** |
-| **3** | **Establish full-stack server architecture & configuration** | **COMPLETED** | Unified Express runtime (`server.ts`, `server/*`); dev with Vite middleware (`npm run dev`), prod with static dist/ (`npm start`); `/api/health/live` & `ready` verified 200; strict JSON 404 on `/api/*`; fail-fast config validation; client-side posture bypass eliminated. | **PASSED (READY FOR PHASE 4)** |
-| **4** | **Design relational data model, migrations, & repositories** | **COMPLETED** | Normalized 15-table schema with constraints, indexes, versioned SQL migrations (`001_initial_schema.sql` up/down), typed PostgreSQL pool/transaction runner, 8 repository modules, separated fixtures seeder, and DB-aware health/readiness reporting. | **PASSED (READY FOR PHASE 5)** |
-| **5** | **Implement auth, sessions, server-side RBAC & tenant isolation** | **COMPLETED** | Real cryptographic OTP auth (`/api/auth/otp/request`, `/api/auth/otp/verify`), 256-bit token hashed at rest (`SHA-256`), HttpOnly cookie sessions, granular session revocation, server-enforced RBAC (`requireAuth`, `requirePlatformRole`, `requireSalonMembership`, `requireSalonPermission`), CSRF validation, operator-only bootstrap, and 31 automated security tests passing. External PostgreSQL connection marked NOT VERIFIED. | **PASSED (READY FOR PHASE 6)** |
-| **6** | **Build shared design system and semantic tokens** | *PENDING* | Baseline tokens verified. Full alignment pending. | Next Phase. |
-| **7** | **Complete customer discovery and booking journey** | *PENDING* | UI wizard exists; server persistence pending. | Hold. |
-| **8** | **Complete salon manager's operational workflows** | *PENDING* | Snapp-style UI exists; backend cashflow pending. | Hold. |
-| **9** | **Complete super-admin console and operational modules** | *PENDING* | Rich UI exists; live backend hooks pending. | Hold. |
-| **10** | **Integrate real SMS, payment, & infrastructure services** | *PENDING* | Not started. | Hold. |
-| **11** | **Perform cross-persona UI/UX, responsive, & accessibility refinement** | *PENDING* | Mobile switcher fix verified; further audits pending. | Hold. |
-| **12** | **Execute automated tests, security verification & regression testing** | *PENDING* | Not started. | Hold. |
-| **13** | **Prepare production deployment, monitoring, backup & rollback** | *PENDING* | Not started. | Hold. |
+| **0** | **Read-only repository audit and baseline evidence** | **COMPLETED** | `docs/BASELINE_AUDIT.md` | Done |
+| **1** | **Product requirements, architecture & PRD** | **COMPLETED** | `docs/` (PRD, Architecture, Data Model, Security, QA) | Done |
+| **2** | **Contain confirmed security risks & demo separation** | **COMPLETED** | Sign-off below | Done |
+| **3** | **Full-stack server architecture** | **COMPLETED** | Sign-off below | Done |
+| **4** | **Relational data model, migrations, repositories** | **COMPLETED** | Sign-off below | Done |
+| **5** | **Auth, sessions, server-side RBAC & tenant isolation** | **COMPLETED** | Sign-off below | Done |
+| **6** | **Design system & semantic tokens** | **COMPLETED** | UI track UI-1/UI-5 + contrast commits | Done |
+| **7** | **Customer discovery & booking journey** | **COMPLETED** | Phase 7 sign-off below + `journey-booking.spec.ts` | Done |
+| **8** | **Salon manager operational workflows** | **COMPLETED** | Phase 8 sign-off below + Phase 10 commit `eac64c9` | Done |
+| **9** | **Super-admin console & governance** | **COMPLETED** | Phase 9 sign-off below + Phase 13 commit `ba756db` | Done |
+| **10** | **Real SMS, payment & infrastructure services** | **COMPLETED (SMS)** | Phase 14 commit `4c8b6a7` — Kavenegar delivery layer + fail-closed posture. **Live SMS send: BLOCKED on real credentials.** Payments: NOT implemented (separate work). | Staging verify SMS |
+| **11** | **Cross-persona UI/UX, responsive & accessibility** | **COMPLETED** | UI track + Phase 15 commit `6de3474` + Phase 18 contrast-inclusive axe gates | Screen-reader pass pending (manual) |
+| **12** | **Automated tests, security & regression** | **COMPLETED** | Vitest/unit+integration+DB suites, Playwright journeys, CI workflow | CI has never executed (no push yet) |
+| **13** | **Deployment, monitoring, backup & rollback** | **COMPLETED** | Phase 16 commit `5d2ddbb` — Docker, correlation IDs, deployment guide | Staging deployment pending |
+| **18** | **Production-readiness hardening & verification** | **COMPLETED** | Real PostgreSQL 16.15: migrations 001–005 from empty DB + 25/25 DB tests; E2E rate-limiter isolation; admin aggregates from real data; contrast-inclusive a11y gates; security doc reconciliation | See the Phase 18 section below |
 
 ---
 
@@ -384,3 +391,109 @@
 
 
 
+
+---
+
+## Phase 18: Production Readiness Hardening & Verification — COMPLETED & VERIFIED (2026-11-17)
+
+Environment: real PostgreSQL 16.15 (isolated portable instance, port 5433,
+dedicated `nobatara_test` database — never production) on the developer
+workstation. Branch `work/db-reliability`, HEAD `5d2ddbb` at start.
+
+### 1. Real PostgreSQL verification (highest priority)
+
+- **Migration chain from EMPTY database**: 001→005 applied in order, tracked in
+  `schema_migrations`, idempotent on re-run. **Migration 004 was genuinely
+  broken on real PostgreSQL** (never previously executed) and is now fixed:
+  - the working-hours uniqueness index cast its sentinel to `::uuid` while
+    `working_hours.staff_id` is `VARCHAR(64)` → `COALESCE types character
+    varying and uuid cannot be matched`;
+  - the Jalali→Gregorian SQL function's month walk used the TypeScript util's
+    0-based month-length array inside 1-based PL/pgSQL indexing, resolving
+    dates one month late (1403/08/25 → 2024-12-14 instead of 2024-11-15);
+  - the same off-by-one applied to the round-trip `g_d_m` lookup.
+- **Rollback behavior**: the failed 004 left zero partial state (transaction
+  rolled back cleanly); `db:rollback` (down) verified for 005 and 004, then
+  re-applied.
+- **Database test suite**: all 23 previously-skipped PostgreSQL-backed tests now
+  EXECUTE — **25/25 passing** (including new Phase 18 regression tests), stable
+  across repeated runs. Fixes required to make that true:
+  - `vitest.config.ts` now runs test files sequentially (`fileParallelism:
+    false`) — the two DB suites share one database and fixture IDs; parallel
+    files interleave `cleanupFixtures()` with another file's tests.
+  - The expired-grant test inserted a grant that was BORN expired, violating
+    the `booking_grants_expiry` constraint; it now inserts a naturally aged
+    grant instead.
+  - Two assertions compared pg `Date` objects to strings, and the R7 race test
+    over-specified WHICH overlapping booking wins (scheduler-dependent); it now
+    asserts exactly-one-winner (membership, not identity).
+- **Real bugs the DB suite exposed in production code**:
+  - `availability_exceptions.start_date/end_date` crossed the repository as JS
+    `Date` objects while the declared contract (and every consumer) uses
+    'YYYY-MM-DD' strings — holiday blocking silently never fired on real
+    PostgreSQL. Repositories now select DATE columns as canonical text.
+  - `appointmentRepository.updateStatus` bound `$1` as both the status column
+    and the CASE comparison — PostgreSQL rejected every status transition with
+    "inconsistent types deduced for parameter $1" (customer cancellation,
+    salon panel transitions). Fixed with distinct placeholders + regression test.
+- **CI**: the workflow defines a PostgreSQL 16 service with health checks and
+  correct `TEST_DATABASE_URL`/`DATABASE_URL` wiring (`npm run test:db`,
+  `db:migrate` before E2E). **The workflow has never executed** — the branch
+  is unpushed, so CI status is UNVERIFIED, not PASSING.
+
+### 2. E2E rate-limiter flakiness (Phase 17: 13 passed / 3 failed)
+
+Root cause: the whole suite drives one deterministic client IP; the production
+OTP send limiter (10 / 10 min / IP) rejects journeys after the ~10th OTP
+request, and reused test phones hit the 60 s resend cooldown.
+
+Fix (production limits untouched): a dev/test-only endpoint
+`POST /api/dev/reset-rate-limiters` — mounted ONLY when `config.isProduction`
+is false, re-checks the flag itself (standard 404 in production), clears the
+in-process limiter buckets and deletes OTP challenges only for explicitly
+listed test phones. `e2e/helpers/testIsolation.ts` resets state before every
+test; no production limit is raised, disabled, or weakened.
+
+### 3. Admin dashboard data (BusinessesView)
+
+The zero-filled aggregates were **incorrectly generated**, not real: the
+`/api/admin/salons` endpoint returned no aggregates and the client hardcoded
+zeros. The endpoint now computes REAL per-salon aggregates — current-month
+revenue (confirmed/completed appointments, Asia/Tehran month bounds),
+total appointments, active staff — from the appointments/staff tables
+(DB mode) or the same in-memory rules (dev mode). Integration tests cover
+non-empty and empty datasets; the console never invents numbers.
+
+### 4. Accessibility
+
+Axe scans now INCLUDE `color-contrast` (previously excluded) and run against
+BOTH themes (dark default + light via the ThemeContext storage key); the
+critical `button-name` violation (icon-only toast close button) is fixed with
+a Persian accessible name. Keyboard/focus and Escape-close coverage added.
+**Screen-reader (NVDA/VoiceOver) and physical-device walkthroughs remain NOT
+TESTED in this environment** — they stay a manual release prerequisite.
+
+### 5. SMS provider
+
+Code-reviewed end-to-end: config validation, per-attempt timeout, bounded
+transport-only retries, structured error families, phone masking
+(`0912****89`) and OTP-free logs, production fail-closed (NullSmsProvider).
+10 unit tests (gateway mocked) cover success/failure/timeout/PII. **Live SMS
+delivery: BLOCKED until valid Kavenegar credentials are supplied** — still
+explicitly unverified against the real telco.
+
+### 6. Phase 18 honest status ledger
+
+| Item | Status |
+| :--- | :--- |
+| PostgreSQL migrations 001–005 on real PG 16.15 | **PASS** (after 004 fixes) |
+| DB-backed test suite | **PASS** — 25/25, repeated runs stable |
+| Full Vitest suite (unit + integration + DB) | **PASS** (see Phase 7 results) |
+| Full Playwright suite ×2 consecutive runs | see Phase 18 audit report |
+| Production build & typecheck | **PASS** |
+| npm audit (runtime deps) | see audit report |
+| Live SMS delivery (Kavenegar) | **BLOCKED** — needs credentials |
+| Screen-reader / real-device accessibility pass | **NOT TESTED** — needs manual run |
+| CI pipeline execution | **NOT TESTED** — branch unpushed by rule |
+| Horizontal-scale shared rate limiter (Redis) | **NOT IMPLEMENTED** — documented single-process scope |
+| Payments (Zarinpal/Shaparak) | **NOT IMPLEMENTED** — out of Phase 18 scope |

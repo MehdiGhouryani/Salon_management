@@ -36,6 +36,10 @@ export default defineConfig({
       // Production CLIENT posture (no demo mode): makes the real OTP login flow
       // reachable from the storefront drawer, exactly as in production builds.
       VITE_APP_MODE: 'production',
+      // Phase 19: the dev/test-only reset endpoints are OFF by default even in
+      // non-production; the E2E suite explicitly opts in here. Production and
+      // any server process without this flag return 404 on both routes.
+      ENABLE_TEST_ENDPOINTS: 'true',
     },
   },
   projects: [

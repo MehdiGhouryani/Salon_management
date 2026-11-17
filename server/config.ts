@@ -48,6 +48,8 @@ export interface ServerConfig {
   readonly appMode: SupportedAppMode;
   readonly isProduction: boolean;
   readonly isDevelopment: boolean;
+  /** Phase 19: dev/test-only reset endpoints require this explicit opt-in (default OFF). */
+  readonly testEndpointsEnabled: boolean;
   readonly port: number;
   readonly host: string;
   readonly corsOrigins: string[];
@@ -125,6 +127,15 @@ function parseAndValidateConfig(): ServerConfig {
 
   const isProduction = nodeEnv === 'production' || appMode === 'production';
   const isDevelopment = !isProduction;
+
+  // Phase 19: the dev/test-only reset endpoints (/api/dev/reset-rate-limiters,
+  // /api/dev/reset-e2e-bookings) require this EXPLICIT flag, ON TOP of
+  // non-production mode. Default is OFF: a development or staging process must
+  // deliberately opt in, so the routes can never be silently available. The
+  // isProduction guard is hard-coded into the expression — even an operator
+  // error setting the flag in a production environment cannot enable them.
+  const testEndpointsEnabled =
+    !isProduction && (process.env.ENABLE_TEST_ENDPOINTS || '').trim() === 'true';
 
   // 6. Parse and validate Database Configuration
   const rawDatabaseUrl = (process.env.DATABASE_URL || '').trim();
@@ -249,6 +260,7 @@ function parseAndValidateConfig(): ServerConfig {
     appMode,
     isProduction,
     isDevelopment,
+    testEndpointsEnabled,
     port: parsedPort,
     host,
     corsOrigins,

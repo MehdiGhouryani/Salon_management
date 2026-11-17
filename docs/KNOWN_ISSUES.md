@@ -2,6 +2,9 @@
 
 **Audit Date:** 2026-10-19  
 **Status:** Documented for Remediation  
+**Phase 18 reconciliation (2026-11-17):** every issue below was remediated in
+Phases 2–18 and is covered by automated tests; the per-issue remediation notes
+state the current evidence. Remaining open items live at the bottom.
 
 ---
 
@@ -71,3 +74,29 @@
 - **Source Location:** `src/App.tsx:334-364`
 - **Description:** While the mobile floating pill switcher collapses cleanly at 375px-430px, on viewports narrower than 360px it can occasionally sit near bottom navigation bars.
 - **Remediation Plan (Phase 11):** Ensure strict safe-area-inset and z-index layering with a drag/reposition affordance or complete tucking behind a hamburger menu.
+
+---
+
+## Phase 18 Remediation Ledger (2026-11-17)
+
+| Baseline issue | Current status | Evidence |
+| :--- | :--- | :--- |
+| **ISSUE-SEC-01** Unauthenticated admin access via persona switcher | **REMEDIATED** | Server-verified session + `requirePlatformRole('super_admin')`; 401/403 RBAC integration tests; E2E super-admin journey incl. 403 for customers |
+| **ISSUE-SEC-02** Client-side mock OTP with `1234` bypass | **REMEDIATED** | Server OTP (CSPRNG, HMAC at rest, TTL/cooldown/attempts, atomic consume); unit + integration + E2E real-OTP journeys. **Live SMS: BLOCKED on Kavenegar credentials** |
+| **ISSUE-SEC-03** Plaintext API keys in client component | **REMEDIATED** | Keys only in server env; client sees masked status (code-verified) |
+| **ISSUE-SEC-04** Cross-tenant data leakage | **REMEDIATED** | Membership-bound queries (`requireSalonMembership`); tenant-boundary HTTP tests |
+| **ISSUE-ARCH-01** Zero persistence (React state) | **REMEDIATED** | PostgreSQL layer; Phase 18 executed migrations 001–005 + 25/25 DB tests on real PG 16.15 |
+| **ISSUE-ARCH-02** Missing server entry point | **REMEDIATED** | `npm run dev` = Express + Vite middleware; `npm start` = production static serving; CI jobs wired |
+| **ISSUE-ARCH-03** False success feedback on infrastructure ops | **REMEDIATED** | Health probes are real (`/api/health/ready` DB probe); simulated ops labeled; fail-closed DB errors (503) |
+| **ISSUE-UX-01** Floating switcher on ultra-small displays | **REMEDIATED** | Persona switch moved into the environment strip (UI track); overflow asserted at 360px in E2E |
+
+## Open items after Phase 18
+
+| Item | Status |
+| :--- | :--- |
+| Live SMS delivery verification (real Kavenegar send) | **BLOCKED** — needs valid credentials |
+| Screen-reader (NVDA/VoiceOver) + physical-device accessibility pass | **NOT TESTED** — manual prerequisite |
+| CI pipeline execution | **NOT TESTED** — branch intentionally unpushed |
+| Shared rate limiter for horizontally scaled deployments (e.g. Redis) | **NOT IMPLEMENTED** — single-process scope documented in `server/middleware/rateLimit.ts` and the deployment checklist |
+| Payment gateway integration (Zarinpal/Shaparak) | **NOT IMPLEMENTED** — separate track |
+| `picomatch` ReDoS advisory (GHSA-fc5q-39xc-vjpf / CVE-2026-112366) in the BUILD toolchain | **ACCEPTED RISK (P3, dev-only) — analyzed in Phase 19**: affected range is `introduced: 0 → last_affected: 4.0.7`, i.e. **no patched release exists** (4.0.7 is the latest). Affected path: `vite@8.3.8 → tinyglobby@0.2.17 → fdir@6.5.0 → picomatch@4.0.7` and `vitest@5.1.0 → picomatch@4.0.7` — all devDependencies. Verified: picomatch is **not installed in the production dependency tree** (express/cookie-parser/dotenv/pg/tsx pull none of it), and at build time it only matches the repo's own glob patterns, never attacker input. npm's only suggested fix is a breaking Vite 8→6 downgrade — rejected. **Revisit when:** (a) picomatch > 4.0.7 ships a fix → upgrade via npm `overrides`; (b) vite/tinyglobby depend on a fixed picomatch; (c) re-run `npm audit`. `npm audit --omit=dev` reports 0 vulnerabilities. |

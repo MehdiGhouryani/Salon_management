@@ -82,6 +82,48 @@ Framework: **Vitest** (single framework, same pipeline as Vite) + **Playwright**
 
 Database test rules: `TEST_DATABASE_URL` must point at an isolated database (a URL containing `prod` is refused); a configured-but-unreachable database makes the suite **fail**, not skip; fixtures use the `t3-` prefix and clean up only their own rows. See [e2e/README.md](../e2e/README.md) for which E2E journeys are implemented and which are blocked (mock-driven console surfaces).
 
+### 7.1 Running the PostgreSQL-backed tests locally without Docker
+
+CI provisions PostgreSQL 16 as a service container. When neither Docker nor a
+local PostgreSQL is available (e.g. a locked-down Windows workstation), the
+same verification is reproducible with **portable binaries** — no installer, no
+admin rights, fully isolated throwaway cluster:
+
+```bash
+# 1. Obtain PostgreSQL 16 binaries (either source):
+#    a) EDB zip: https://www.enterprisedb.com/download-postgresql-binaries
+#       (postgresql-16.x-1-windows-x64-binaries.zip → extract "pgsql")
+#    b) npm: npm pack @embedded-postgres/windows-x64@16.x → extract package/native
+#       (ships initdb/pg_ctl/postgres only — no psql; use node pg for SQL below)
+
+# 2. Initialize a throwaway cluster (D:\pg16-portable-test\data), dedicated
+#    superuser, UTF-8, on a non-default port:
+initdb.exe -D D:\pg16-portable-test\data -U nobatara_test -A scram-sha-256 \
+  --pwfile=<file-with-password> -E UTF8 --no-locale
+postgres.exe -D D:\pg16-portable-test\data -p 5433
+
+# 3. Create the database (no psql in the npm package? use node):
+node -e "import('pg').then(async ({default: pg}) => {
+  const c = new pg.Client({connectionString: 'postgresql://nobatara_test:<pw>@127.0.0.1:5433/postgres'});
+  await c.connect(); await c.query('CREATE DATABASE nobatara_test'); await c.end();
+});"
+
+# 4. Verify the migration chain from an EMPTY database (001→005), tracking and
+#    idempotency, then run the fail-closed DB suite:
+export DATABASE_URL="postgresql://nobatara_test:<pw>@127.0.0.1:5433/nobatara_test"
+npm run db:migrate && npm run db:migrate   # second run must be a no-op
+export TEST_DATABASE_URL="$DATABASE_URL"
+npm run test:db
+
+# 5. E2E with full CI parity (persistent DB; migrations + idempotent seed):
+npm run db:seed    # idempotent; safe to repeat
+npx playwright test
+```
+
+The cluster lives entirely in its own data directory — delete it (and the
+binaries) when done; nothing is installed system-wide and no production
+credential is ever involved.
+
 ## 8. SMS Provider Setup (production OTP delivery)
 
 NobatAra sends OTP codes through **Kavenegar**'s verify/lookup API. No account is created

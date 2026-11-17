@@ -178,3 +178,80 @@ describe('Production HTTP posture (spawned node server.ts, unreachable probe DB)
     expect(indexRes.headers.get('strict-transport-security')).toContain('max-age=31536000');
   }, 60000);
 });
+
+describe('Phase 19: dev/test-only reset endpoints are unreachable where they must be', () => {
+  const RESET_ROUTES = ['/api/dev/reset-rate-limiters', '/api/dev/reset-e2e-bookings'];
+  const resetBody = JSON.stringify({
+    phones: ['09361000005', '09361000020', '09364567890', '09364567891', '09364567892', '09362000001', '09362000077'],
+  });
+
+  it('Production returns the standard JSON 404 EVEN IF an operator wrongly sets ENABLE_TEST_ENDPOINTS=true', async () => {
+    // Operator-error simulation: the flag is set, but production posture
+    // hard-disables the endpoints regardless (config.testEndpointsEnabled is
+    // force-false in production; the dev router is also never mounted).
+    serverProcess = spawn(process.execPath, [SERVER_ENTRY], {
+      cwd: ROOT,
+      env: prodEnv({
+        DATABASE_URL: 'postgresql://127.0.0.1:54321/nobatara_prod_posture_probe',
+        ENABLE_TEST_ENDPOINTS: 'true',
+      }),
+      stdio: 'ignore',
+    });
+
+    const live = await waitForLive(`${BASE}/api/health/live`);
+    expect(live).toBe(true);
+
+    for (const route of RESET_ROUTES) {
+      // Valid Origin + anti-CSRF header: the request must PASS CSRF and reach
+      // the routing layer, where the API 404 trap answers — proving the routes
+      // themselves are absent in production, not merely blocked by CSRF.
+      const res = await fetch(`${BASE}${route}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://app.nobatara.ir',
+          'X-NobatAra-Client': 'web',
+        },
+        body: resetBody,
+      });
+      expect(res.status, route).toBe(404);
+      const body = await res.json();
+      // Standard JSON 404 trap: no information leakage about the endpoint.
+      // (The API trap answers { success:false, error:{ code, message, documentation } }.)
+      expect(body.error?.code, route).toBe('API_ENDPOINT_NOT_FOUND');
+    }
+  }, 60000);
+
+  it('Development WITHOUT the explicit flag returns 404 (disabled by default, not just in production)', async () => {
+    let devProcess: ChildProcess | null = spawn(process.execPath, [SERVER_ENTRY], {
+      cwd: ROOT,
+      env: {
+        ...process.env,
+        NODE_ENV: 'development',
+        PORT: '3213',
+        HOST: '127.0.0.1',
+        // NOTE: ENABLE_TEST_ENDPOINTS deliberately ABSENT — default OFF.
+        ENABLE_TEST_ENDPOINTS: '',
+      },
+      stdio: 'ignore',
+    });
+    const DEV_BASE = 'http://127.0.0.1:3213';
+    try {
+      const live = await waitForLive(`${DEV_BASE}/api/health/live`);
+      expect(live).toBe(true);
+
+      for (const route of RESET_ROUTES) {
+        const res = await fetch(`${DEV_BASE}${route}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: resetBody,
+        });
+        expect(res.status, `dev without flag: ${route}`).toBe(404);
+        expect((await res.json()).error, route).toBe('API_ENDPOINT_NOT_FOUND');
+      }
+    } finally {
+      devProcess?.kill();
+      devProcess = null;
+    }
+  }, 60000);
+});

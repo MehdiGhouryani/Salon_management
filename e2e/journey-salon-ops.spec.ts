@@ -7,7 +7,7 @@
  * In dev (in-memory adapter) the seeded salon manager account is used; the
  * same journey runs against PostgreSQL in CI where memberships live in the DB.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/testIsolation';
 
 const STAFF_PHONE = '09361000005';
 

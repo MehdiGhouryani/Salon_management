@@ -24,8 +24,7 @@ export interface AdminSalon {
   plan: string;
   ownerName: string;
   phone: string;
-  /** Server rows carry no financial aggregates yet — zero-filled so the
-   *  console's sorting/filtering never crashes on missing fields. */
+  /** REAL aggregates computed server-side from appointments/staff (Phase 18). */
   monthlyRevenue: number;
   totalAppointments: number;
   activeStaffCount: number;
@@ -102,9 +101,11 @@ export function useAdminOps(enabled: boolean) {
         const data = await api.get<{ salons: Record<string, any>[]; total?: number }>(
           `/api/admin/salons?${qs.toString()}`
         );
-        // Normalize server rows to the console's Salon shape: the API returns
-        // snake-ish fields and NO financial aggregates — zero-fill them so
-        // filters/sorting never crash on undefined.
+        // Normalize server rows to the console's Salon shape. Phase 18: the
+        // server computes REAL operational aggregates per salon (current-month
+        // revenue from confirmed/completed appointments, total appointments,
+        // active staff) — zero is only used when the server genuinely reports
+        // no activity for that salon or omits the field.
         const normalized: AdminSalon[] = (data.salons || []).map((sv) => ({
           id: sv.id,
           name: sv.name || '',
@@ -115,9 +116,9 @@ export function useAdminOps(enabled: boolean) {
           plan: sv.plan || 'bronze',
           ownerName: sv.owner_name || sv.ownerName || '',
           phone: sv.phone || '',
-          monthlyRevenue: 0,
-          totalAppointments: 0,
-          activeStaffCount: 0,
+          monthlyRevenue: typeof sv.monthlyRevenue === 'number' ? sv.monthlyRevenue : 0,
+          totalAppointments: typeof sv.totalAppointments === 'number' ? sv.totalAppointments : 0,
+          activeStaffCount: typeof sv.activeStaffCount === 'number' ? sv.activeStaffCount : 0,
           createdAt: sv.created_at,
         }));
         if (mounted.current) {

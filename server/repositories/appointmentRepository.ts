@@ -487,15 +487,20 @@ export const appointmentRepository = {
 
     // Transactional mutation (Phase 06): the status change and its history
     // row must commit or roll back together when no outer transaction exists.
+    // Phase 18: the status value is bound TWICE ($1 for the column, $4 for the
+    // CASE comparison). A single $1 in both positions made PostgreSQL deduce
+    // "inconsistent types for parameter $1" (varchar column vs literal
+    // comparison) and fail every status transition on real PostgreSQL — the
+    // in-memory adapter masked this until the Phase 18 DB suite ran it.
     const runUpdate = async (txClient?: PoolClient): Promise<DbAppointment | null> => {
       const res = await query<DbAppointment>(
         `UPDATE appointments
          SET status = $1,
-             cancellation_reason = CASE WHEN $1 = 'cancelled' THEN $2 ELSE cancellation_reason END,
+             cancellation_reason = CASE WHEN $4 = 'cancelled' THEN $2 ELSE cancellation_reason END,
              updated_at = NOW()
          WHERE id = $3
          RETURNING *`,
-        [newStatus, reason || null, id],
+        [newStatus, reason || null, id, newStatus],
         txClient
       );
 
@@ -653,9 +658,137 @@ export const appointmentRepository = {
   },
 
   /**
+   * Per-salon booking aggregates for the Super Admin console (Phase 18).
+   *
+   * All numbers are computed from real appointment rows — never fabricated:
+   *  - monthlyRevenue: SUM(price) of confirmed/completed appointments whose
+   *    canonical booking_date_greg falls inside the CURRENT calendar month in
+   *    Asia/Tehran (the platform's business timezone). Legacy rows whose date
+   *    could not be canonicalized (booking_date_greg IS NULL) are excluded
+   *    from the monthly window — the same rule availability queries follow.
+   *  - totalAppointments: COUNT(*) of every appointment row for the salon
+   *    (same semantics as the platform-wide totalAppointments KPI).
+   *
+   * Salons with no rows are simply absent from the returned map; callers
+   * must treat a missing entry as all-zero.
+   */
+  async getSalonBookingAggregates(
+    salonIds: string[],
+    client?: PoolClient
+  ): Promise<Map<string, { monthlyRevenue: number; totalAppointments: number }>> {
+    const aggregates = new Map<string, { monthlyRevenue: number; totalAppointments: number }>();
+    if (salonIds.length === 0) return aggregates;
+
+    if (!isDatabaseConfigured()) {
+      const monthStart = tehranMonthStart();
+      const monthEnd = tehranMonthEnd(monthStart);
+      for (const appt of inMemoryAppointments.values()) {
+        if (!salonIds.includes(appt.salon_id)) continue;
+        const entry = aggregates.get(appt.salon_id) || { monthlyRevenue: 0, totalAppointments: 0 };
+        entry.totalAppointments += 1;
+        // Canonicalize the same way the domain layer does: only unambiguous
+        // ISO/Jalali dates count toward the monthly revenue window.
+        if (appt.status === 'confirmed' || appt.status === 'completed') {
+          const greg = appt.booking_date_greg || parseBookingDateInput(appt.booking_date)?.canonical;
+          if (greg && greg >= monthStart && greg <= monthEnd) {
+            entry.monthlyRevenue += Number(appt.price) || 0;
+          }
+        }
+        aggregates.set(appt.salon_id, entry);
+      }
+      return aggregates;
+    }
+
+    const res = await query<{ salon_id: string; monthly_revenue: string; total_appointments: string }>(
+      `WITH bounds AS (
+         SELECT date_trunc('month', now() AT TIME ZONE 'Asia/Tehran')::date AS month_start,
+                (date_trunc('month', now() AT TIME ZONE 'Asia/Tehran') + interval '1 month - 1 day')::date AS month_end
+       )
+       SELECT a.salon_id,
+              COALESCE(SUM(a.price) FILTER (
+                WHERE a.status IN ('confirmed', 'completed')
+                  AND a.booking_date_greg IS NOT NULL
+                  AND a.booking_date_greg BETWEEN b.month_start AND b.month_end
+              ), 0)::text AS monthly_revenue,
+              COUNT(*)::text AS total_appointments
+       FROM appointments a CROSS JOIN bounds b
+       WHERE a.salon_id = ANY($1::text[])
+       GROUP BY a.salon_id`,
+      [salonIds],
+      client
+    );
+    for (const row of res.rows) {
+      aggregates.set(row.salon_id, {
+        monthlyRevenue: parseInt(row.monthly_revenue, 10) || 0,
+        totalAppointments: parseInt(row.total_appointments, 10) || 0,
+      });
+    }
+    return aggregates;
+  },
+
+  /**
    * Testing helper: clears in-memory appointments
    */
   _clearInMemory() {
     inMemoryAppointments.clear();
   },
+
+  /**
+   * Phase 19 (dev/test reset endpoint support): deletes appointments — and
+   * their status history — for the given CLIENT PHONES in whichever store is
+   * active. Callers are responsible for allowlisting phones (the dev route
+   * enforces the server-side E2E_TEST_PHONE_ALLOWLIST before invoking this).
+   */
+  async deleteByClientPhones(
+    phones: string[],
+    client?: PoolClient
+  ): Promise<{ appointmentsDeleted: number; historyDeleted: number }> {
+    if (phones.length === 0) return { appointmentsDeleted: 0, historyDeleted: 0 };
+
+    if (!isDatabaseConfigured()) {
+      // The in-memory adapter has no status-history store (history writes are
+      // no-ops there), so only the appointments themselves are removed.
+      let appointmentsDeleted = 0;
+      for (const appt of [...inMemoryAppointments.values()]) {
+        if (!phones.includes(appt.client_phone)) continue;
+        inMemoryAppointments.delete(appt.id);
+        appointmentsDeleted += 1;
+      }
+      return { appointmentsDeleted, historyDeleted: 0 };
+    }
+
+    const history = await query(
+      `DELETE FROM appointment_status_history
+       WHERE appointment_id IN (
+         SELECT id FROM appointments WHERE client_phone = ANY($1::text[])
+       )`,
+      [phones],
+      client
+    );
+    const deleted = await query(
+      `DELETE FROM appointments WHERE client_phone = ANY($1::text[])`,
+      [phones],
+      client
+    );
+    return {
+      appointmentsDeleted: deleted.rowCount ?? 0,
+      historyDeleted: history.rowCount ?? 0,
+    };
+  },
 };
+
+/** Today's date in Asia/Tehran as YYYY-MM-DD (the platform business timezone). */
+function tehranToday(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date());
+}
+
+/** First day of the current Asia/Tehran month as YYYY-MM-DD. */
+function tehranMonthStart(): string {
+  return `${tehranToday().slice(0, 7)}-01`;
+}
+
+/** Last day of the current Asia/Tehran month as YYYY-MM-DD. */
+function tehranMonthEnd(monthStart: string): string {
+  const [y, m] = monthStart.split('-').map(Number);
+  return new Date(Date.UTC(y, m, 0, 12)).toISOString().slice(0, 10);
+}

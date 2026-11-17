@@ -1,7 +1,7 @@
 /**
  * E2E Journey 1 — Public salon browsing (real server, real browser) — v11 UI
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/testIsolation';
 
 test('visitor can browse the salon storefront and see services and specialists', async ({ page }) => {
   await page.goto('/');

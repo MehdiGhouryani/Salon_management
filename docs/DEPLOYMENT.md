@@ -90,6 +90,47 @@ reports latency + reachability; alert on `unhealthy` for >1 minute.
 - DB: dedicated non-superuser role for the app; admin access via bastion, not public exposure (local compose binds 127.0.0.1 only).
 - Admin access: super_admin provisioned only via `scripts/bootstrapAdmin.ts`; last-admin and self-lockout protections enforced server-side.
 - Log privacy: phones masked in SMS logs; OTP codes never logged; query strings never logged.
+- Dev/test-only reset endpoints (`/api/dev/reset-*`): absent in production (404) and additionally hard-disabled unless the process was explicitly started with `ENABLE_TEST_ENDPOINTS=true` — never set that outside a deliberate test run.
+
+### 6.1 Rate limiter scalability (Phase 19 analysis — current scope and the multi-instance path)
+
+**Current implementation** (`server/middleware/rateLimit.ts`): a fixed-window
+counter kept in an **in-process `Map`**, keyed by server-derived identity
+(`req.ip` honoring `TRUST_PROXY_COUNT`, plus the phone where applicable).
+
+**Single-process limitation (honest scope):**
+- The counter lives in one Node process's memory. It does not survive restarts
+  and is not shared with any other process.
+- With exactly ONE application instance the documented limits are exact:
+  e.g. `/api/auth/otp/request` allows 10 sends per IP per 10 minutes.
+
+**What happens with multiple instances behind a load balancer:**
+- Every instance keeps its own map, so the effective allowance multiplies by
+  the instance count: N instances → a client can send up to **N × max** within
+  one window.
+- Because the per-instance windows start independently (first request each
+  instance sees), bursts can also slip across unsynchronized windows.
+- **Bypass is real, not theoretical**: with round-robin balancing, consecutive
+  requests from one client land on different instances and may never exceed
+  any single instance's counter. The same applies to the OTP service's
+  per-phone/IP counter (`otpService.countRecentRequests`) in its in-memory
+  mode. (The DB-backed OTP counter does NOT have this problem when instances
+  share one PostgreSQL — it is shared by construction.)
+
+**Recommended shared-storage architecture for a future phase (no dependency
+introduced now):**
+1. **Preferred — Redis** (atomic `INCR` + `EXPIRE`, or a sorted-set sliding
+   window): sub-millisecond, purpose-built, single source of truth for all
+   instances. Justified once horizontal scaling is actually planned.
+2. **Zero-new-infrastructure alternative — PostgreSQL**: a small
+   `rate_limit_buckets(key PK, window_start, count)` table with an atomic
+   UPSERT. Correct but adds ~1 DB round trip per limited request — acceptable
+   for OTP/admin routes, not for global high-rate middleware.
+3. Either way, the `rateLimit()` call sites keep their current shape: only the
+   bucket store swaps behind the same `keyFor` contract.
+
+Until a shared store exists, **run a single application instance** (the
+deployment defaults to one) — this is recorded in the release checklist.
 
 ## 7. External prerequisites (operator actions - none performed by this repo)
 
@@ -107,6 +148,7 @@ reports latency + reachability; alert on `unhealthy` for >1 minute.
 - [ ] Fresh `pg_dump` backup taken and restore-tested on staging
 - [ ] Staging smoke test: OTP login, booking creation, salon panel load, admin status change
 - [ ] Rollback plan: previous image tag + `db:rollback` path documented in release notes
+- [ ] Scale = ONE application instance (§6.1: the in-memory rate limiter is per-process; a shared store is a prerequisite for horizontal scaling)
 - [ ] **Explicit production approval** recorded (operator sign-off)
 
 ## 9. Troubleshooting quick reference

@@ -8,7 +8,7 @@
  * asserts the booking appears from the SERVER, cancels it, and verifies the
  * cancelled status is the server's response.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/testIsolation';
 
 const HISTORY_PHONE = '09364567892';
 
@@ -30,6 +30,17 @@ test('customer logs in via OTP and manages a real booking end-to-end', async ({ 
   expect(bookingGrant).toBeTruthy();
 
   const tomorrow = new Date(Date.now() + 3 * 86_400_000).toISOString().split('T')[0];
+  // Pick a genuinely FREE slot from the server's real availability — the suite
+  // must be idempotent against a persistent database (CI parity): the previous
+  // run's booking occupies its slot, and a hardcoded time would 409 on reruns.
+  const availRes = await page.request.get(
+    `/api/public/salons/sal-101/availability?serviceId=srv-101&date=${tomorrow}&staffId=stf-101`
+  );
+  const availJson = await availRes.json();
+  const freeSlots: Array<{ time: string; available: boolean }> = availJson.slots || [];
+  const bookingTime = freeSlots.find((s) => s.available)?.time;
+  expect(bookingTime, 'server must report at least one free slot for the fixture salon').toBeTruthy();
+
   const bookingRes = await page.request.post('/api/public/bookings', {
     headers: { 'X-NobatAra-Booking-Grant': bookingGrant },
     data: {
@@ -37,7 +48,7 @@ test('customer logs in via OTP and manages a real booking end-to-end', async ({ 
       serviceId: 'srv-101',
       staffId: 'stf-101',
       bookingDate: tomorrow,
-      bookingTime: '12:30',
+      bookingTime,
       clientName: 'کاربر تاریخچه',
       clientPhone: HISTORY_PHONE,
     },

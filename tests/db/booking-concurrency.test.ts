@@ -102,13 +102,16 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL booking concurrency (real transac
     expect(rejected.length).toBe(1);
     expect((rejected[0] as PromiseRejectedResult).reason?.code).toBe('SLOT_ALREADY_TAKEN');
 
-    // And the persisted pair must really be 10:00-11:00 (the winner)
+    // And exactly ONE of the two overlapping attempts persisted — which one
+    // wins the advisory-lock race is scheduler-dependent, so the assertion is
+    // membership, not identity (Phase 18: the previous '10:00'-only check was
+    // a nondeterministic over-specification).
     const persisted = await db.raw.query(
       `SELECT booking_time, end_time FROM appointments WHERE salon_id = $1 AND staff_id = $2 AND booking_date = '2026-11-21' AND status <> 'cancelled'`,
       [db.fixtures.salonId, db.fixtures.staffId]
     );
     expect(persisted.rows.length).toBe(1);
-    expect(persisted.rows[0].booking_time).toBe('10:00');
+    expect(['10:00', '10:30']).toContain(persisted.rows[0].booking_time);
   });
 });
 
@@ -255,7 +258,9 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL booking rules & rollback (Phase 0
     });
     expect(created.trackingCode).toBeTruthy();
 
-    // Same grant + same slot: slot conflict wins; grant state stays consistent.
+    // Replaying the CONSUMED grant is rejected before any slot evaluation —
+    // the grant gate precedes business validation (Phase 18: the previous
+    // expectation of SLOT_ALREADY_TAKEN contradicted the Phase 08 contract).
     await expect(
       db.bookingService.createBooking({
         salonId: db.fixtures.salonId,
@@ -269,7 +274,32 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL booking rules & rollback (Phase 0
         userAgent: 'rollback-probe',
         bookingGrant: token,
       })
+    ).rejects.toMatchObject({ code: 'BOOKING_GRANT_ALREADY_USED' });
+
+    // The rollback contract proper: a FRESH grant presented to a conflicting
+    // slot fails with SLOT_ALREADY_TAKEN and must remain usable — consumption
+    // happens inside the booking transaction, so the failed booking rolls it
+    // back instead of burning it.
+    const { token: freshToken } = await bookingGrantService.issueGrant('09370000509');
+    await expect(
+      db.bookingService.createBooking({
+        salonId: db.fixtures.salonId,
+        serviceId: db.fixtures.serviceId,
+        staffId: db.fixtures.staffId,
+        bookingDate: '2026-11-25',
+        bookingTime: '16:00',
+        clientName: 'دارنده مجوز تازه',
+        clientPhone: '09370000509',
+        ipAddress: '127.0.0.1',
+        userAgent: 'rollback-probe-fresh',
+        bookingGrant: freshToken,
+      })
     ).rejects.toMatchObject({ code: 'SLOT_ALREADY_TAKEN' });
+
+    // The fresh grant SURVIVED the failed booking — explicit proof that a
+    // failed booking never double-burns a grant.
+    const stillUsable = await bookingGrantService.consumeGrant(freshToken, '09370000509');
+    expect(stillUsable.consumed_at).toBeTruthy();
 
     await expect(
       bookingGrantService.consumeGrant(token, '09370000507')

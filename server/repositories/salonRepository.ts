@@ -699,8 +699,17 @@ export const salonRepository = {
       conditions.push('staff_id IS NULL');
     }
 
+    // DATE columns are selected as canonical 'YYYY-MM-DD' text so the runtime
+    // shape matches the DbAvailabilityException contract (start_date/end_date:
+    // string). The pg driver would otherwise return JS Date objects, breaking
+    // every string date comparison in the rules engine on real PostgreSQL
+    // (holiday blocking silently never fired — caught by the Phase 18 DB suite).
     const res = await query<DbAvailabilityException>(
-      `SELECT * FROM availability_exceptions WHERE ${conditions.join(' AND ')}`,
+      `SELECT id, salon_id, staff_id,
+              to_char(start_date, 'YYYY-MM-DD') AS start_date,
+              to_char(end_date, 'YYYY-MM-DD') AS end_date,
+              start_time, end_time, reason, exception_type, is_available, created_at
+       FROM availability_exceptions WHERE ${conditions.join(' AND ')}`,
       values,
       client
     );
@@ -716,7 +725,11 @@ export const salonRepository = {
     }
 
     const res = await query<DbAvailabilityException>(
-      `SELECT * FROM availability_exceptions WHERE salon_id = $1 ORDER BY start_date ASC`,
+      `SELECT id, salon_id, staff_id,
+              to_char(start_date, 'YYYY-MM-DD') AS start_date,
+              to_char(end_date, 'YYYY-MM-DD') AS end_date,
+              start_time, end_time, reason, exception_type, is_available, created_at
+       FROM availability_exceptions WHERE salon_id = $1 ORDER BY start_date ASC`,
       [salonId],
       client
     );
@@ -761,7 +774,10 @@ export const salonRepository = {
       `INSERT INTO availability_exceptions (
         salon_id, staff_id, start_date, end_date, start_time, end_time, reason, exception_type, is_available
       ) VALUES ($1, $2, $3::date, $4::date, $5, $6, $7, $8, $9)
-      RETURNING *`,
+      RETURNING id, salon_id, staff_id,
+                to_char(start_date, 'YYYY-MM-DD') AS start_date,
+                to_char(end_date, 'YYYY-MM-DD') AS end_date,
+                start_time, end_time, reason, exception_type, is_available, created_at`,
       [
         dto.salonId,
         dto.staffId || null,

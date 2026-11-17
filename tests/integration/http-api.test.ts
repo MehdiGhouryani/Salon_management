@@ -21,6 +21,9 @@ import { getDevMockSmsProvider } from '../../server/services/sms/index.ts';
 import { bookingService } from '../../server/services/booking/bookingService.ts';
 import { clearRateLimitBuckets } from '../../server/middleware/rateLimit.ts';
 import { bookingGrantService } from '../../server/services/auth/bookingGrantService.ts';
+import { salonRepository } from '../../server/repositories/salonRepository.ts';
+import { appointmentRepository } from '../../server/repositories/appointmentRepository.ts';
+import { staffRepository } from '../../server/repositories/staffRepository.ts';
 
 let server: http.Server;
 let baseUrl: string;
@@ -169,6 +172,112 @@ describe('Admin API security & RBAC over HTTP (integration)', () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(Array.isArray(data.logs)).toBe(true);
+  });
+
+  it('Salons list carries REAL aggregates: current-month revenue, appointment count, active staff (Phase 18)', async () => {
+    // Dedicated fixture salon so seeded rows never influence the assertions.
+    const salonId = 't18-agg-salon';
+    await salonRepository.create({
+      id: salonId,
+      slug: 't18-agg-salon',
+      name: 'سالن تست تجمیع داده',
+      ownerName: 'مالک تجمیع',
+      phone: '09361818181',
+      province: 'تهران',
+      city: 'تهران',
+      address: 'تهران، محل تست تجمیع',
+      status: 'active',
+      planExpiry: new Date('2027-01-01'),
+    }).catch(() => {});
+
+    // Two paid appointments inside the CURRENT Asia/Tehran month:
+    // one confirmed + one completed → both count toward monthly revenue.
+    const tehranToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran' }).format(new Date());
+    const monthStart = `${tehranToday.slice(0, 7)}-01`;
+    const [y, m] = monthStart.split('-').map(Number);
+    const monthEnd = new Date(Date.UTC(y, m, 0, 12)).toISOString().slice(0, 10);
+
+    await appointmentRepository.create({
+      id: 't18-appt-confirmed',
+      trackingCode: 'GIS-T18C1',
+      salonId,
+      serviceId: 'srv-t18',
+      staffId: 'stf-t18-active',
+      clientName: 'مشتری تجمیع ۱',
+      clientPhone: '09361818182',
+      bookingDate: monthEnd,
+      bookingTime: '11:00',
+      price: 500000,
+      status: 'confirmed',
+    });
+    await appointmentRepository.create({
+      id: 't18-appt-completed',
+      trackingCode: 'GIS-T18C2',
+      salonId,
+      serviceId: 'srv-t18',
+      staffId: 'stf-t18-active',
+      clientName: 'مشتری تجمیع ۲',
+      clientPhone: '09361818183',
+      bookingDate: monthStart,
+      bookingTime: '12:00',
+      price: 300000,
+      status: 'completed',
+    });
+    // A cancelled appointment adds to the total count but NOT to revenue.
+    await appointmentRepository.create({
+      id: 't18-appt-cancelled',
+      trackingCode: 'GIS-T18C3',
+      salonId,
+      serviceId: 'srv-t18',
+      staffId: 'stf-t18-active',
+      clientName: 'مشتری تجمیع ۳',
+      clientPhone: '09361818184',
+      bookingDate: monthEnd,
+      bookingTime: '13:00',
+      price: 999999,
+      status: 'cancelled',
+    });
+
+    await staffRepository.create({ id: 'stf-t18-active', salonId, name: 'پرسنل فعال', role: 'متخصص', isActive: true });
+    await staffRepository.create({ id: 'stf-t18-inactive', salonId, name: 'پرسنل غیرفعال', role: 'متخصص', isActive: false });
+
+    const res = await fetch(`${baseUrl}/api/admin/salons?search=${encodeURIComponent('سالن تست تجمیع داده')}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    const salon = (data.salons || []).find((s: any) => s.id === salonId);
+    expect(salon).toBeTruthy();
+    expect(salon.monthlyRevenue).toBe(800000); // 500000 confirmed + 300000 completed
+    expect(salon.totalAppointments).toBe(3); // includes the cancelled row
+    expect(salon.activeStaffCount).toBe(1); // inactive staff excluded
+  });
+
+  it('Salons list reports honest zeros for a salon with no activity (Phase 18)', async () => {
+    const salonId = 't18-empty-salon';
+    await salonRepository.create({
+      id: salonId,
+      slug: 't18-empty-salon',
+      name: 'سالن بدون فعالیت',
+      ownerName: 'مالک بدون نوبت',
+      phone: '09361818185',
+      province: 'تهران',
+      city: 'تهران',
+      address: 'تهران، محل تست خالی',
+      status: 'active',
+      planExpiry: new Date('2027-01-01'),
+    }).catch(() => {});
+
+    const res = await fetch(`${baseUrl}/api/admin/salons?search=${encodeURIComponent('بدون فعالیت')}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    const salon = (data.salons || []).find((s: any) => s.id === salonId);
+    expect(salon).toBeTruthy();
+    expect(salon.monthlyRevenue).toBe(0);
+    expect(salon.totalAppointments).toBe(0);
+    expect(salon.activeStaffCount).toBe(0);
   });
 });
 
@@ -751,5 +860,177 @@ describe('Booking policy via HTTP (Phase 09)', () => {
     await expect(
       bookingService.cancelBooking(created.trackingCode, '09367778822', 'لغو پس از تکمیل')
     ).rejects.toMatchObject({ statusCode: 409, code: 'APPOINTMENT_NOT_CANCELLABLE' });
+  });
+});
+
+describe('Phase 19 security: dev/test reset endpoints (flag ON in this suite via vitest env)', () => {
+  const ALLOWLIST = [
+    '09361000005',
+    '09361000020',
+    '09364567890',
+    '09364567891',
+    '09364567892',
+    '09362000001',
+    '09362000077',
+  ];
+  const CUSTOMER_PHONE = '09365550001'; // real-customer-shaped, NOT allowlisted
+
+  it('server-side allowlist exists and matches the E2E helper list exactly (drift guard)', async () => {
+    const { E2E_TEST_PHONE_ALLOWLIST } = await import('../../server/routes/dev.ts');
+    expect([...E2E_TEST_PHONE_ALLOWLIST]).toEqual(ALLOWLIST);
+  });
+
+  it('allowlisted phone: reset deletes the OTP challenge (cooldown gone) — 200', async () => {
+    const allowlisted = ALLOWLIST[4]; // 09364567892
+    await clearRateLimitBuckets();
+
+    const first = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: allowlisted, purpose: 'login' }),
+    });
+    expect(first.status).toBe(200);
+
+    // Immediate re-request hits the 60s resend cooldown — proves the challenge exists.
+    const cooldown = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: allowlisted, purpose: 'login' }),
+    });
+    expect(cooldown.status).toBe(429);
+
+    const reset = await fetch(`${baseUrl}/api/dev/reset-rate-limiters`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phones: ALLOWLIST }),
+    });
+    expect(reset.status).toBe(200);
+    const resetBody = await reset.json();
+    expect(resetBody.success).toBe(true);
+    expect(resetBody.otpChallengesDeleted).toBeGreaterThanOrEqual(1);
+
+    // After the reset the cooldown is gone: the re-request succeeds again.
+    const after = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: allowlisted, purpose: 'login' }),
+    });
+    expect(after.status).toBe(200);
+  });
+
+  it('NON-allowlisted phone: reset is REJECTED with 400 and the OTP challenge SURVIVES', async () => {
+    await clearRateLimitBuckets();
+
+    const first = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: CUSTOMER_PHONE, purpose: 'login' }),
+    });
+    expect(first.status).toBe(200);
+
+    const reset = await fetch(`${baseUrl}/api/dev/reset-rate-limiters`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phones: [CUSTOMER_PHONE] }),
+    });
+    expect(reset.status).toBe(400);
+    const resetBody = await reset.json();
+    expect(resetBody.error).toBe('TEST_PHONE_NOT_ALLOWLISTED');
+    expect(resetBody.rejectedCount).toBe(1);
+
+    // The real-customer-shaped challenge was NOT deleted: the resend cooldown
+    // still applies (this is exactly the production protection that must hold).
+    const cooldown = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: CUSTOMER_PHONE, purpose: 'login' }),
+    });
+    expect(cooldown.status).toBe(429);
+  });
+
+  it('mixed list (one allowlisted + one unknown): fail-closed — nothing is deleted', async () => {
+    await clearRateLimitBuckets();
+
+    const first = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: ALLOWLIST[2], purpose: 'login' }),
+    });
+    expect(first.status).toBe(200);
+
+    const reset = await fetch(`${baseUrl}/api/dev/reset-rate-limiters`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phones: [ALLOWLIST[2], '09365550099'] }),
+    });
+    expect(reset.status).toBe(400);
+    expect((await reset.json()).error).toBe('TEST_PHONE_NOT_ALLOWLISTED');
+
+    // The allowlisted phone's challenge also survived the rejected request.
+    const cooldown = await fetch(`${baseUrl}/api/auth/otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phone: ALLOWLIST[2], purpose: 'login' }),
+    });
+    expect(cooldown.status).toBe(429);
+  });
+
+  it('allowlisted phone: reset-e2e-bookings deletes ONLY that phone\u2019s appointments', async () => {
+    await clearRateLimitBuckets();
+    await appointmentRepository.create({
+      id: 't19-e2e-book-allow',
+      trackingCode: 'GIS-T19A1',
+      salonId: 'sal-101',
+      serviceId: 'srv-101',
+      staffId: 'stf-101',
+      clientName: 'دارنده مجوز آزمایشی',
+      clientPhone: '09364567891',
+      bookingDate: '2026-12-01',
+      bookingTime: '09:00',
+      price: 100000,
+      status: 'confirmed',
+    });
+
+    const reset = await fetch(`${baseUrl}/api/dev/reset-e2e-bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phones: ALLOWLIST }),
+    });
+    expect(reset.status).toBe(200);
+    const body = await reset.json();
+    expect(body.success).toBe(true);
+    expect(body.appointmentsDeleted).toBeGreaterThanOrEqual(1);
+
+    const gone = await appointmentRepository.findById('t19-e2e-book-allow');
+    expect(gone).toBeNull();
+  });
+
+  it('NON-allowlisted phone: reset-e2e-bookings is rejected with 400 and the booking SURVIVES', async () => {
+    await clearRateLimitBuckets();
+    await appointmentRepository.create({
+      id: 't19-e2e-book-customer',
+      trackingCode: 'GIS-T19C1',
+      salonId: 'sal-101',
+      serviceId: 'srv-101',
+      staffId: 'stf-101',
+      clientName: 'مشتری واقعی‌نما',
+      clientPhone: CUSTOMER_PHONE,
+      bookingDate: '2026-12-01',
+      bookingTime: '10:00',
+      price: 100000,
+      status: 'confirmed',
+    });
+
+    const reset = await fetch(`${baseUrl}/api/dev/reset-e2e-bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-NobatAra-Client': 'test' },
+      body: JSON.stringify({ phones: [CUSTOMER_PHONE] }),
+    });
+    expect(reset.status).toBe(400);
+    expect((await reset.json()).error).toBe('TEST_PHONE_NOT_ALLOWLISTED');
+
+    const stillThere = await appointmentRepository.findById('t19-e2e-book-customer');
+    expect(stillThere).toBeTruthy();
+    expect(stillThere?.client_phone).toBe(CUSTOMER_PHONE);
   });
 });

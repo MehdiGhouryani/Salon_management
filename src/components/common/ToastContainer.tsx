@@ -46,9 +46,10 @@ export const ToastContainer: React.FC = () => {
             {/* Close button */}
             <button
               onClick={() => removeToast(toast.id)}
+              aria-label="بستن اعلان"
               className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded transition-colors shrink-0 cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         );

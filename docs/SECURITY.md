@@ -1,20 +1,32 @@
 # NobatAra — Security & Compliance Architecture
 
-**Audit Date:** 2026-10-19  
-**Status:** Security Baseline & Hardening Strategy  
+**Audit Date:** 2026-10-19 (baseline) · **Reconciled:** Phase 18, 2026-11-17  
+**Status:** Implemented architecture + verification state per control  
 
 ---
 
 ## 1. Threat Modeling & Vulnerability Matrix
 
-| Threat / Risk | Current Baseline Status | Mitigation Plan in Phase 2 & 5 |
-| :--- | :--- | :--- |
-| **Unauthenticated Admin Access** | HIGH RISK: Any user can click the persona switcher in `App.tsx` and access super admin views. | Restrict switcher to explicit `DEMO_MODE=true`. Production requires verified session JWT + 2FA challenge. |
-| **Client-Side OTP Bypass** | HIGH RISK: OTP is generated in browser in `BookingModal.tsx` and accepts `1234`. | Shift OTP generation and validation strictly to backend with bcrypt hashing, 120s TTL, and rate limiting. |
-| **Cross-Tenant Data Exposure** | HIGH RISK: Salon managers can switch salons via dropdown (`currentSalonSlug`). | Backend queries enforce `WHERE salon_id = :authenticatedSalonId` derived strictly from verified JWT. |
-| **Exposed Secret API Keys** | MEDIUM RISK: Fake credentials shown in client `SettingsView.tsx`. | Real API keys kept exclusively in server environment variables (`KAVENEGAR_API_KEY`, `ZARINPAL_MERCHANT`). Client only receives masked status. |
-| **Brute Force & Denial of Service** | MEDIUM RISK: No rate limiting on booking creation or simulated dispatch. | Implement `express-rate-limit` (10 requests/min on OTP endpoints, 60 requests/min globally per IP). |
-| **Tampering with Audit Logs** | LOW RISK: Audit logs currently stored in volatile React state. | Store audit logs in an append-only database table with actor ID, IP address, user agent, severity, and action details. |
+The baseline findings below were the October 2026 audit of the pre-hardening
+client-only SPA. **Every item has since been remediated server-side**; the
+"Verification (Phase 18)" column states exactly what currently proves it, so no
+claim outruns its evidence.
+
+| Threat / Risk | Baseline (2026-10-19) | Current implementation | Verification (Phase 18) |
+| :--- | :--- | :--- | :--- |
+| **Unauthenticated Admin Access** | HIGH RISK: persona switcher granted admin views client-side. | Super-admin console requires a server-verified session (`requirePlatformRole('super_admin')`); bootstrap only via operator CLI (`scripts/bootstrapAdmin.ts --confirm`). | Implemented + tested: 401/403 RBAC tests (`tests/integration/http-api.test.ts`), E2E super-admin journey, `SUPER_ADMIN_ASSIGNMENT_FORBIDDEN` on role escalation. |
+| **Client-Side OTP Bypass** | HIGH RISK: OTP generated in browser, `1234` bypass. | OTP generated server-side (`crypto.randomInt`), stored as keyed HMAC only, TTL/cooldown/attempt caps, atomic consumption. | Implemented + tested: unit OTP lifecycle tests + integration HTTP OTP tests + E2E real-OTP journeys. **Live SMS delivery (Kavenegar): BLOCKED — needs real credentials.** |
+| **Cross-Tenant Data Exposure** | HIGH RISK: salon switcher leaked other tenants' data. | Every salon query binds to the membership-verified `salon_id` (`requireSalonMembership`). | Implemented + tested: tenant-boundary HTTP tests + salon E2E journey. |
+| **Exposed Secret API Keys** | MEDIUM RISK: fake keys in client `SettingsView`. | Keys only in server env; client sees masked status. | Implemented (code-verified). |
+| **Brute Force & DoS** | MEDIUM RISK: no rate limiting. | In-process fixed-window limiter on OTP/booking/admin routes; per-IP + per-phone OTP counters + resend cooldown; fail-closed on DB errors. | Implemented + tested (integration rate-limit tests). **Single-process scope honestly documented — horizontal deployments need a shared limiter.** |
+| **Tampering with Audit Logs** | LOW RISK: logs in React state. | Append-only `audit_logs` table with actor, role, IP, user agent, severity, details; admin panel reads from the API. | Implemented + tested (admin/audit integration tests + E2E governance journey). **Real-PostgreSQL persistence verified in Phase 18 (migrations 001–005 executed from empty DB).** |
+
+### Verification state legend (used across this document)
+
+- **Implemented + tested** — source code exists AND automated tests execute against it.
+- **Implemented, not verified against real infrastructure** — code + tests exist, but live external dependency unproven.
+- **Not implemented** — no code.
+- **Blocked** — external prerequisite missing (credentials, accounts, devices).
 
 ---
 

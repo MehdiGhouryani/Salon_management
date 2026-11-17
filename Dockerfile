@@ -18,16 +18,20 @@ COPY package.json package-lock.json tsconfig.json vite.config.ts index.html ./
 COPY src ./src
 RUN npm run build
 
-# ---------- Stage 3: runtime (dev deps stripped) ----------
+# ---------- Stage 3: runtime (production dependency tree only) ----------
 FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
-# tsx + production deps only (the server entry runs TypeScript via tsx in
-# production for zero-transpile drift with development; the frontend ships
-# pre-built static assets from dist/).
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json tsconfig.json ./
+# Phase 19 (approach B — minimum runtime deps): tsx lives in "dependencies"
+# because the CMD runs the TypeScript server directly (zero-transpile-drift
+# design); every other tool (vite, react, test runners, types) is a
+# devDependency. Installing with --omit=dev yields ONLY express, cookie-parser,
+# dotenv, pg, tsx + their transitive deps — no dev-only tools ship in the image.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+
+COPY tsconfig.json ./
 COPY server ./server
 COPY scripts ./scripts
 COPY --from=build /app/dist ./dist

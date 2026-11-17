@@ -95,7 +95,11 @@ BEGIN
   gd := days + 1;
 
   leap := ((gy % 4 = 0 AND gy % 100 <> 0) OR gy % 400 = 0);
-  month_lengths := ARRAY[0, 31, CASE WHEN leap THEN 29 ELSE 28 END, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  -- PL/pgSQL arrays are 1-BASED: index 1 must be January (31 days). The
+  -- original port kept the TypeScript util's 0-based padding element, which
+  -- shifted every month walk one month late (caught by the Phase 18 DB suite:
+  -- 1403/08/25 resolved to 2024-12-14 instead of 2024-11-15).
+  month_lengths := ARRAY[31, CASE WHEN leap THEN 29 ELSE 28 END, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   gm := 1;
   WHILE gm <= 12 AND gd > month_lengths[gm] LOOP
     gd := gd - month_lengths[gm];
@@ -109,8 +113,11 @@ BEGIN
   jy := CASE WHEN gy <= 1600 THEN 0 ELSE 979 END;
   g := CASE WHEN gy <= 1600 THEN gy - 621 ELSE gy - 1600 END;
   gy2 := CASE WHEN gm > 2 THEN g + 1 ELSE g END;
+  -- g_d_m is 1-BASED here (index 0 does not exist in PL/pgSQL), so the
+  -- cumulative-days lookup for month gm is g_d_m[gm] — the TypeScript/PHP
+  -- originals use 0-based g_d_m[gm-1] where element 0 is the padding zero.
   jdn_days := (365 * g) + FLOOR((gy2 + 3) / 4)::BIGINT - FLOOR((gy2 + 99) / 100)::BIGINT
-              + FLOOR((gy2 + 399) / 400)::BIGINT - 80 + gd + g_d_m[gm - 1];
+              + FLOOR((gy2 + 399) / 400)::BIGINT - 80 + gd + g_d_m[gm];
   jy := jy + 33 * FLOOR(jdn_days / 12053)::INT;
   jdn_days := jdn_days % 12053;
   jy := jy + 4 * FLOOR(jdn_days / 1461)::INT;
@@ -175,10 +182,12 @@ WHERE a.salon_id = b.salon_id
   AND (a.updated_at, a.id::text) < (b.updated_at, b.id::text);
 
 -- One working-hours row per (salon, staff-or-salon-level, weekday). Salon-level
--- rows (staff_id IS NULL) are keyed with a fixed sentinel UUID so they cannot
--- collide with a real staff row.
+-- rows (staff_id IS NULL) are keyed with a fixed sentinel string so they cannot
+-- collide with a real staff row. staff_id is VARCHAR(64) in migration 001, so
+-- the sentinel must stay in the same type domain (a ::uuid cast here fails on
+-- real PostgreSQL with "COALESCE types character varying and uuid").
 CREATE UNIQUE INDEX IF NOT EXISTS uq_working_hours_salon_day_staff
-  ON working_hours (salon_id, COALESCE(staff_id, '00000000-0000-0000-0000-000000000000'::uuid), day_of_week);
+  ON working_hours (salon_id, COALESCE(staff_id, '00000000-0000-0000-0000-000000000000'), day_of_week);
 
 -- Canonical staff-slot uniqueness on the DATE column (cancelled appointments
 -- do not occupy a slot). The legacy uq_staff_slot on the VARCHAR remains so
