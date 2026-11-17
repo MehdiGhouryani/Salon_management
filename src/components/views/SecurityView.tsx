@@ -632,8 +632,6 @@ activeSubTab === 'audit'
         </Modal>
       )}
 
-      {/* Confirmation Modal */}
-
     </div>
   );
 };

@@ -88,7 +88,7 @@ export function parseDatabaseSslSettings(
   }
 
   const databaseUrl = (env.DATABASE_URL || '').trim();
-  const sslModeRequiresTls = /(?:\\?|&)sslmode=(?:require|verify-ca|verify-full)(?:&|$)/i.test(databaseUrl);
+  const sslModeRequiresTls = /(?:\?|&)sslmode=(?:require|verify-ca|verify-full)(?:&|$)/i.test(databaseUrl);
   const ssl = rawSsl === 'true' || sslModeRequiresTls;
 
   const rawVerify = (env.DB_SSL_REJECT_UNAUTHORIZED || 'true').trim().toLowerCase();

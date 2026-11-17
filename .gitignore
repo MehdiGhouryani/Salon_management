@@ -18,3 +18,4 @@ pgdata/
 *.pgdata
 # Design-skill working artifacts (UI handoff tooling)
 .taste-skill/
+.aistudio/
