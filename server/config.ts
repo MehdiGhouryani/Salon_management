@@ -16,6 +16,8 @@ export interface DatabaseConfig {
   readonly user: string;
   readonly password?: string;
   readonly ssl: boolean;
+  readonly sslRejectUnauthorized: boolean;
+  readonly sslCa?: string;
   readonly poolMin: number;
   readonly poolMax: number;
   readonly idleTimeoutMs: number;
@@ -68,6 +70,50 @@ export interface ServerConfig {
     readonly timeoutMs: number;
     readonly maxAttempts: number;
   };
+}
+
+export interface DatabaseSslSettings {
+  ssl: boolean;
+  sslRejectUnauthorized: boolean;
+  sslCa?: string;
+}
+
+export function parseDatabaseSslSettings(
+  env: NodeJS.ProcessEnv,
+  isProduction: boolean
+): DatabaseSslSettings {
+  const rawSsl = (env.DB_SSL || '').trim().toLowerCase();
+  if (rawSsl && !['true', 'false'].includes(rawSsl)) {
+    throw new Error('[ServerConfig] Invalid DB_SSL: expected true or false.');
+  }
+
+  const databaseUrl = (env.DATABASE_URL || '').trim();
+  const sslModeRequiresTls = /(?:\\?|&)sslmode=(?:require|verify-ca|verify-full)(?:&|$)/i.test(databaseUrl);
+  const ssl = rawSsl === 'true' || sslModeRequiresTls;
+
+  const rawVerify = (env.DB_SSL_REJECT_UNAUTHORIZED || 'true').trim().toLowerCase();
+  if (!['true', 'false'].includes(rawVerify)) {
+    throw new Error('[ServerConfig] Invalid DB_SSL_REJECT_UNAUTHORIZED: expected true or false.');
+  }
+  const sslRejectUnauthorized = rawVerify === 'true';
+
+  if (isProduction && !sslRejectUnauthorized) {
+    throw new Error(
+      '[ServerConfig] DB_SSL_REJECT_UNAUTHORIZED=false is forbidden in production. ' +
+        'Configure a trusted DB_SSL_CA certificate instead.'
+    );
+  }
+
+  const rawCa = (env.DB_SSL_CA || '').trim();
+  const sslCa = rawCa ? rawCa.replace(/\\n/g, '\n') : undefined;
+  if (sslCa && !ssl) {
+    throw new Error('[ServerConfig] DB_SSL_CA requires DB_SSL=true or a TLS sslmode in DATABASE_URL.');
+  }
+  if (sslCa && !sslCa.includes('-----BEGIN CERTIFICATE-----')) {
+    throw new Error('[ServerConfig] DB_SSL_CA must contain PEM-encoded certificate material.');
+  }
+
+  return Object.freeze({ ssl, sslRejectUnauthorized, sslCa });
 }
 
 function parseAndValidateConfig(): ServerConfig {
@@ -153,7 +199,8 @@ function parseAndValidateConfig(): ServerConfig {
   const dbName = (process.env.DB_NAME || 'nobatara').trim();
   const dbUser = (process.env.DB_USER || 'postgres').trim();
   const dbPassword = process.env.DB_PASSWORD ? process.env.DB_PASSWORD.trim() : undefined;
-  const dbSsl = process.env.DB_SSL === 'true' || (rawDatabaseUrl.includes('sslmode=require'));
+  const dbSslSettings = parseDatabaseSslSettings(process.env, isProduction);
+  const dbSsl = dbSslSettings.ssl;
 
   const poolMin = parseInt(process.env.DB_POOL_MIN || '2', 10);
   const poolMax = parseInt(process.env.DB_POOL_MAX || '10', 10);
@@ -182,6 +229,8 @@ function parseAndValidateConfig(): ServerConfig {
     user: dbUser,
     password: dbPassword,
     ssl: dbSsl,
+    sslRejectUnauthorized: dbSslSettings.sslRejectUnauthorized,
+    sslCa: dbSslSettings.sslCa,
     poolMin: isNaN(poolMin) ? 2 : poolMin,
     poolMax: isNaN(poolMax) ? 10 : poolMax,
     idleTimeoutMs: isNaN(idleTimeoutMs) ? 30000 : idleTimeoutMs,

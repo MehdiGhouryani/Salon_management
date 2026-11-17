@@ -74,10 +74,17 @@ export function getPool(): pg.Pool {
   }
 
   try {
+    const sslOptions: pg.PoolConfig['ssl'] = config.database.ssl
+      ? {
+          rejectUnauthorized: config.database.sslRejectUnauthorized,
+          ...(config.database.sslCa ? { ca: config.database.sslCa } : {}),
+        }
+      : false;
+
     const poolConfig: pg.PoolConfig = config.database.url
       ? {
           connectionString: config.database.url,
-          ssl: config.database.ssl ? { rejectUnauthorized: false } : false,
+          ssl: sslOptions,
           max: config.database.poolMax,
           min: config.database.poolMin,
           idleTimeoutMillis: config.database.idleTimeoutMs,
@@ -89,7 +96,7 @@ export function getPool(): pg.Pool {
           database: config.database.name,
           user: config.database.user,
           password: config.database.password,
-          ssl: config.database.ssl ? { rejectUnauthorized: false } : false,
+          ssl: sslOptions,
           max: config.database.poolMax,
           min: config.database.poolMin,
           idleTimeoutMillis: config.database.idleTimeoutMs,
