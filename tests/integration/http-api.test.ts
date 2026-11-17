@@ -67,6 +67,7 @@ beforeAll(async () => {
   const regSession = await sessionService.createSession(regUser, mockReq, mockRes, 'web');
   const adminSession = await sessionService.createSession(superAdminUser, mockReq, mockRes, 'web');
   regUserToken = regSession.rawToken;
+  await userRepository.addMembership(regUser.id, 'sal-101', 'owner', []);
   adminToken = adminSession.rawToken;
 });
 
@@ -627,7 +628,7 @@ describe('Super admin self-protection (Phase 07, integration)', () => {
       });
       if (res.status === 429) {
         const data = await res.json();
-        expect(data.error).toBe('RATE_LIMITED');
+        expect(data.error).toBe('OTP_VERIFY_RATE_LIMIT');
         sawRateLimit = true;
         break;
       }
@@ -1097,5 +1098,99 @@ describe('Phase 19 security: dev/test reset endpoints (flag ON in this suite via
     const stillThere = await appointmentRepository.findById('t19-e2e-book-customer');
     expect(stillThere).toBeTruthy();
     expect(stillThere?.client_phone).toBe(CUSTOMER_PHONE);
+  });
+});
+
+
+describe('Persistent support ticket API over HTTP', () => {
+  it('lets a salon owner open a ticket, the super admin reply, and the salon continue the conversation', async () => {
+    const create = await fetch(`${baseUrl}/api/salon/sal-101/support/tickets`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${regUserToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+      body: JSON.stringify({
+        subject: 'مشکل اتصال پیامک',
+        category: 'sms',
+        priority: 'high',
+        message: 'پیامک‌های تایید برای مشتریان ارسال نمی‌شوند.',
+      }),
+    });
+
+    expect(create.status).toBe(201);
+    const created = await create.json();
+    expect(created.ticket.ticketNumber).toMatch(/^SUP-/);
+    expect(created.ticket.messages).toHaveLength(1);
+    const ticketId = created.ticket.id;
+
+    const adminList = await fetch(`${baseUrl}/api/admin/support/tickets?status=open&priority=high`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(adminList.status).toBe(200);
+    const list = await adminList.json();
+    expect(list.tickets.some((ticket: any) => ticket.id === ticketId)).toBe(true);
+
+    const reply = await fetch(`${baseUrl}/api/admin/support/tickets/${ticketId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+      body: JSON.stringify({ content: 'درخواست دریافت شد و در حال بررسی است.' }),
+    });
+    expect(reply.status).toBe(201);
+
+    const salonReply = await fetch(`${baseUrl}/api/salon/sal-101/support/tickets/${ticketId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${regUserToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+      body: JSON.stringify({ content: 'ممنون، منتظر نتیجه می‌مانیم.' }),
+    });
+    expect(salonReply.status).toBe(201);
+
+    const status = await fetch(`${baseUrl}/api/admin/support/tickets/${ticketId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+      body: JSON.stringify({ status: 'resolved' }),
+    });
+    expect(status.status).toBe(200);
+    expect((await status.json()).ticket.status).toBe('resolved');
+
+    const ownList = await fetch(`${baseUrl}/api/salon/sal-101/support/tickets`, {
+      headers: { Authorization: `Bearer ${regUserToken}` },
+    });
+    expect(ownList.status).toBe(200);
+    const ownData = await ownList.json();
+    const ownTicket = ownData.tickets.find((ticket: any) => ticket.id === ticketId);
+    expect(ownTicket).toBeTruthy();
+    expect(ownTicket.messages).toHaveLength(3);
+  });
+
+  it('rejects invalid ticket data and prevents access from a different salon tenant', async () => {
+    const invalid = await fetch(`${baseUrl}/api/salon/sal-101/support/tickets`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${regUserToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+      body: JSON.stringify({ subject: 'no', category: 'unknown', message: 'bad', priority: 'critical' }),
+    });
+    expect(invalid.status).toBe(400);
+
+    const crossTenant = await fetch(`${baseUrl}/api/salon/sal-102/support/tickets`, {
+      headers: { Authorization: `Bearer ${regUserToken}` },
+    });
+    expect(crossTenant.status).toBe(403);
   });
 });
