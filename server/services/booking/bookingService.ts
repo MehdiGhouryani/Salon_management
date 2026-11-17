@@ -590,7 +590,7 @@ export const bookingService = {
         };
       });
     } else {
-      // In-Memory Dev/Test: Mutex lock per (salon, staff, date) to prevent parallel race conditions
+      // In-Memory Dev/Test: serialize by salon/date, matching the PostgreSQL advisory lock
       const lockKey = `${params.salonId}:${canonicalDate}`;
       const release = await acquireLock(lockKey);
       try {

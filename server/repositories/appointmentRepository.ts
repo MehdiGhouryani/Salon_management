@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import { query, isDatabaseConfigured, withTransaction } from '../db/pool.ts';
-import { doIntervalsOverlap } from '../utils/bookingTime.ts';
+import { addMinutesToTime, doIntervalsOverlap } from '../utils/bookingTime.ts';
 import { parseBookingDateInput } from '../utils/jalali.ts';
 
 export type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
@@ -317,7 +317,7 @@ export const appointmentRepository = {
           appt.status !== 'cancelled' &&
           appt.id !== excludeAppointmentId
         ) {
-          const existingEnd = appt.end_time || appt.booking_time;
+          const existingEnd = appt.end_time || addMinutesToTime(appt.booking_time, 60);
           if (doIntervalsOverlap(bookingTime, endTime, appt.booking_time, existingEnd)) {
             return false; // Overlap detected! Slot is not available
           }
