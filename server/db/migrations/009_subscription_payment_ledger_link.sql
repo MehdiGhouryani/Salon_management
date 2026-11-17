@@ -6,5 +6,4 @@ ALTER TABLE payment_records
   REFERENCES subscription_payment_attempts(id) ON DELETE RESTRICT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_records_subscription_attempt
-  ON payment_records(subscription_payment_attempt_id)
-  WHERE subscription_payment_attempt_id IS NOT NULL;
+  ON payment_records(subscription_payment_attempt_id);
