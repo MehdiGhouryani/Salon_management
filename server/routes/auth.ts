@@ -20,7 +20,7 @@ export const authRouter = express.Router();
  */
 authRouter.post(
   '/otp/request',
-  rateLimit({ windowMs: 10 * 60 * 1000, max: 10, keyFor: (req) => String(req.ip || 'unknown') }),
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 10, keyFor: (req) => String(req.ip || 'unknown'), code: 'OTP_REQUEST_RATE_LIMIT' }),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Phase 07: fail-closed database errors surface as controlled 503s —
     // never as process-killing unhandled rejections (Express 4 does not
@@ -84,6 +84,7 @@ authRouter.post(
       const phone = req.body?.phone ? normalizeIranianPhone(String(req.body.phone)).national : 'nophone';
       return `${ip}:${phone}`;
     },
+    code: 'OTP_VERIFY_RATE_LIMIT',
   }),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

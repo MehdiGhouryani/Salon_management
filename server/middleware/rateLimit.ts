@@ -211,3 +211,25 @@ export function clearRateLimitBuckets(): void {
   memoryBuckets.clear();
   lastMemorySweep = 0;
 }
+
+
+/**
+ * Test-only targeted reset for the deterministic E2E client.
+ * The caller is selected by a dev-only allowlisted endpoint; only HMAC keys
+ * for the explicitly supplied test identities are deleted, never whole IP
+ * ranges or customer rows.
+ */
+export async function clearRateLimitBucketsForTest(code: string, identities: string[]): Promise<number> {
+  const hashes = Array.from(new Set(
+    identities.map((identity) => String(identity).trim()).filter(Boolean)
+  )).map((identity) => createBucketHash(code, identity));
+
+  for (const hash of hashes) memoryBuckets.delete(hash);
+  if (!hashes.length || !isDatabaseConfigured()) return hashes.length;
+
+  const result = await query(
+    'DELETE FROM api_rate_limit_buckets WHERE bucket_hash = ANY($1::char(64)[])',
+    [hashes]
+  );
+  return Number(result.rowCount || 0);
+}

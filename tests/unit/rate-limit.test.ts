@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { clearRateLimitBuckets, rateLimit } from '../../server/middleware/rateLimit.ts';
+import { clearRateLimitBuckets, clearRateLimitBucketsForTest, rateLimit } from '../../server/middleware/rateLimit.ts';
 
 interface InvocationResult {
   statusCode: number;
@@ -120,5 +120,32 @@ describe('rateLimit middleware', () => {
     expect(() =>
       rateLimit({ windowMs: 1_000, max: 0, keyFor: () => 'x' })
     ).toThrow(/max/);
+  });
+});
+
+
+describe('test-scoped persistent rate-limit reset', () => {
+  it('clears only the requested policy identity', async () => {
+    const first = rateLimit({
+      windowMs: 60_000,
+      max: 1,
+      keyFor: (req) => String(req.ip),
+      code: 'TEST_SCOPED_RESET',
+    });
+    const unrelated = rateLimit({
+      windowMs: 60_000,
+      max: 1,
+      keyFor: (req) => String(req.ip),
+      code: 'TEST_SCOPED_RESET_OTHER',
+    });
+
+    expect((await invoke(first)).statusCode).toBe(200);
+    expect((await invoke(first)).statusCode).toBe(429);
+    expect((await invoke(unrelated)).statusCode).toBe(200);
+
+    await clearRateLimitBucketsForTest('TEST_SCOPED_RESET', ['192.0.2.10']);
+
+    expect((await invoke(first)).statusCode).toBe(200);
+    expect((await invoke(unrelated)).statusCode).toBe(429);
   });
 });

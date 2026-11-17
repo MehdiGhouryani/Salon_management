@@ -4,7 +4,7 @@ import { config } from '../config.ts';
 import { getDevMockSmsProvider } from '../services/sms/index.ts';
 import { userRepository } from '../repositories/userRepository.ts';
 import { otpService } from '../services/auth/otpService.ts';
-import { clearRateLimitBuckets } from '../middleware/rateLimit.ts';
+import { clearRateLimitBuckets, clearRateLimitBucketsForTest } from '../middleware/rateLimit.ts';
 import { appointmentRepository } from '../repositories/appointmentRepository.ts';
 
 export const devRouter = express.Router();
@@ -127,6 +127,25 @@ devRouter.post('/reset-rate-limiters', async (req: Request, res: Response): Prom
     res.status(500).json({
       error: 'RATE_LIMIT_RESET_FAILED',
       message: err?.message || 'خطا در بازنشانی وضعیت OTP.',
+    });
+    return;
+  }
+
+  // Shared PostgreSQL rate-limit counters must also reset for this test IP.
+  // Request OTP is IP-scoped; verify OTP is scoped to this IP + allowlisted phone.
+  const callerIp = String(req.ip || 'unknown');
+  try {
+    await Promise.all([
+      clearRateLimitBucketsForTest('OTP_REQUEST_RATE_LIMIT', [callerIp]),
+      clearRateLimitBucketsForTest(
+        'OTP_VERIFY_RATE_LIMIT',
+        phones.map((phone) => callerIp + ':' + phone)
+      ),
+    ]);
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'RATE_LIMIT_RESET_FAILED',
+      message: err?.message || 'خطا در بازنشانی محدودیت‌های آزمایشی.',
     });
     return;
   }
