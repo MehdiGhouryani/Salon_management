@@ -111,7 +111,7 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL subscription payment idempotency 
     );
     expect(ledger.rows).toHaveLength(1);
     expect(ledger.rows[0]).toMatchObject({
-      amount: '8900000',
+      amount: '890000',
       currency: 'IRT',
       transaction_type: 'subscription',
       status: 'completed',

@@ -349,9 +349,13 @@ export async function settleVerifiedSubscriptionPayment(
        ON CONFLICT (subscription_payment_attempt_id) DO NOTHING`,
       [
         locked.salon_id,
-        Number(locked.amount_rial),
+        Number(locked.amount_toman),
         reference,
-        JSON.stringify({ planCode: locked.plan_code, subscriptionId: subscription.rows[0].id }),
+        JSON.stringify({
+          planCode: locked.plan_code,
+          subscriptionId: subscription.rows[0].id,
+          amountRial: Number(locked.amount_rial),
+        }),
         locked.id,
       ],
       client
