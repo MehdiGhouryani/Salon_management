@@ -60,7 +60,13 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Verify the test database is reachable (deliberate failure if not)
-        run: node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client({connectionString: process.env.TEST_DATABASE_URL}); try { await c.connect(); const r = await c.query('SELECT version() v'); console.log('TEST DATABASE REACHABLE:', r.rows[0].v); await c.end(); } catch (e) { console.error('TEST DATABASE UNREACHABLE:', e.message); process.exit(1); } })"
+        # Phase 19 checkpoint fix: the inline node -e script contained
+        # "({default: pg})" whose ": " sequence is invalid inside a YAML plain
+        # scalar — the workflow failed at startup with zero jobs (the file was
+        # never machine-validated before this first CI run). Block scalars are
+        # literal and immune to that.
+        run: |
+          node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client({connectionString: process.env.TEST_DATABASE_URL}); try { await c.connect(); const r = await c.query('SELECT version() v'); console.log('TEST DATABASE REACHABLE:', r.rows[0].v); await c.end(); } catch (e) { console.error('TEST DATABASE UNREACHABLE:', e.message); process.exit(1); } })"
       - run: npm run test:db
 
   build:
@@ -107,7 +113,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Verify the E2E database is reachable (deliberate failure if not)
-        run: node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client({connectionString: process.env.DATABASE_URL}); try { await c.connect(); console.log('E2E DATABASE REACHABLE'); await c.end(); } catch (e) { console.error('E2E DATABASE UNREACHABLE:', e.message); process.exit(1); } })"
+        run: |
+          node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client({connectionString: process.env.DATABASE_URL}); try { await c.connect(); console.log('E2E DATABASE REACHABLE'); await c.end(); } catch (e) { console.error('E2E DATABASE UNREACHABLE:', e.message); process.exit(1); } })"
       - run: npm run db:migrate
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
