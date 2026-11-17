@@ -275,15 +275,6 @@ export async function processZarinpalCallback(
     return { success: false, attemptId: attempt.id, reason: 'pending' };
   }
 
-  if (!verification.verified || !verification.reference) {
-    await subscriptionRepository.setFailed(
-      attempt.id,
-      'GATEWAY_VERIFY_' + verification.code,
-      verification.message
-    );
-    return { success: false, attemptId: attempt.id, reason: 'verification_failed' };
-  }
-
   const verifiedReference = verification.reference;
   if (!verification.verified || !verifiedReference) {
     await subscriptionRepository.setFailed(
@@ -392,7 +383,6 @@ export async function settleVerifiedSubscriptionPayment(
 
     return { success: true, attemptId: locked.id, duplicate: false };
   });
-};
 }
 
 export async function getSalonSubscriptionSummary(salonId: string) {
