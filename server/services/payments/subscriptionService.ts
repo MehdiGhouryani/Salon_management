@@ -277,23 +277,18 @@ export async function processZarinpalCallback(
   if (!attempt) return { success: false, reason: 'unknown_authority' };
   if (attempt.status === 'paid') return { success: true, attemptId: attempt.id, duplicate: true };
 
-  if (gatewayStatus.toUpperCase() !== 'OK') {
-    await withTransaction(async (client) => {
-      const locked = await subscriptionRepository.lockById(attempt.id, client);
-      if (locked && locked.status === 'pending') {
-        await query(
-          `UPDATE subscription_payment_attempts
-           SET status = 'cancelled', failure_code = 'CUSTOMER_CANCELLED', updated_at = NOW()
-           WHERE id = $1 AND status = 'pending'`,
-          [attempt.id],
-          client
-        );
-      }
-    });
-    return { success: false, attemptId: attempt.id, reason: 'cancelled' };
+  const callbackStatus = gatewayStatus.trim().toUpperCase();
+  if (callbackStatus !== 'OK' && callbackStatus !== 'NOK') {
+    return { success: false, attemptId: attempt.id, reason: 'pending' };
   }
 
   if (attempt.status !== 'pending') return { success: false, attemptId: attempt.id, reason: 'pending' };
+
+  // Status is a browser-return parameter, not proof of payment or cancellation.
+  // Verify both OK and NOK callbacks server-to-server before changing the attempt.
+  // This prevents a forged Status=NOK request from cancelling a payment that
+  // the provider has actually completed.
+
 
   let verification: ReturnType<typeof parseZarinpalVerifyResponse>;
   try {
@@ -310,7 +305,11 @@ export async function processZarinpalCallback(
       'GATEWAY_VERIFY_' + verification.code,
       verification.message
     );
-    return { success: false, attemptId: attempt.id, reason: 'verification_failed' };
+    return {
+      success: false,
+      attemptId: attempt.id,
+      reason: callbackStatus === 'NOK' ? 'cancelled' : 'verification_failed',
+    };
   }
 
   return settleVerifiedSubscriptionPayment(attempt.id, verifiedReference, verification.message);
