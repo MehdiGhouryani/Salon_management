@@ -1198,3 +1198,44 @@ describe('Persistent support ticket API over HTTP', () => {
     expect(crossTenant.status).toBe(403);
   });
 });
+
+
+describe('Salon subscription API security and payment readiness', () => {
+  it('allows platform admins to inspect subscription state but never fakes a payment without gateway configuration', async () => {
+    const summary = await fetch(`${baseUrl}/api/salon/sal-101/subscription`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(summary.status).toBe(200);
+    const summaryData = await summary.json();
+    expect(summaryData.success).toBe(true);
+    expect(summaryData.paymentEnabled).toBe(false);
+
+    const checkout = await fetch(`${baseUrl}/api/salon/sal-101/subscription/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+        'Idempotency-Key': 'integration-subscription-key-0001',
+      },
+      body: JSON.stringify({ planCode: 'bronze' }),
+    });
+    expect(checkout.status).toBe(503);
+    expect((await checkout.json()).error).toBe('PAYMENT_GATEWAY_NOT_CONFIGURED');
+  });
+
+  it('rejects checkout requests without a valid plan or idempotency key', async () => {
+    const invalidPlan = await fetch(`${baseUrl}/api/salon/sal-101/subscription/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+        'Idempotency-Key': 'integration-subscription-key-0002',
+      },
+      body: JSON.stringify({ planCode: 'unknown' }),
+    });
+    expect(invalidPlan.status).toBe(400);
+    expect((await invalidPlan.json()).error).toBe('INVALID_SUBSCRIPTION_PLAN');
+  });
+});

@@ -42,7 +42,7 @@ export function zarinpalPaymentUrl(authority: string, sandbox = config.payments.
   return host + '/pg/StartPay/' + encodeURIComponent(authority);
 }
 
-function parseZarinpalRequestResponse(payload: unknown): { authority: string; message: string | null } {
+export function parseZarinpalRequestResponse(payload: unknown): { authority: string; message: string | null } {
   const response = payload as ZarinpalResponse;
   const code = Number(response?.data?.code);
   const authority = typeof response?.data?.authority === 'string' ? response.data.authority.trim() : '';
@@ -52,7 +52,7 @@ function parseZarinpalRequestResponse(payload: unknown): { authority: string; me
   return { authority, message: String(response?.data?.message || '').slice(0, 255) || null };
 }
 
-function parseZarinpalVerifyResponse(payload: unknown): { verified: boolean; reference: string | null; message: string | null; code: number } {
+export function parseZarinpalVerifyResponse(payload: unknown): { verified: boolean; reference: string | null; message: string | null; code: number } {
   const response = payload as ZarinpalResponse;
   const code = Number(response?.data?.code);
   const rawReference = response?.data?.ref_id;
