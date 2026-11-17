@@ -64,6 +64,10 @@ export const OperationsView: React.FC = () => {
         </div>
       </div>
 
+      <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 border border-amber-500/20 rounded-xl px-3 py-2">
+        شاخص‌های منابع، نرخ کش و لاگ‌های این صفحه نمونه هستند و هنوز به مانیتورینگ واقعی متصل نشده‌اند.
+      </p>
+
       {/* Hardware & Infrastructure KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
         <div className="p-4 rounded-2xl bg-white dark:bg-elevated border border-stone-200/90 dark:border-border-default">
@@ -146,11 +150,9 @@ export const OperationsView: React.FC = () => {
           </div>
         </div>
 
-        {isDemoMode && (
-             <p className="text-xs text-text-muted mt-3" dir="rtl">
-               گزارش‌های این فهرست نمونه‌اند و از سرور نیامده‌اند.
-             </p>
-           )}
+        <p className="text-xs text-text-muted mt-3" dir="rtl">
+          گزارش‌های این فهرست نمونه‌اند و از سرور نیامده‌اند.
+        </p>
            <div className="p-3 bg-stone-50 dark:bg-elevated rounded-xl border border-stone-100 dark:border-border-default/80 my-3 font-mono text-xs space-y-2 max-h-72 overflow-y-auto" dir="ltr">
           {filteredLogs.map((log, i) => (
             <div key={i} className="flex items-start gap-2 text-left">

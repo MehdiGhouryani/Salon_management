@@ -66,7 +66,7 @@ export interface DataContextType {
   terminateAllOtherSessions: () => void;
   metrics: SystemMetrics;
   flushRedisCache: () => void;
-  runSystemDiagnostic: () => void;
+  runSystemDiagnostic: () => Promise<void> | void;
   auditLogs: AuditLog[];
   securitySettings: SecuritySettings;
   updateSecuritySettings: (settings: Partial<SecuritySettings>) => void;
@@ -412,11 +412,42 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // System Ops
   const flushRedisCache = () => {
-    addToast({ type: 'success', title: 'کش Redis پاکسازی شد' });
+    addToast({
+      type: isDemoMode ? 'info' : 'warning',
+      title: 'پاکسازی کش انجام نشد',
+      message: isDemoMode
+        ? 'این عملیات در حالت نمایشی اجرا نمی‌شود؛ هیچ زیرساختی تغییر نکرد.'
+        : 'Redis در نسخه فعلی متصل نیست؛ هیچ کشی پاک نشد.',
+    });
   };
 
-  const runSystemDiagnostic = () => {
-    addToast({ type: 'info', title: 'عیب‌یابی سیستم اجرا شد', message: 'سلامت پلتفرم ۱۰۰٪ تایید است.' });
+  const runSystemDiagnostic = async () => {
+    try {
+      const response = await fetch('/api/health/ready', {
+        headers: { Accept: 'application/json' },
+      });
+      const result = await response.json().catch(() => null);
+      const serviceStatus =
+        result?.status === 'ready' ? 'آماده' :
+        result?.status === 'degraded' ? 'نیمه‌آماده' :
+        result?.status === 'unhealthy' ? 'ناسالم' : 'نامشخص';
+      const databaseStatus =
+        result?.database?.status === 'connected' ? 'متصل' :
+        result?.database?.status === 'unreachable' ? 'در دسترس نیست' :
+        result?.database?.status === 'not_configured' ? 'پیکربندی نشده' : 'نامشخص';
+
+      addToast({
+        type: response.ok && result?.status === 'ready' ? 'success' : 'warning',
+        title: 'نتیجه بررسی سلامت سرویس',
+        message: `وضعیت سرویس: ${serviceStatus}؛ وضعیت پایگاه داده: ${databaseStatus}.`,
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'بررسی سلامت ناموفق بود',
+        message: 'امکان دریافت پاسخ از سرویس سلامت وجود نداشت.',
+      });
+    }
   };
 
   // Security Settings
