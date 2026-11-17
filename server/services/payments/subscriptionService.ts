@@ -284,9 +284,31 @@ export async function processZarinpalCallback(
     return { success: false, attemptId: attempt.id, reason: 'verification_failed' };
   }
 
+  const verifiedReference = verification.reference;
+  if (!verification.verified || !verifiedReference) {
+    await subscriptionRepository.setFailed(
+      attempt.id,
+      'GATEWAY_VERIFY_' + verification.code,
+      verification.message
+    );
+    return { success: false, attemptId: attempt.id, reason: 'verification_failed' };
+  }
+
+  return settleVerifiedSubscriptionPayment(attempt.id, verifiedReference, verification.message);
+}
+
+export async function settleVerifiedSubscriptionPayment(
+  attemptId: string,
+  reference: string,
+  gatewayMessage: string | null
+): Promise<ZarinpalCallbackResult> {
+  if (!reference || reference.length > 64) {
+    throw new SubscriptionPaymentError('INVALID_GATEWAY_REFERENCE', 'شناسه تراکنش درگاه معتبر نیست.', 400);
+  }
+
   return withTransaction(async (client) => {
-    const locked = await subscriptionRepository.lockById(attempt.id, client);
-    if (!locked) return { success: false, attemptId: attempt.id, reason: 'unknown_authority' };
+    const locked = await subscriptionRepository.lockById(attemptId, client);
+    if (!locked) return { success: false, attemptId, reason: 'unknown_authority' };
     if (locked.status === 'paid') {
       return { success: true, attemptId: locked.id, duplicate: true };
     }
@@ -325,7 +347,7 @@ export async function processZarinpalCallback(
       client
     );
 
-    await subscriptionRepository.markPaid(locked.id, verification.reference, verification.message, client);
+    await subscriptionRepository.markPaid(locked.id, reference, gatewayMessage, client);
 
     await query(
       `INSERT INTO payment_records (
@@ -337,7 +359,7 @@ export async function processZarinpalCallback(
       [
         locked.salon_id,
         Number(locked.amount_rial),
-        verification.reference,
+        reference,
         JSON.stringify({ planCode: locked.plan_code, subscriptionId: subscription.rows[0].id }),
         locked.id,
       ],
@@ -363,13 +385,14 @@ export async function processZarinpalCallback(
         planCode: locked.plan_code,
         amountToman: Number(locked.amount_toman),
         amountRial: Number(locked.amount_rial),
-        gatewayReference: verification.reference,
+        gatewayReference: reference,
         subscriptionId: subscription.rows[0].id,
       },
     }, client);
 
     return { success: true, attemptId: locked.id, duplicate: false };
   });
+};
 }
 
 export async function getSalonSubscriptionSummary(salonId: string) {
