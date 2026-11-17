@@ -24,6 +24,22 @@ jobs:
   integration:
     name: HTTP integration tests (real Express app)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nobatara_test
+          POSTGRES_PASSWORD: nobatara_test_pw
+          POSTGRES_DB: nobatara_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nobatara_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PROXY_TEST_DATABASE_URL: postgresql://nobatara_test:nobatara_test_pw@localhost:5432/nobatara_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,9 +47,14 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # First-CI-execution fix (checkpoint): the production-posture suite
-      # spawns the real production server entry, which serves dist/ — the
-      # local runs had a pre-built dist/, CI does not. Build it here.
+      - name: Prepare the PostgreSQL database for spawned production probes
+        env:
+          NODE_ENV: test
+          DATABASE_URL: ${{ env.PROXY_TEST_DATABASE_URL }}
+        run: |
+          node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client({connectionString: process.env.DATABASE_URL}); try { await c.connect(); console.log('PROXY TEST DATABASE REACHABLE'); await c.end(); } catch (e) { console.error('PROXY TEST DATABASE UNREACHABLE:', e.message); process.exit(1); } })"
+          npm run db:migrate
+      # The production-posture suite spawns the real server entry, which serves dist/.
       - run: npm run build
       - run: npm run test:integration
 

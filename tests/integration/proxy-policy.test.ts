@@ -21,6 +21,7 @@ import path from 'path';
 const ROOT = path.resolve(__dirname, '../..');
 const SERVER_ENTRY = path.join(ROOT, 'server.ts');
 const TEST_SESSION_SECRET = 'proxy-policy-probe-secret-0123456789abcdef0123456789abcdef';
+const PROXY_TEST_DATABASE_URL = (process.env.PROXY_TEST_DATABASE_URL || '').trim();
 
 let serverA: ChildProcess | null = null;
 let serverB: ChildProcess | null = null;
@@ -32,7 +33,7 @@ const baseEnv = (port: number, extra: Record<string, string> = {}): NodeJS.Proce
   HOST: '127.0.0.1',
   SESSION_SECRET: TEST_SESSION_SECRET,
   // Configured-but-unreachable probe DB: enough to pass startup fail-fast.
-  DATABASE_URL: 'postgresql://127.0.0.1:54321/nobatara_proxy_probe',
+  DATABASE_URL: PROXY_TEST_DATABASE_URL || 'postgresql://127.0.0.1:54321/nobatara_proxy_probe',
   ...extra,
 });
 
@@ -50,24 +51,23 @@ async function waitForLive(url: string, timeoutMs = 20000): Promise<void> {
   throw new Error(`Server did not become live: ${url}`);
 }
 
-async function hitOtpRequest(port: number, xff?: string): Promise<Response> {
-  return fetch(`http://127.0.0.1:${port}/api/auth/otp/request`, {
+async function hitOtpVerify(port: number, xff?: string): Promise<Response> {
+  return fetch(`http://127.0.0.1:${port}/api/auth/otp/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Nobatara-Client': 'test',
       ...(xff ? { 'X-Forwarded-For': xff } : {}),
     },
-    body: JSON.stringify({ phone: '09121234567', purpose: 'login' }),
+    body: JSON.stringify({ phone: '09121234567', code: '000000', purpose: 'login' }),
   });
 }
-
 afterAll(() => {
   serverA?.kill();
   serverB?.kill();
 });
 
-describe('Client-IP trust policy (spawned production servers)', () => {
+describe.skipIf(!PROXY_TEST_DATABASE_URL)('Client-IP trust policy (spawned production servers with PostgreSQL)', () => {
   it('default: client-supplied X-Forwarded-For cannot dodge IP rate limiting', async () => {
     serverA = spawn(process.execPath, [SERVER_ENTRY], {
       cwd: ROOT,
@@ -76,11 +76,11 @@ describe('Client-IP trust policy (spawned production servers)', () => {
     });
     await waitForLive('http://127.0.0.1:3212/api/health/live');
 
-    // The OTP request limiter allows 10 per 10 minutes per IP. Spoofing a
+    // OTP verification allows 12 per 10 minutes per (IP, phone). A
     // fresh XFF on every request must NOT create fresh buckets.
-    let statuses: number[] = [];
-    for (let i = 0; i < 12; i++) {
-      const res = await hitOtpRequest(3212, `10.0.${Math.floor(i / 255)}.${i + 1}`);
+    const statuses: number[] = [];
+    for (let i = 0; i < 15; i++) {
+      const res = await hitOtpVerify(3212, `10.0.${Math.floor(i / 255)}.${i + 1}`);
       statuses.push(res.status);
     }
     expect(statuses.filter((s) => s === 429).length).toBeGreaterThan(0);
@@ -95,11 +95,11 @@ describe('Client-IP trust policy (spawned production servers)', () => {
     await waitForLive('http://127.0.0.1:3213/api/health/live');
 
     // With exactly one trusted hop, the XFF tail becomes req.ip — distinct
-    // clients stay distinct, so 12 requests across 12 identities must NOT trip
-    // the 10-per-window cap.
+    // clients stay distinct, so 15 requests must NOT trip
+    // the 12-per-window cap.
     const statuses: number[] = [];
-    for (let i = 0; i < 12; i++) {
-      const res = await hitOtpRequest(3213, `10.1.${Math.floor(i / 255)}.${i + 1}`);
+    for (let i = 0; i < 15; i++) {
+      const res = await hitOtpVerify(3213, `10.1.${Math.floor(i / 255)}.${i + 1}`);
       statuses.push(res.status);
     }
     expect(statuses.filter((s) => s === 429).length).toBe(0);
