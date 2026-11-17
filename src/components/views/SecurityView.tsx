@@ -13,7 +13,8 @@ import { useAdmin } from '../../context/AdminContext';
 import { useAdminOps } from '../../hooks/useAdminOps';
 import { AuditSeverity } from '../../types/admin';
 import { toPersianDigits } from '../../utils/formatters';
-import { ConfirmModal } from '../common/ConfirmModal';
+import { api, ApiError } from '../../api/client';
+import { ActiveSession } from '../../types/admin';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../ui/EmptyState';
 import { Select } from '../ui/Select';
@@ -24,19 +25,29 @@ import { Modal } from '../ui/Modal';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export const SecurityView: React.FC = () => {
-  const { isDemoMode, auditLogs: demoAuditLogs, addToast } = useAdmin();
+  const {
+    isDemoMode,
+    auditLogs: demoAuditLogs,
+    addToast,
+    serverAuth,
+    sessions: demoSessions,
+    terminateSession: terminateDemoSession,
+    terminateAllOtherSessions: terminateDemoOtherSessions,
+  } = useAdmin();
   const adminOps = useAdminOps(!isDemoMode);
   // Phase 13: production reads the audited server log; demo keeps local preview.
   const auditLogs = (isDemoMode ? demoAuditLogs : adminOps.auditLogs) as typeof demoAuditLogs;
 
   const {
-    sessions,
     securitySettings,
-    terminateSession,
-    terminateAllOtherSessions,
     addIpToBlacklist,
     removeIpFromBlacklist,
   } = useAdmin();
+
+  const [serverSessions, setServerSessions] = useState<ActiveSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState('');
+  const sessions = isDemoMode ? demoSessions : serverSessions;
 
   const [activeSubTab, setActiveSubTab] = useState<'audit' | 'sessions' | 'firewall'>('audit');
 
@@ -44,6 +55,99 @@ export const SecurityView: React.FC = () => {
     if (!isDemoMode) adminOps.loadAuditLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemoMode]);
+
+  const loadServerSessions = async () => {
+    if (isDemoMode) return;
+    setSessionsLoading(true);
+    setSessionsError('');
+    try {
+      const data = await api.get<{
+        sessions: Array<{
+          id: string;
+          ipAddress: string;
+          userAgent: string;
+          sessionType: string;
+          createdAt: string;
+          lastActiveAt: string;
+          expiresAt: string;
+          isCurrent: boolean;
+        }>;
+      }>('/api/auth/sessions');
+
+      const formatDate = (value: string) => {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fa-IR');
+      };
+
+      setServerSessions((data.sessions || []).map((session) => ({
+        id: session.id,
+        userId: serverAuth.user?.id || '',
+        userName: serverAuth.user?.fullName || 'حساب فعلی',
+        role: serverAuth.user?.platformRole || 'user',
+        ipAddress: session.ipAddress || '—',
+        location: 'موقعیت نامشخص',
+        browser: session.userAgent || 'مرورگر نامشخص',
+        device: session.sessionType || 'web',
+        startedAt: formatDate(session.createdAt),
+        lastActive: formatDate(session.lastActiveAt),
+        isCurrent: session.isCurrent,
+      })));
+    } catch (err) {
+      setSessionsError(
+        err instanceof ApiError ? err.message : 'دریافت نشست‌های حساب از سرور ناموفق بود.'
+      );
+      setServerSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isDemoMode && activeSubTab === 'sessions' && serverAuth.authenticated) {
+      void loadServerSessions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDemoMode, activeSubTab, serverAuth.authenticated, serverAuth.user?.id]);
+
+  const revokeSession = async (session: ActiveSession) => {
+    if (isDemoMode) {
+      terminateDemoSession(session.id);
+      return;
+    }
+    try {
+      await api.post(`/api/auth/sessions/${encodeURIComponent(session.id)}/revoke`);
+      await loadServerSessions();
+      addToast({ type: 'success', title: 'نشست با موفقیت باطل شد' });
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'ابطال نشست ناموفق بود',
+        message: err instanceof ApiError ? err.message : 'سرور نتوانست نشست را باطل کند.',
+      });
+    }
+  };
+
+  const revokeOtherSessions = async () => {
+    if (isDemoMode) {
+      terminateDemoOtherSessions();
+      return;
+    }
+    try {
+      const result = await api.post<{ revokedCount: number }>('/api/auth/sessions/revoke-others');
+      await loadServerSessions();
+      addToast({
+        type: 'success',
+        title: 'نشست‌های دیگر باطل شدند',
+        message: `${toPersianDigits(result.revokedCount || 0)} نشست دیگر از حساب شما خارج شدند.`,
+      });
+    } catch (err) {
+      addToast({
+        type: 'error',
+        title: 'خروج از دستگاه‌های دیگر ناموفق بود',
+        message: err instanceof ApiError ? err.message : 'سرور نتوانست نشست‌ها را باطل کند.',
+      });
+    }
+  };
   const [logSearch, setLogSearch] = useState('');
   const debouncedSearch = useDebounce(logSearch, 300);
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -52,20 +156,6 @@ export const SecurityView: React.FC = () => {
   const [newBlacklistIp, setNewBlacklistIp] = useState('');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 12;
-
-  const [confirmData, setConfirmData] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    variant: 'danger' | 'warning';
-    onConfirm: () => void;
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    variant: 'warning',
-    onConfirm: () => {},
-  });
 
   const filteredLogs = useMemo(() => {
     return auditLogs.filter((log) => {
@@ -183,7 +273,7 @@ activeSubTab === 'audit'
           }`}
         >
           <Laptop className="w-3.5 h-3.5" />
-          <span>نشست‌های فعال ({toPersianDigits(sessions.length)})</span>
+          <span>نشست‌های حساب شما ({toPersianDigits(sessions.length)})</span>
         </button>
 
         <button
@@ -366,14 +456,14 @@ activeSubTab === 'audit'
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-2xl text-xs">
             <span className="font-semibold text-[var(--text-secondary)]">
-              {toPersianDigits(sessions.length)} نشست فعال در سامانه
+              {toPersianDigits(sessions.length)} نشست فعال برای حساب شما
             </span>
 
             {sessions.length > 1 && (
               <Button
                 variant="danger"
                 size="sm"
-                onClick={terminateAllOtherSessions}
+                onClick={revokeOtherSessions}
                 disabled={!isDemoMode}
               >
                 خروج از تمام نشست‌های دیگر
@@ -381,6 +471,17 @@ activeSubTab === 'audit'
             )}
           </div>
 
+          {!isDemoMode && (
+            <p className="text-[11px] text-[var(--text-muted)]">
+              این فهرست فقط نشست‌های حساب فعلی را نشان می‌دهد، نه نشست‌های تمام کاربران پلتفرم.
+            </p>
+          )}
+          {sessionsLoading && (
+            <p className="text-xs text-[var(--text-muted)]" aria-live="polite">در حال دریافت نشست‌ها از سرور…</p>
+          )}
+          {sessionsError && (
+            <p role="alert" className="text-xs text-rose-600 dark:text-rose-300">{sessionsError}</p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {sessions.map((sess) => (
               <div
@@ -410,7 +511,7 @@ activeSubTab === 'audit'
                   <Button
                     variant="ghost"
                     size="xs"
-                    onClick={() => terminateSession(sess.id)}
+                    onClick={() => void revokeSession(sess)}
                     disabled={!isDemoMode}
                     title="پایان دادن به این نشست"
                     className="text-[var(--status-error)] hover:bg-[var(--status-error-bg)]"
@@ -532,14 +633,7 @@ activeSubTab === 'audit'
       )}
 
       {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmData.isOpen}
-        title={confirmData.title}
-        message={confirmData.message}
-        variant={confirmData.variant}
-        onConfirm={confirmData.onConfirm}
-        onClose={() => setConfirmData({ ...confirmData, isOpen: false })}
-      />
+
     </div>
   );
 };
