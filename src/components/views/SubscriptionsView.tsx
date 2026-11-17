@@ -70,6 +70,7 @@ interface DisplayTransaction {
   date: string;
   gateway: string;
   status: string;
+  statusCode: string;
   type: string;
 }
 const STATUS_LABELS: Record<LiveTransaction['status'], string> = {
@@ -127,7 +128,8 @@ export const SubscriptionsView: React.FC = () => {
   useEffect(() => { void loadOverview(); }, [loadOverview]);
 
   const displayPlans: Plan[] = useMemo(() => {
-    if (!liveEnabled) return demoPlans;
+    if (isDemoMode) return demoPlans;
+    if (!liveEnabled) return [];
     return (overview?.plans || []).map((plan) => ({
       id: plan.code,
       name: plan.title,
@@ -140,18 +142,22 @@ export const SubscriptionsView: React.FC = () => {
       vipSupport: plan.code === 'gold_vip',
       activeSubscribers: plan.activeSubscribers,
     }));
-  }, [demoPlans, liveEnabled, overview]);
+  }, [demoPlans, isDemoMode, liveEnabled, overview]);
 
   const totalSubscribers = liveEnabled
     ? overview?.summary.activeSubscriptions || 0
-    : displayPlans.reduce((acc, plan) => acc + plan.activeSubscribers, 0);
+    : isDemoMode
+      ? displayPlans.reduce((acc, plan) => acc + plan.activeSubscribers, 0)
+      : 0;
   const estimatedMRR = liveEnabled
     ? overview?.summary.mrrToman || 0
-    : displayPlans.reduce((acc, plan) => acc + plan.priceMonthly * plan.activeSubscribers, 0);
+    : isDemoMode
+      ? displayPlans.reduce((acc, plan) => acc + plan.priceMonthly * plan.activeSubscribers, 0)
+      : 0;
   const monthlyCollected = liveEnabled ? overview?.summary.revenueMtdToman || 0 : 0;
 
   const displayTransactions: DisplayTransaction[] = useMemo(() => {
-    if (!liveEnabled) {
+    if (isDemoMode) {
       return demoTransactions.map((tx) => ({
         id: tx.id,
         salonName: tx.salonName,
@@ -159,9 +165,11 @@ export const SubscriptionsView: React.FC = () => {
         date: tx.date,
         gateway: tx.gateway,
         status: tx.status === 'successful' ? 'موفق' : tx.status === 'failed' ? 'ناموفق' : 'بازپرداخت',
+        statusCode: tx.status,
         type: tx.type === 'subscription' ? 'تمدید اشتراک سالن' : 'شارژ پیامک',
       }));
     }
+    if (!liveEnabled) return [];
     return (overview?.transactions || []).map((tx) => ({
       id: tx.id,
       salonName: tx.salonName,
@@ -169,14 +177,16 @@ export const SubscriptionsView: React.FC = () => {
       date: tx.verifiedAt || tx.createdAt,
       gateway: tx.gateway,
       status: STATUS_LABELS[tx.status],
+      statusCode: tx.status,
       type: tx.planName,
     }));
-  }, [demoTransactions, liveEnabled, overview]);
+  }, [demoTransactions, isDemoMode, liveEnabled, overview]);
 
   const filteredTransactions = displayTransactions.filter((tx) => {
     const gatewayMatches = filterGateway === 'all' || tx.gateway.toLowerCase() === filterGateway.toLowerCase();
     const statusMatches = filterStatus === 'all' ||
-      (filterStatus === 'success' ? ['موفق', 'موفق و تأییدشده'].includes(tx.status) : tx.status.toLowerCase().includes(filterStatus));
+      (filterStatus === 'success' && ['paid', 'successful'].includes(tx.statusCode)) ||
+      tx.statusCode === filterStatus;
     return gatewayMatches && statusMatches;
   });
 
