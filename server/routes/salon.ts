@@ -7,6 +7,8 @@ import { appointmentRepository, type AppointmentStatus } from '../repositories/a
 import { serviceRepository } from '../repositories/serviceRepository.ts';
 import { staffRepository } from '../repositories/staffRepository.ts';
 import { supportTicketRepository, type SupportTicketCategory, type SupportTicketPriority } from '../repositories/supportTicketRepository.ts';
+import { rateLimit } from '../middleware/rateLimit.ts';
+import { getSalonSubscriptionSummary, startSubscriptionCheckout, SubscriptionPaymentError } from '../services/payments/subscriptionService.ts';
 import { clientRepository } from '../repositories/clientRepository.ts';
 import { auditLogRepository } from '../repositories/auditLogRepository.ts';
 import { withTransaction } from '../db/pool.ts';
@@ -1553,6 +1555,59 @@ salonRouter.post(
     } catch (err: any) {
       res.status(500).json({
         error: 'SALON_SUPPORT_REPLY_ERROR',
+        message: safeInternalErrorMessage(err),
+      });
+    }
+  }
+);
+
+
+/** Salon owner/manager can inspect only their own subscription and payment history. */
+salonRouter.get('/subscription', requireSalonMembership('owner', 'manager'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const summary = await getSalonSubscriptionSummary(String(req.params.salonId));
+    res.status(200).json({ success: true, ...summary });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'SUBSCRIPTION_SUMMARY_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
+
+/** Starts a provider-backed subscription checkout; no demo or fake success path. */
+salonRouter.post(
+  '/subscription/checkout',
+  requireSalonMembership('owner', 'manager'),
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 5,
+    keyFor: (req) => String(req.user?.id || req.ip || 'unknown') + ':' + String(req.params.salonId),
+    code: 'SUBSCRIPTION_CHECKOUT_RATE_LIMIT',
+  }),
+  async (req: Request, res: Response): Promise<void> => {
+    const planCode = String(req.body?.planCode || '');
+    const idempotencyKey = String(req.headers['idempotency-key'] || '');
+    if (!['bronze', 'silver', 'gold_vip'].includes(planCode)) {
+      res.status(400).json({ error: 'INVALID_SUBSCRIPTION_PLAN', message: 'پلن انتخابی معتبر نیست.' });
+      return;
+    }
+    try {
+      const result = await startSubscriptionCheckout({
+        salonId: String(req.params.salonId),
+        userId: req.user!.id,
+        mobile: req.user!.phone,
+        planCode: planCode as 'bronze' | 'silver' | 'gold_vip',
+        idempotencyKey,
+      });
+      res.status(200).json({ success: true, ...result });
+    } catch (err: any) {
+      if (err instanceof SubscriptionPaymentError) {
+        res.status(err.statusCode).json({ error: err.code, message: err.message });
+        return;
+      }
+      res.status(500).json({
+        error: 'SUBSCRIPTION_CHECKOUT_ERROR',
         message: safeInternalErrorMessage(err),
       });
     }

@@ -5,6 +5,7 @@ import { adminRouter } from './admin.ts';
 import { salonRouter } from './salon.ts';
 import { publicRouter } from './public.ts';
 import { devRouter } from './dev.ts';
+import { paymentsRouter } from './payments.ts';
 import { config } from '../config.ts';
 
 export const apiRouter = express.Router();
@@ -17,6 +18,9 @@ apiRouter.use('/auth', authRouter);
 
 // Mount Public Customer Discovery & Booking Subsystem (Phase 7)
 apiRouter.use('/public', publicRouter);
+
+// Payment-provider callbacks are verified server-to-server and do not require a user session.
+apiRouter.use('/payments', paymentsRouter);
 
 // Mount Super Admin Governance Subsystem (RBAC Protected)
 apiRouter.use('/admin', adminRouter);
