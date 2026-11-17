@@ -86,11 +86,15 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL subscription payment idempotency 
     expect((await subscriptionRepository.findByAuthority(authority))?.id).toBe(attemptId);
 
     const reference = 'T3REF' + randomUUID().replaceAll('-', '').slice(0, 24);
-    const settled = await settleVerifiedSubscriptionPayment(attemptId, reference, 'verified in isolated test');
-    expect(settled).toMatchObject({ success: true, attemptId, duplicate: false });
-
-    const repeatedCallback = await settleVerifiedSubscriptionPayment(attemptId, reference, 'duplicate callback');
-    expect(repeatedCallback).toMatchObject({ success: true, attemptId, duplicate: true });
+    // Simulate two duplicate provider callbacks racing at the same time.
+    // The SELECT ... FOR UPDATE lock must let only one request create the
+    // subscription and ledger row; the other must observe status=paid.
+    const settlements = await Promise.all([
+      settleVerifiedSubscriptionPayment(attemptId, reference, 'first callback'),
+      settleVerifiedSubscriptionPayment(attemptId, reference, 'concurrent duplicate callback'),
+    ]);
+    expect(settlements.filter((result) => result.success && !result.duplicate)).toHaveLength(1);
+    expect(settlements.filter((result) => result.success && result.duplicate)).toHaveLength(1);
 
     const payment = await db.raw.query(
       'SELECT status, gateway_reference FROM subscription_payment_attempts WHERE id = $1',
