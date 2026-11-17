@@ -67,7 +67,6 @@ beforeAll(async () => {
   const regSession = await sessionService.createSession(regUser, mockReq, mockRes, 'web');
   const adminSession = await sessionService.createSession(superAdminUser, mockReq, mockRes, 'web');
   regUserToken = regSession.rawToken;
-  await userRepository.addMembership(regUser.id, 'sal-101', 'owner', []);
   adminToken = adminSession.rawToken;
 });
 
@@ -1103,6 +1102,11 @@ describe('Phase 19 security: dev/test reset endpoints (flag ON in this suite via
 
 
 describe('Persistent support ticket API over HTTP', () => {
+  beforeAll(async () => {
+    // Grant only this support-test identity salon access. Earlier tenant tests
+    // keep exercising a customer without any salon membership.
+    await userRepository.addMembership(regUserId, 'sal-101', 'owner', []);
+  });
   it('lets a salon owner open a ticket, the super admin reply, and the salon continue the conversation', async () => {
     const create = await fetch(`${baseUrl}/api/salon/sal-101/support/tickets`, {
       method: 'POST',
