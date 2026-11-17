@@ -73,7 +73,7 @@ export const MessagesView: React.FC = () => {
 
   const handleSendBroadcast = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!broadcastText.trim()) return;
+    if (!isDemoMode || !broadcastText.trim()) return;
     sendBroadcastMessage(broadcastSalonName, broadcastText);
     setIsBroadcastModalOpen(false);
     setBroadcastText('');
@@ -86,7 +86,7 @@ export const MessagesView: React.FC = () => {
   };
 
   const handleSaveTemplate = () => {
-    if (!editingTemplate) return;
+    if (!isDemoMode || !editingTemplate) return;
     updateTemplate(editingTemplate.id, templatePattern, templateEnabled);
     setEditingTemplate(null);
   };

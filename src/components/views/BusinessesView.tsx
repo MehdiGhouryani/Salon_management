@@ -206,6 +206,10 @@ export const BusinessesView: React.FC = () => {
 
   const handleCreateSalon = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isDemoMode) {
+      addToast({ type: 'warning', title: 'ثبت مستقیم سالن هنوز پشتیبانی نمی‌شود', message: 'ثبت سالن باید از مسیر درخواست/تأیید رسمی انجام شود؛ هیچ رکوردی ایجاد نشد.' });
+      return;
+    }
     if (!formData.name?.trim() || !formData.ownerName?.trim() || !formData.phone?.trim()) {
       addToast({
         type: 'error',
@@ -256,12 +260,20 @@ export const BusinessesView: React.FC = () => {
   };
 
   const openPlanModal = (salon: Salon) => {
+    if (!isDemoMode) {
+      addToast({ type: 'warning', title: 'مدیریت اشتراک هنوز به API مالی متصل نیست', message: 'هیچ تغییری اعمال نشد.' });
+      return;
+    }
     setTargetSalonForPlan(salon);
     setSelectedPlanOption(salon.plan);
     setIsPlanModalOpen(true);
   };
 
   const handleSavePlanChange = () => {
+    if (!isDemoMode) {
+      addToast({ type: 'warning', title: 'تغییر پلن ذخیره نشد', message: 'API مدیریت اشتراک در دسترس نیست.' });
+      return;
+    }
     if (!targetSalonForPlan) return;
     updateSalonPlan(targetSalonForPlan.id, selectedPlanOption);
     setIsPlanModalOpen(false);
@@ -321,6 +333,8 @@ export const BusinessesView: React.FC = () => {
 
           <button
             onClick={() => setIsAddModalOpen(true)}
+            disabled={!isDemoMode}
+            title="ثبت مستقیم سالن در API مدیریتی پیاده‌سازی نشده است."
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-brand hover:bg-brand-hover dark:bg-brand dark:hover:bg-brand rounded-xl transition-colors cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
@@ -328,6 +342,12 @@ export const BusinessesView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {!isDemoMode && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+          فهرست سالن‌ها و وضعیت آن‌ها از API دریافت می‌شود؛ ایجاد دستی سالن، تغییر پلن و یادداشت نظارتی هنوز در API مدیریتی پیاده‌سازی نشده‌اند.
+        </div>
+      )}
 
       {/* Segmented Status Tabs */}
       <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white dark:bg-surface border border-slate-200 dark:border-border-default rounded-xl text-xs">
@@ -533,6 +553,7 @@ export const BusinessesView: React.FC = () => {
                       <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-border-default">
                         <button
                           onClick={() => openPlanModal(salon)}
+                          disabled={!isDemoMode}
                           className="px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer flex items-center gap-1.5 bg-slate-100 dark:bg-elevated border-slate-200 dark:border-border-default text-slate-700 dark:text-text-main"
                         >
                           <span>{salon.plan === 'gold_vip' ? 'بسته VIP' : salon.plan === 'silver' ? 'نقره‌ای' : 'برنزی'}</span>
@@ -789,6 +810,7 @@ export const BusinessesView: React.FC = () => {
 
               <button
                 onClick={() => openPlanModal(inspectedSalon)}
+                disabled={!isDemoMode}
                 className="px-3 py-2 text-xs font-medium bg-stone-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-xl transition-colors cursor-pointer"
               >
                 تغییر پلن
@@ -866,7 +888,9 @@ export const BusinessesView: React.FC = () => {
             {/* Notes */}
             <div className="space-y-1.5 text-xs">
               <h4 className="font-bold text-zinc-900 dark:text-text-main">یادداشت نظارتی</h4>
+              {!isDemoMode && <p className="text-[11px] text-[var(--text-muted)]">ذخیره یادداشت نظارتی در سرور هنوز پیاده‌سازی نشده است.</p>}
               <textarea
+                disabled={!isDemoMode}
                 value={inspectedSalon.notes || ''}
                 onChange={(e) => {
                   const updated = { ...inspectedSalon, notes: e.target.value };

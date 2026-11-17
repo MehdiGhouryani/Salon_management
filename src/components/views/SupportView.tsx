@@ -42,7 +42,7 @@ export const SupportView: React.FC = () => {
 
   const handleSendReply = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!replyText.trim() || !selectedTicket) return;
+    if (!isDemoMode || !replyText.trim() || !selectedTicket) return;
     replyToTicket(selectedTicket.id, replyText);
     setReplyText('');
   };

@@ -24,7 +24,7 @@ import { Modal } from '../ui/Modal';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export const SecurityView: React.FC = () => {
-  const { isDemoMode, auditLogs: demoAuditLogs } = useAdmin();
+  const { isDemoMode, auditLogs: demoAuditLogs, addToast } = useAdmin();
   const adminOps = useAdminOps(!isDemoMode);
   // Phase 13: production reads the audited server log; demo keeps local preview.
   const auditLogs = (isDemoMode ? demoAuditLogs : adminOps.auditLogs) as typeof demoAuditLogs;
@@ -91,6 +91,10 @@ export const SecurityView: React.FC = () => {
 
   const handleAddIp = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isDemoMode) {
+      addToast({ type: 'warning', title: 'فایروال مدیریتی متصل نیست', message: 'فهرست مسدودسازی IP هنوز API سمت سرور ندارد؛ هیچ IP مسدود نشد.' });
+      return;
+    }
     const cleanIp = newBlacklistIp.trim();
     if (!cleanIp) return;
     addIpToBlacklist(cleanIp);
@@ -194,6 +198,12 @@ activeSubTab === 'audit'
           <span>فایروال و لیست سیاه IP</span>
         </button>
       </div>
+
+      {!isDemoMode && activeSubTab !== 'audit' && (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+          نشست‌های نمایش‌داده‌شده و فهرست IP مسدود نمونه هستند؛ API مدیریتی برای مشاهده/ابطال سراسری نشست‌ها و مدیریت فایروال هنوز وجود ندارد. فقط لاگ‌های ممیزی این صفحه از سرور دریافت می‌شوند.
+        </div>
+      )}
 
       {/* Tab 1: Audit Logs */}
       {activeSubTab === 'audit' && (
@@ -364,6 +374,7 @@ activeSubTab === 'audit'
                 variant="danger"
                 size="sm"
                 onClick={terminateAllOtherSessions}
+                disabled={!isDemoMode}
               >
                 خروج از تمام نشست‌های دیگر
               </Button>
@@ -400,6 +411,7 @@ activeSubTab === 'audit'
                     variant="ghost"
                     size="xs"
                     onClick={() => terminateSession(sess.id)}
+                    disabled={!isDemoMode}
                     title="پایان دادن به این نشست"
                     className="text-[var(--status-error)] hover:bg-[var(--status-error-bg)]"
                   >
@@ -428,6 +440,7 @@ activeSubTab === 'audit'
                 size="sm"
                 dir="ltr"
                 value={newBlacklistIp}
+                disabled={!isDemoMode}
                 onChange={(e) => setNewBlacklistIp(e.target.value)}
                 placeholder="192.168.1.100"
                 tabularNums
@@ -437,6 +450,7 @@ activeSubTab === 'audit'
                 variant="danger"
                 size="sm"
                 className="shrink-0"
+                disabled={!isDemoMode}
               >
                 مسدودسازی
               </Button>
@@ -461,6 +475,7 @@ activeSubTab === 'audit'
                       variant="ghost"
                       size="xs"
                       onClick={() => removeIpFromBlacklist(ip)}
+                      disabled={!isDemoMode}
                       className="text-[var(--status-error)] hover:bg-[var(--status-error-bg)]"
                     >
                       رفع مسدودی
