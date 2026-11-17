@@ -90,6 +90,10 @@ describe('Authenticated account session management over HTTP', () => {
     expect(listData.sessions.some((session: any) => session.id === extraSession.sessionId)).toBe(true);
     expect(listData.sessions.every((session: any) => typeof session.isCurrent === 'boolean')).toBe(true);
 
+    const regularSession = await sessionService.validateSession(regUserToken);
+    expect(regularSession.session).toBeTruthy();
+    expect(listData.sessions.some((session: any) => session.id === regularSession.session!.id)).toBe(false);
+
     const revokeResponse = await fetch(`${baseUrl}/api/auth/sessions/${extraSession.sessionId}/revoke`, {
       method: 'POST',
       headers: {
