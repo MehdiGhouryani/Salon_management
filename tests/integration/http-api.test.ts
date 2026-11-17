@@ -74,6 +74,67 @@ afterAll(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
+describe('Authenticated account session management over HTTP', () => {
+  it('lists only the signed-in account sessions and revokes one of its own sessions', async () => {
+    const admin = await userRepository.findByPhone('09120000000');
+    expect(admin).toBeTruthy();
+
+    const extraSession = await sessionService.createSession(admin!, mockReq, mockRes, 'mobile');
+    const listResponse = await fetch(`${baseUrl}/api/auth/sessions`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+
+    expect(listResponse.status).toBe(200);
+    const listData = await listResponse.json();
+    expect(listData.success).toBe(true);
+    expect(listData.sessions.some((session: any) => session.id === extraSession.sessionId)).toBe(true);
+    expect(listData.sessions.every((session: any) => typeof session.isCurrent === 'boolean')).toBe(true);
+
+    const revokeResponse = await fetch(`${baseUrl}/api/auth/sessions/${extraSession.sessionId}/revoke`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+    });
+    expect(revokeResponse.status).toBe(200);
+    expect((await revokeResponse.json()).success).toBe(true);
+
+    const afterResponse = await fetch(`${baseUrl}/api/auth/sessions`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const afterData = await afterResponse.json();
+    expect(afterData.sessions.some((session: any) => session.id === extraSession.sessionId)).toBe(false);
+  });
+
+  it('revokes other devices while preserving the current authenticated session', async () => {
+    const admin = await userRepository.findByPhone('09120000000');
+    expect(admin).toBeTruthy();
+
+    const extraSession = await sessionService.createSession(admin!, mockReq, mockRes, 'api');
+    const response = await fetch(`${baseUrl}/api/auth/sessions/revoke-others`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.success).toBe(true);
+    expect(body.revokedCount).toBeGreaterThanOrEqual(1);
+
+    const afterResponse = await fetch(`${baseUrl}/api/auth/sessions`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const afterData = await afterResponse.json();
+    expect(afterData.sessions.length).toBe(1);
+    expect(afterData.sessions[0].isCurrent).toBe(true);
+    expect(afterData.sessions[0].id).not.toBe(extraSession.sessionId);
+  });
+});
+
 describe('Admin API security & RBAC over HTTP (integration)', () => {
   it('Unauthenticated request to /api/admin/stats is denied with 401', async () => {
     const res = await fetch(`${baseUrl}/api/admin/stats`);
