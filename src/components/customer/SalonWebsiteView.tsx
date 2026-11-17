@@ -425,7 +425,9 @@ export const SalonWebsiteView: React.FC = () => {
         salon={salon}
         initialServiceId={serviceId}
         onBookingSuccess={(booking) => {
-          addCustomerBooking(booking);
+          // The booking is already persisted by the public booking API in
+          // production. Only mirror it into local fixture state in Demo mode.
+          if (isDemoMode) addCustomerBooking(booking);
           setBookingOpen(false);
           setReceipt(booking);
           setReceiptOpen(true);
