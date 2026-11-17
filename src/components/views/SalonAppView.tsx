@@ -11,6 +11,7 @@ import {
   SalonStaffItem,
 } from '../../mock/salonDirectoryData';
 import { SalonQrModal } from '../common/SalonQrModal';
+import { SalonSupportTab } from '../salon/SalonSupportTab';
 import { SalonShell, SalonTab } from '../salon/SalonShell';
 import { TodayTab } from '../salon/TodayTab';
 import { ServicesTab } from '../salon/ServicesTab';
@@ -49,6 +50,9 @@ export const SalonAppView: React.FC = () => {
 
   // The panel operates on the salon the authenticated user is a member of.
   const membershipSalonId = serverAuth.salonMemberships?.[0]?.salonId || '';
+  const supportEnabled = !isDemoMode && (serverAuth.salonMemberships || []).some((membership) =>
+    membership.salonId === membershipSalonId && (membership.role === 'owner' || membership.role === 'manager')
+  );
   const viewingSalon = salons.find((s) => s.slug === currentSalonSlug);
   const salonId = isDemoMode ? viewingSalon?.id || salons[0]?.id || '' : membershipSalonId || viewingSalon?.id || '';
   const currentSalon = useMemo(
@@ -309,6 +313,7 @@ export const SalonAppView: React.FC = () => {
       onOpenQr={() => setQrModalOpen(true)}
       isDark={isDark}
       onToggleTheme={toggleTheme}
+      supportEnabled={supportEnabled}
     >
       {activeTab === 'appointments' && (
         <TodayTab
@@ -356,6 +361,7 @@ export const SalonAppView: React.FC = () => {
           onSaveDetails={handleSaveShowcase}
         />
       )}
+      {activeTab === 'support' && supportEnabled && <SalonSupportTab salonId={salonId} />}
       {activeTab === 'profile' && (
         <ProfileTab
           salon={currentSalon}
