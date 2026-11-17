@@ -80,6 +80,14 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL subscription payment idempotency 
     expect(duplicateRequest.created).toBe(false);
     expect(duplicateRequest.attempt.id).toBe(attemptId);
 
+    // A different idempotency key cannot create a second in-flight authority.
+    await expect(
+      db.withTransaction((client) => subscriptionRepository.createPaymentAttempt({
+        ...input,
+        idempotencyKey: 'db-billing-second-' + randomUUID(),
+      }, client))
+    ).rejects.toThrow(/uq_subscription_one_open_attempt_per_salon/);
+
     const authority = 'T3PAY' + randomUUID().replaceAll('-', '').slice(0, 30);
     const pending = await subscriptionRepository.setPending(attemptId, authority, 'request accepted');
     expect(pending?.status).toBe('pending');

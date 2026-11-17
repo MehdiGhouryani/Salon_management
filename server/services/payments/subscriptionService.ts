@@ -168,18 +168,46 @@ export async function startSubscriptionCheckout(input: {
     throw new SubscriptionPaymentError('INVALID_SUBSCRIPTION_AMOUNT', 'مبلغ پلن برای پرداخت معتبر نیست.', 500);
   }
 
-  const created = await withTransaction((client) =>
-    subscriptionRepository.createPaymentAttempt({
+  const checkoutAttempt = await withTransaction(async (client) => {
+    // Serialize checkout creation on the salon row. The database also has a
+    // partial unique index for one creating/pending attempt per salon.
+    const salonLocked = await subscriptionRepository.lockSalonForCheckout(input.salonId, client);
+    if (!salonLocked) {
+      throw new SubscriptionPaymentError('SALON_NOT_FOUND', 'سالن مورد نظر یافت نشد.', 404);
+    }
+
+    const current = await subscriptionRepository.currentSubscription(input.salonId, client);
+    if (current) {
+      throw new SubscriptionPaymentError(
+        'ACTIVE_SUBSCRIPTION_EXISTS',
+        'اشتراک فعلی سالن هنوز معتبر است. برای جلوگیری از حذف روزهای باقی‌مانده، خرید پلن جدید پس از پایان دوره امکان‌پذیر می‌شود.',
+        409
+      );
+    }
+
+    const inFlight = await subscriptionRepository.findInFlightPaymentAttempt(input.salonId, client);
+    if (inFlight) {
+      if (inFlight.status === 'pending' && inFlight.authority) {
+        return { attempt: inFlight, created: false };
+      }
+      throw new SubscriptionPaymentError(
+        'SUBSCRIPTION_PAYMENT_IN_PROGRESS',
+        'درخواست پرداخت قبلی هنوز در حال ایجاد است. چند لحظه بعد دوباره تلاش کنید.',
+        409
+      );
+    }
+
+    return subscriptionRepository.createPaymentAttempt({
       salonId: input.salonId,
       userId: input.userId,
       planCode: plan.code,
       amountToman,
       idempotencyKey: input.idempotencyKey,
-    }, client)
-  );
-  const attempt = created.attempt;
+    }, client);
+  });
+  const attempt = checkoutAttempt.attempt;
 
-  if (!created.created) {
+  if (!checkoutAttempt.created) {
     if (attempt.status === 'paid') {
       return { attemptId: attempt.id, status: 'already_paid', reused: true };
     }

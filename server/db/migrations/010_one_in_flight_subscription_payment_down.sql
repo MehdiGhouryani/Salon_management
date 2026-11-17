@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS uq_subscription_one_open_attempt_per_salon;

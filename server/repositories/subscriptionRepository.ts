@@ -37,6 +37,24 @@ export const subscriptionRepository = {
     );
     return result.rows[0] || null;
   },
+  async lockSalonForCheckout(salonId: string, client: PoolClient): Promise<boolean> {
+    const result = await query<{ id: string }>(
+      'SELECT id FROM salons WHERE id = $1 FOR UPDATE',
+      [salonId],
+      client
+    );
+    return Boolean(result.rows[0]);
+  },
+  async findInFlightPaymentAttempt(salonId: string, client: PoolClient): Promise<DbSubscriptionPaymentAttempt | null> {
+    const result = await query<DbSubscriptionPaymentAttempt>(
+      `SELECT * FROM subscription_payment_attempts
+       WHERE salon_id = $1 AND status IN ('creating', 'pending')
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+      [salonId],
+      client
+    );
+    return result.rows[0] || null;
+  },
   async createPaymentAttempt(input: {
     salonId: string; userId: string; planCode: SubscriptionPlanCode;
     amountToman: number; idempotencyKey: string;
@@ -100,7 +118,7 @@ export const subscriptionRepository = {
     const result = await query<DbSalonSubscription>(
       `SELECT s.*, p.title AS plan_title, p.offer AS plan_offer
        FROM salon_subscriptions s JOIN subscription_plans p ON p.code = s.plan_code
-       WHERE s.salon_id = $1 AND s.status = 'active'
+       WHERE s.salon_id = $1 AND s.status = 'active' AND s.ends_at > NOW()
        ORDER BY s.ends_at DESC LIMIT 1`, [salonId], client
     );
     return result.rows[0] || null;
