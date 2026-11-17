@@ -143,6 +143,12 @@ export async function query<R extends QueryResultRow = any>(
     }
     return result;
   } catch (err: any) {
+    // Preserve already-normalized initialization failures so callers receive
+    // the intended 503 contract rather than a generic query error.
+    if (err instanceof DatabaseUnavailableError) {
+      throw err;
+    }
+
     // FAIL CLOSED (R4): a configured-but-offline database must produce a loud,
     // controlled error — never an empty result set that reads as "no data" or
     // a write that silently did nothing.

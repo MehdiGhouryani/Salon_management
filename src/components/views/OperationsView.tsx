@@ -13,7 +13,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { toPersianDigits } from '../../utils/formatters';
 
 export const OperationsView: React.FC = () => {
-  const { metrics, flushRedisCache, runSystemDiagnostic, isDemoMode } = useAdmin();
+  const { metrics, flushRedisCache, runSystemDiagnostic } = useAdmin();
   const [logFilter, setLogFilter] = useState<'all' | 'error' | 'cron'>('all');
 
   const simulatedLogs = [
