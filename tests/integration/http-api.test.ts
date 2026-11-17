@@ -1239,3 +1239,21 @@ describe('Salon subscription API security and payment readiness', () => {
     expect((await invalidPlan.json()).error).toBe('INVALID_SUBSCRIPTION_PLAN');
   });
 });
+
+
+describe('Admin subscription finance overview fail-closed behavior', () => {
+  it('does not fabricate financial metrics when PostgreSQL is not configured', async () => {
+    const response = await fetch(`${baseUrl}/api/admin/subscriptions/overview`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe('SUBSCRIPTION_DATABASE_UNAVAILABLE');
+  });
+
+  it('keeps the finance overview restricted to platform super admins', async () => {
+    const response = await fetch(`${baseUrl}/api/admin/subscriptions/overview`, {
+      headers: { Authorization: `Bearer ${regUserToken}` },
+    });
+    expect(response.status).toBe(403);
+  });
+});

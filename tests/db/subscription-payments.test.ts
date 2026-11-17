@@ -13,6 +13,7 @@ let attemptId = '';
 let userRepository: typeof import('../../server/repositories/userRepository.ts')['userRepository'];
 let subscriptionRepository: typeof import('../../server/repositories/subscriptionRepository.ts')['subscriptionRepository'];
 let settleVerifiedSubscriptionPayment: typeof import('../../server/services/payments/subscriptionService.ts')['settleVerifiedSubscriptionPayment'];
+let getAdminOverview: typeof import('../../server/repositories/subscriptionRepository.ts')['subscriptionRepository']['getAdminOverview'];
 
 describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL subscription payment idempotency and settlement', () => {
   beforeAll(async () => {
@@ -24,6 +25,7 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL subscription payment idempotency 
     ]);
     userRepository = users.userRepository;
     subscriptionRepository = subscriptions.subscriptionRepository;
+    getAdminOverview = subscriptions.subscriptionRepository.getAdminOverview;
     settleVerifiedSubscriptionPayment = service.settleVerifiedSubscriptionPayment;
 
     const phone = '093700' + String(randomInt(0, 100000)).padStart(5, '0');
@@ -118,5 +120,12 @@ describe.skipIf(!DB_TESTS_ENABLED)('PostgreSQL subscription payment idempotency 
     const salon = await db.raw.query('SELECT plan, plan_expiry FROM salons WHERE id = $1', [db.fixtures.salonId]);
     expect(salon.rows[0].plan).toBe('bronze');
     expect(new Date(salon.rows[0].plan_expiry).getTime()).toBeGreaterThan(Date.now());
+
+    const adminOverview = await getAdminOverview(20, 0);
+    expect(adminOverview.summary.activeSubscriptions).toBeGreaterThanOrEqual(1);
+    expect(adminOverview.summary.mrrToman).toBeGreaterThanOrEqual(890000);
+    expect(adminOverview.summary.revenueMtdToman).toBeGreaterThanOrEqual(890000);
+    expect(adminOverview.plans.find((plan) => plan.code === 'bronze')?.activeSubscribers).toBeGreaterThanOrEqual(1);
+    expect(adminOverview.transactions.some((tx) => tx.id === attemptId && tx.status === 'paid')).toBe(true);
   });
 });
