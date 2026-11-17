@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -22,6 +22,7 @@ import { BookingDetailSheet, BookingChanges } from '../salon/BookingDetailSheet'
 import { SubscriptionSheet } from '../salon/SubscriptionSheet';
 import { GatewayId, PlanId } from '../salon/plans';
 import { useSalonOps } from '../../hooks/useSalonOps';
+import { api, ApiError } from '../../api/client';
 
 /**
  * The salon manager's app (Phase 12): every operational surface is served by
@@ -103,6 +104,8 @@ export const SalonAppView: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('gold_vip');
   const [selectedGateway, setSelectedGateway] = useState<GatewayId>('zarinpal');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentEnabled, setPaymentEnabled] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   const [onlineBookingEnabled, setOnlineBookingEnabled] = useState(true);
   const [smsNotificationEnabled, setSmsNotificationEnabled] = useState(true);
@@ -282,27 +285,116 @@ export const SalonAppView: React.FC = () => {
       addToast({ type: 'info', title: `[شبیه‌سازی دمو] ${label} ${next ? 'فعال' : 'غیرفعال'} شد` });
     };
 
-  const handlePaySubscription = () => {
-    if (!isDemoMode) {
+  const loadBillingAvailability = useCallback(async () => {
+    if (isDemoMode || !salonId) return;
+    setBillingLoading(true);
+    try {
+      const result = await api.get<{ paymentEnabled: boolean }>(
+        `/api/salon/${encodeURIComponent(salonId)}/subscription`
+      );
+      setPaymentEnabled(Boolean(result.paymentEnabled));
+    } catch (error) {
+      setPaymentEnabled(false);
+      const message = error instanceof ApiError ? error.message : 'وضعیت درگاه پرداخت دریافت نشد.';
+      addToast({ type: 'error', title: 'دریافت وضعیت پرداخت ناموفق بود', message });
+    } finally {
+      setBillingLoading(false);
+    }
+  }, [isDemoMode, salonId, addToast]);
+
+  const openSubscriptionSheet = () => {
+    setSubModalOpen(true);
+    if (!isDemoMode) void loadBillingAvailability();
+  };
+
+  const handlePaySubscription = async () => {
+    if (isDemoMode) {
+      setIsProcessingPayment(true);
+      setTimeout(() => {
+        setIsProcessingPayment(false);
+        updateSalonPlan(currentSalon.id, selectedPlan);
+        setSubModalOpen(false);
+        addToast({
+          type: 'info',
+          title: '[شبیه‌سازی دمو] اشتراک سالن در حافظه آزمایشی ارتقا یافت',
+          message: 'توجه: این پرداخت نمایشی است و هیچ تراکنش مالی واقعی انجام نشد.',
+        });
+      }, 1200);
+      return;
+    }
+
+    if (!paymentEnabled || selectedGateway !== 'zarinpal') {
       addToast({
-        type: 'error',
-        title: 'درگاه بانکی متصل نیست',
-        message: 'در محیط عملیاتی، اتصال به درگاه شاپرک در فاز ۱۰ پیاده‌سازی خواهد شد.',
+        type: 'warning',
+        title: 'پرداخت در دسترس نیست',
+        message: 'درگاه زرین‌پال در محیط سرور فعال یا پیکربندی نشده است.',
       });
       return;
     }
+
     setIsProcessingPayment(true);
-    setTimeout(() => {
+    try {
+      const result = await api.post<{
+        status: 'pending' | 'already_paid';
+        paymentUrl?: string;
+        attemptId: string;
+      }>(
+        `/api/salon/${encodeURIComponent(salonId)}/subscription/checkout`,
+        { planCode: selectedPlan },
+        { headers: { 'Idempotency-Key': window.crypto.randomUUID() } }
+      );
+
+      if (result.status === 'already_paid') {
+        setSubModalOpen(false);
+        addToast({ type: 'success', title: 'این پرداخت قبلاً تأیید شده است' });
+        await ops.reload();
+        return;
+      }
+
+      if (!result.paymentUrl) {
+        throw new Error('آدرس پرداخت از سرور دریافت نشد.');
+      }
+
+      window.location.assign(result.paymentUrl);
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : 'شروع پرداخت ناموفق بود.';
+      addToast({ type: 'error', title: 'شروع پرداخت ناموفق بود', message });
       setIsProcessingPayment(false);
-      updateSalonPlan(currentSalon.id, selectedPlan);
-      setSubModalOpen(false);
-      addToast({
-        type: 'info',
-        title: '[شبیه‌سازی دمو] اشتراک سالن در حافظه آزمایشی ارتقا یافت',
-        message: 'توجه: این یک پرداخت شبیه‌سازی شده است و هیچ تراکنش مالی واقعی انجام نشد.',
-      });
-    }, 1200);
+    }
   };
+
+  useEffect(() => {
+    const currentUrl = new URL(window.location.href);
+    const paymentStatus = currentUrl.searchParams.get('subscription_payment');
+    if (!paymentStatus) return;
+
+    if (paymentStatus === 'success') {
+      addToast({
+        type: 'success',
+        title: 'پرداخت تأیید شد',
+        message: 'اشتراک سالن در سرور ثبت و فعال شد.',
+      });
+      void ops.reload();
+    } else if (paymentStatus === 'pending') {
+      addToast({
+        type: 'warning',
+        title: 'تأیید پرداخت در انتظار بررسی است',
+        message: 'وضعیت پرداخت هنوز قطعی نیست. از پرداخت مجدد خودداری کنید و سوابق را بررسی کنید.',
+      });
+    } else if (paymentStatus === 'cancelled') {
+      addToast({ type: 'info', title: 'پرداخت لغو شد', message: 'اشتراک فعلی شما تغییری نکرد.' });
+    } else {
+      addToast({ type: 'error', title: 'پرداخت تأیید نشد', message: 'اشتراک فعال نشد و مبلغی به‌عنوان پرداخت موفق ثبت نشده است.' });
+    }
+
+    currentUrl.searchParams.delete('subscription_payment');
+    currentUrl.searchParams.delete('payment_attempt');
+    window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
+  }, [addToast, ops.reload]);
 
   return (
     <SalonShell
@@ -374,7 +466,7 @@ export const SalonAppView: React.FC = () => {
           onSetDark={(dark) => {
             if (dark !== isDark) toggleTheme();
           }}
-          onOpenSubscription={() => setSubModalOpen(true)}
+          onOpenSubscription={openSubscriptionSheet}
           salonOptions={salons.map((s) => ({ slug: s.slug || '', name: s.name }))}
           currentSlug={currentSalon.slug || ''}
           onChangeSalon={setCurrentSalonSlug}
@@ -406,7 +498,8 @@ export const SalonAppView: React.FC = () => {
         onPlanChange={setSelectedPlan}
         gateway={selectedGateway}
         onGatewayChange={setSelectedGateway}
-        isProcessing={isProcessingPayment}
+        isProcessing={isProcessingPayment || billingLoading}
+        paymentEnabled={paymentEnabled}
         onPay={handlePaySubscription}
       />
       <SalonQrModal

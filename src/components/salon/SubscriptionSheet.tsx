@@ -14,6 +14,7 @@ interface SubscriptionSheetProps {
   gateway: GatewayId;
   onGatewayChange: (g: GatewayId) => void;
   isProcessing: boolean;
+  paymentEnabled: boolean;
   onPay: () => void;
 }
 
@@ -26,6 +27,7 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({
   gateway,
   onGatewayChange,
   isProcessing,
+  paymentEnabled,
   onPay,
 }) => (
   <Sheet
@@ -35,10 +37,12 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({
     description={
       isDemoMode
         ? 'در نسخه دمو پرداخت شبیه‌سازی می‌شود و تراکنش واقعی انجام نمی‌شود.'
-        : 'پرداخت از طریق درگاه بانکی انجام می‌شود.'
+        : paymentEnabled
+          ? 'پرداخت امن از طریق درگاه زرین‌پال؛ فعال‌سازی اشتراک فقط پس از تأیید تراکنش انجام می‌شود.'
+          : 'درگاه پرداخت هنوز در تنظیمات سرور فعال نشده است؛ پرداخت واقعی در دسترس نیست.'
     }
     footer={
-      <Button size="lg" className="w-full" isLoading={isProcessing} onClick={onPay}>
+      <Button size="lg" className="w-full" isLoading={isProcessing} disabled={!isDemoMode && !paymentEnabled} onClick={onPay}>
         {`پرداخت ${money(PLANS[plan].price)} تومان`}
       </Button>
     }

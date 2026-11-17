@@ -35,10 +35,9 @@ export const PLANS: Record<PlanId, PlanInfo> = {
   },
 };
 
+/** Only the Zarinpal provider is implemented and server-verified in production. */
 export const GATEWAYS = [
   { id: 'zarinpal', name: 'زرین‌پال' },
-  { id: 'mellat', name: 'بانک ملت' },
-  { id: 'saman', name: 'سامان' },
 ] as const;
 
 export type GatewayId = (typeof GATEWAYS)[number]['id'];
