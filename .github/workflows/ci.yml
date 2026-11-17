@@ -31,6 +31,10 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # First-CI-execution fix (checkpoint): the production-posture suite
+      # spawns the real production server entry, which serves dist/ — the
+      # local runs had a pre-built dist/, CI does not. Build it here.
+      - run: npm run build
       - run: npm run test:integration
 
   database:
@@ -116,6 +120,10 @@ jobs:
         run: |
           node -e "import('pg').then(async ({default: pg}) => { const c = new pg.Client({connectionString: process.env.DATABASE_URL}); try { await c.connect(); console.log('E2E DATABASE REACHABLE'); await c.end(); } catch (e) { console.error('E2E DATABASE UNREACHABLE:', e.message); process.exit(1); } })"
       - run: npm run db:migrate
+      # First-CI-execution fix (checkpoint): the journeys exercise the seeded
+      # canonical fixtures (sal-101 & co.); the local database had been seeded
+      # manually once. The seed is idempotent and production-locked.
+      - run: npm run db:seed
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
       - if: always()
