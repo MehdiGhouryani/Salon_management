@@ -93,6 +93,20 @@ function hasEnvironmentConfig(key: IntegrationKey): boolean {
   return isConfigured(key, envSettings(key));
 }
 
+function integrationFields(key: IntegrationKey, settings: IntegrationConfig): Record<string, boolean> {
+  if (key === 'kavenegar') {
+    return {
+      apiKey: Boolean(settings.apiKey),
+      template: Boolean(settings.template),
+    };
+  }
+  return {
+    merchantId: Boolean(settings.merchantId),
+    publicBaseUrl: Boolean(settings.publicBaseUrl),
+    returnUrl: Boolean(settings.returnUrl),
+  };
+}
+
 async function findStored(key: IntegrationKey, client?: PoolClient): Promise<DbPlatformIntegration | null> {
   if (!isDatabaseConfigured()) return null;
   return integrationSettingsRepository.findByKey(key, client);
@@ -133,13 +147,7 @@ export async function getIntegrationStatuses(): Promise<IntegrationStatus[]> {
   const keys: IntegrationKey[] = ['kavenegar', 'zarinpal'];
   return Promise.all(keys.map(async (key) => {
     const state = await getState(key);
-    const fields = key === 'kavenegar'
-      ? { apiKey: Boolean(state.settings.apiKey), template: Boolean(state.settings.template) }
-      : {
-          merchantId: Boolean(state.settings.merchantId),
-          publicBaseUrl: Boolean(state.settings.publicBaseUrl),
-          returnUrl: Boolean(state.settings.returnUrl),
-        };
+    const fields = integrationFields(key, state.settings);
     return {
       key,
       ...INTEGRATIONS[key],
@@ -278,13 +286,7 @@ export async function saveIntegrationSettings(
     configured,
     source: 'database',
     updatedAt: row.updated_at,
-    fields: key === 'kavenegar'
-      ? { apiKey: Boolean(settings.apiKey), template: Boolean(settings.template) }
-      : {
-          merchantId: Boolean(settings.merchantId),
-          publicBaseUrl: Boolean(settings.publicBaseUrl),
-          returnUrl: Boolean(settings.returnUrl),
-        },
+    fields: integrationFields(key, settings),
     ...(key === 'zarinpal' ? { mode: settings.sandbox ? 'sandbox' as const : 'live' as const } : {}),
   };
 }
