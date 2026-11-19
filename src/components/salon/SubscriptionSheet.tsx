@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { GATEWAYS, GatewayId, PLANS, PlanId } from './plans';
-import { money } from './format';
+import { formatNumber } from '../../utils/formatters';
 
 interface SubscriptionSheetProps {
   isOpen: boolean;
@@ -43,7 +43,7 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({
     }
     footer={
       <Button size="lg" className="w-full" isLoading={isProcessing} disabled={!isDemoMode && !paymentEnabled} onClick={onPay}>
-        {`پرداخت ${money(PLANS[plan].price)} تومان`}
+        {`پرداخت ${formatNumber(PLANS[plan].price)} تومان`}
       </Button>
     }
   >

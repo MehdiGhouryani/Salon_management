@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { CustomerBooking } from '../../types/admin';
-import { toPersianDigits } from '../../utils/formatters';
+import { formatNumber, shortDate, toPersianDigits } from '../../utils/formatters';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { EmptyState } from '../ui/EmptyState';
 import { PageTitle } from './PageTitle';
-import { isTodayLabel, money, shortDate, timeToMinutes, todayLabelFa } from './format';
+import { isTodayLabel, timeToMinutes, todayLabelFa } from '../../utils/booking';
 
 type Filter = 'all' | 'pending' | 'done' | 'cancelled';
 
@@ -95,7 +95,7 @@ const Row: React.FC<{
         </span>
         <span className="hidden sm:flex shrink-0 items-baseline gap-1.5">
           <span className="w-24 text-right text-sm tabular-nums text-[var(--text-primary)]">
-            {money(b.price)}
+            {formatNumber(b.price)}
           </span>
         </span>
       </button>

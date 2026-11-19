@@ -1,10 +1,9 @@
 import React from 'react';
-import { toPersianDigits } from '../../utils/formatters';
+import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { SalonServiceItem, SalonStaffItem } from '../../mock/salonDirectoryData';
 import { Avatar } from '../ui/Avatar';
 import { EmptyState } from '../ui/EmptyState';
 import { PageTitle } from './PageTitle';
-import { money } from './format';
 
 interface ServicesTabProps {
   services: SalonServiceItem[];
@@ -40,7 +39,7 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({ services, staff }) => 
                 </div>
               </div>
               <div className="shrink-0 text-sm tabular-nums text-[var(--text-primary)]">
-                {money(s.price)}
+                {formatNumber(s.price)}
                 <span className="text-[11px] text-[var(--text-muted)] ms-1">تومان</span>
               </div>
             </li>

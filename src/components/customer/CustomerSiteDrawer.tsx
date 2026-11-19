@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { DetailedSalonData } from '../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../types/admin';
-import { toPersianDigits } from '../../utils/formatters';
+import { formatNumber, isValidMobile, normalizePhone, toPersianDigits } from '../../utils/formatters';
 import { SalonQrModal } from '../common/SalonQrModal';
 import { ServerAuthModal } from '../common/ServerAuthModal';
 import { api, ApiError } from '../../api/client';
@@ -13,7 +13,6 @@ import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { isValidMobile, money, normalizePhone } from '../salon/format';
 import { FlowFrame } from './FlowFrame';
 
 interface CustomerSiteDrawerProps {
@@ -395,7 +394,7 @@ export const CustomerSiteDrawer: React.FC<CustomerSiteDrawerProps> = ({
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="text-[15px] font-semibold">{b.serviceName}</span>
                         <span className="text-[15px] tabular-nums shrink-0">
-                          {money(b.price)}
+                          {formatNumber(b.price)}
                           <span className="text-xs text-[var(--text-muted)] ms-1">تومان</span>
                         </span>
                       </div>

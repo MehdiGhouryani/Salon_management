@@ -87,3 +87,14 @@
 | `src/components/common/ThemeToggle.tsx` | Segmented and icon theme switchers | Retain |
 | `src/components/common/ToastContainer.tsx` | Toast notification container with auto-dismiss | Retain |
 | `src/components/common/ConfirmModal.tsx` | Reusable confirmation modal for dangerous actions | Retain |
+
+
+---
+
+## 2026-11-19 — Verified cleanup update
+
+- Removed unused repository/database/UI barrel files that had no import consumers.
+- Removed unused UI primitives `Card` and `ErrorState`, the unused `maskApiKey` helper, and the never-opened `ConfirmModal` state/component.
+- Removed the unreferenced `paymentRecordRepository`; payment ledger writes and reporting remain in the active subscription/payment flow.
+- Consolidated historical UI/UX phase notes from `src/docs/` into `docs/UI_UX_IMPLEMENTATION_ARCHIVE.md`. Documentation no longer lives under the application source tree.
+- Moved shared phone normalization and front-end booking/time helpers into `src/utils/`, removing customer-page imports from the salon component directory. Generic monetary formatting now has one implementation (`formatNumber`).

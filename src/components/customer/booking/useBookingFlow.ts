@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdmin } from '../../../context/AdminContext';
 import { DetailedSalonData, SalonServiceItem, SalonStaffItem } from '../../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../../types/admin';
-import { toPersianDigits } from '../../../utils/formatters';
-import { isValidMobile, normalizePhone, toLatinDigits } from '../../salon/format';
+import { isValidMobile, normalizePhone, toLatinDigits, toPersianDigits } from '../../../utils/formatters';
 
 export interface AvailableSlotItem {
   time: string;

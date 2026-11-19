@@ -17,6 +17,28 @@ export function formatNumber(n: number, persianDigits = true): string {
   return persianDigits ? toPersianDigits(formatted) : formatted;
 }
 
+/** Normalizes Persian and Arabic-Indic digits before phone or time validation. */
+export function toLatinDigits(value: string): string {
+  const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+  const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+  return value
+    .replace(/[۰-۹]/g, (digit) => String(persianDigits.indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String(arabicDigits.indexOf(digit)));
+}
+
+export function normalizePhone(value: string): string {
+  return toLatinDigits(value).replace(/[\s\-]/g, '');
+}
+
+export function isValidMobile(value: string): boolean {
+  return /^09\d{9}$/.test(normalizePhone(value));
+}
+
+/** Shortens labels such as "امروز (پنجشنبه ۸ آبان)" to their leading date label. */
+export function shortDate(value: string): string {
+  return value.split(' (')[0];
+}
+
 export function maskPhone(phone: string): string {
   if (!phone || phone.length < 8) return phone;
   // Format: 0912***3456
@@ -24,10 +46,6 @@ export function maskPhone(phone: string): string {
   return `${clean.slice(0, 4)}****${clean.slice(-3)}`;
 }
 
-export function maskApiKey(key: string): string {
-  if (!key || key.length < 10) return '••••••••••••';
-  return `${key.slice(0, 4)}••••••••••••${key.slice(-4)}`;
-}
 
 /**
  * Sanitizes a single CSV cell value to neutralize CSV / Formula Injection attacks (DDE injection).

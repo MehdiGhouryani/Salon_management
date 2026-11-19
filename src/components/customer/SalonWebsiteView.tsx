@@ -6,10 +6,9 @@ import {
   SalonServiceItem,
 } from '../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../types/admin';
-import { toPersianDigits } from '../../utils/formatters';
+import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { money } from '../salon/format';
 import { BookingModal } from './BookingModal';
 import { BookingReceiptModal } from './BookingReceiptModal';
 import { CustomerSiteDrawer } from './CustomerSiteDrawer';
@@ -350,7 +349,7 @@ export const SalonWebsiteView: React.FC = () => {
                             <p className="mt-2 text-base text-[var(--text-secondary)]">
                               {s.duration}،{' '}
                               <span className="tabular-nums text-[var(--text-primary)]">
-                                {money(s.price)} تومان
+                                {formatNumber(s.price)} تومان
                               </span>
                             </p>
                           </div>

@@ -2,8 +2,7 @@ import React from 'react';
 import { DetailedSalonData } from '../../mock/salonDirectoryData';
 import { CustomerBooking } from '../../types/admin';
 import { Button } from '../ui/Button';
-import { toPersianDigits } from '../../utils/formatters';
-import { money } from '../salon/format';
+import { formatNumber, toPersianDigits } from '../../utils/formatters';
 import { FlowFrame } from './FlowFrame';
 import { StepConfirm, StepService, StepTime } from './booking/BookingSteps';
 import { useBookingFlow } from './booking/useBookingFlow';
@@ -88,7 +87,7 @@ const BookingFlowView: React.FC<Omit<BookingModalProps, 'isOpen'>> = ({
             <p className="text-sm text-[var(--text-secondary)] flex items-baseline justify-between gap-3">
               <span className="min-w-0 truncate">{summary.join('، ')}</span>
               <span className="shrink-0 tabular-nums text-[var(--text-primary)]">
-                {money(flow.service.price)}
+                {formatNumber(flow.service.price)}
                 <span className="text-xs text-[var(--text-muted)] ms-1">تومان</span>
               </span>
             </p>

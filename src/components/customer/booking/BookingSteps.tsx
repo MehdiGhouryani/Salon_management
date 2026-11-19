@@ -1,11 +1,10 @@
 import React from 'react';
 import { Check, RefreshCw } from 'lucide-react';
 import { DetailedSalonData } from '../../../mock/salonDirectoryData';
-import { toPersianDigits } from '../../../utils/formatters';
+import { formatNumber, shortDate, toPersianDigits } from '../../../utils/formatters';
 import { Avatar } from '../../ui/Avatar';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { money, shortDate } from '../../salon/format';
 import { BookingFlow } from './useBookingFlow';
 
 const fa = (n: number) => toPersianDigits(String(n));
@@ -53,7 +52,7 @@ export const StepService: React.FC<{ salon: DetailedSalonData; flow: BookingFlow
               <span className="block text-sm text-[var(--text-secondary)] mt-0.5">{s.duration}</span>
             </span>
             <span className="shrink-0 text-[15px] tabular-nums">
-              {money(s.price)}
+              {formatNumber(s.price)}
               <span className="text-xs text-[var(--text-muted)] ms-1">تومان</span>
             </span>
           </button>

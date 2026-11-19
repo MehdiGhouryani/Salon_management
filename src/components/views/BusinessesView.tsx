@@ -25,7 +25,6 @@ import {
   maskPhone,
   exportToCsv,
 } from '../../utils/formatters';
-import { ConfirmModal } from '../common/ConfirmModal';
 import { StatusReasonModal } from '../common/StatusReasonModal';
 import { Pagination } from '../common/Pagination';
 import { EmptyState } from '../ui/EmptyState';
@@ -110,20 +109,6 @@ export const BusinessesView: React.FC = () => {
       variant,
     });
   };
-
-  const [confirmModalData, setConfirmModalData] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    variant: 'danger' | 'warning';
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-    variant: 'warning',
-  });
 
   const [revealPhone, setRevealPhone] = useState(false);
 
@@ -1160,15 +1145,6 @@ export const BusinessesView: React.FC = () => {
         onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
       />
 
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmModalData.isOpen}
-        title={confirmModalData.title}
-        message={confirmModalData.message}
-        variant={confirmModalData.variant}
-        onConfirm={confirmModalData.onConfirm}
-        onClose={() => setConfirmModalData({ ...confirmModalData, isOpen: false })}
-      />
     </div>
   );
 };

@@ -7,7 +7,8 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { SLOTS, money, shortDate } from './format';
+import { formatNumber, shortDate } from '../../utils/formatters';
+import { SLOTS } from '../../utils/booking';
 
 export interface BookingChanges {
   time: string;
@@ -141,7 +142,7 @@ export const BookingDetailSheet: React.FC<BookingDetailSheetProps> = ({
         <Fact label="خدمت">{booking.serviceName}</Fact>
         <Fact label="پرسنل">{booking.staffName}</Fact>
         <Fact label="مبلغ">
-          {money(booking.price)} <span className="text-[11px] text-[var(--text-muted)]">تومان</span>
+          {formatNumber(booking.price)} <span className="text-[11px] text-[var(--text-muted)]">تومان</span>
         </Fact>
         <Fact label="کد پیگیری">
           <span dir="ltr">{booking.trackingCode}</span>

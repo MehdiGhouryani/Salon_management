@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { CustomerBooking } from '../../types/admin';
 import { Button } from '../ui/Button';
-import { money } from '../salon/format';
+import { formatNumber } from '../../utils/formatters';
 import { FlowFrame } from './FlowFrame';
 
 interface BookingReceiptModalProps {
@@ -84,7 +84,7 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({
         <Fact label="متخصص">{booking.staffName}</Fact>
         {salonAddress && <Fact label="آدرس">{salonAddress}</Fact>}
         <Fact label="مبلغ">
-          <span className="tabular-nums">{money(booking.price)}</span>
+          <span className="tabular-nums">{formatNumber(booking.price)}</span>
           <span className="text-xs text-[var(--text-muted)] ms-1">تومان</span>
         </Fact>
       </dl>

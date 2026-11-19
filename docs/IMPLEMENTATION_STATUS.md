@@ -141,7 +141,7 @@ the evidence.
    - Supports `npm run db:migrate` (`up`), `npm run db:rollback` (`down`), and `npm run db:status`.
    - Non-crashing graceful exits on unconfigured environment.
 4. **Typed Repositories (`server/repositories/`)**:
-   - `userRepository`, `salonRepository`, `serviceRepository`, `staffRepository`, `clientRepository`, `appointmentRepository`, `paymentRecordRepository`, `auditLogRepository`.
+   - `userRepository`, `salonRepository`, `serviceRepository`, `staffRepository`, `clientRepository`, `appointmentRepository`, `subscriptionRepository`, `supportTicketRepository`, `integrationSettingsRepository`, and `auditLogRepository`.
    - Parameterized queries throughout (zero SQL concatenation).
    - Transaction client pass-through support.
 5. **Separated Fixture Seeder (`server/db/seeds/initialSeed.ts` & `scripts/seed.ts`)**:

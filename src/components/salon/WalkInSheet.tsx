@@ -4,7 +4,8 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { SalonServiceItem, SalonStaffItem } from '../../mock/salonDirectoryData';
-import { SLOTS, isValidMobile } from './format';
+import { isValidMobile, toLatinDigits } from '../../utils/formatters';
+import { SLOTS } from '../../utils/booking';
 
 export interface WalkInValues {
   clientName: string;
@@ -20,8 +21,6 @@ export interface WalkInValues {
   price: number;
 }
 
-const toLatinDigits = (v: string) =>
-  v.replace(/[۰-۹]/g, (ch) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(ch)));
 
 interface WalkInSheetProps {
   isOpen: boolean;
