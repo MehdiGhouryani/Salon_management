@@ -24,6 +24,22 @@ vi.mock('../../server/config.ts', () => ({
   },
 }));
 
+vi.mock('../../server/services/integrations/integrationSettingsService.ts', () => ({
+  getIntegrationRuntime: vi.fn().mockResolvedValue({
+    key: 'zarinpal',
+    enabled: true,
+    configured: true,
+    source: 'environment',
+    settings: {
+      merchantId: '00000000-0000-4000-8000-000000000000',
+      sandbox: true,
+      publicBaseUrl: 'https://api.example.test',
+      returnUrl: 'https://app.example.test/billing',
+    },
+    updatedAt: null,
+  }),
+}));
+
 vi.mock('../../server/db/pool.ts', () => ({
   withTransaction: mocks.withTransaction,
   query: mocks.query,
