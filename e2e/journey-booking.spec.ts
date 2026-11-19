@@ -27,6 +27,52 @@ async function peekLastOtp(page: Page, phone: string): Promise<string> {
   return body.otp.code;
 }
 
+function isAvailabilityResponse(response: import('@playwright/test').Response): boolean {
+  return response.request().method() === 'GET' &&
+    response.url().includes('/api/public/salons/') &&
+    response.url().includes('/availability?');
+}
+
+/**
+ * Walks upcoming days using the real availability API. Weekday assumptions are
+ * intentionally avoided: the test selects the first day that actually returns
+ * an open slot for the requested service.
+ */
+async function chooseFirstRealAvailableSlot(page: Page, initialResponse: import('@playwright/test').Response): Promise<void> {
+  const dayChips = page.getByRole('radiogroup', { name: 'روز نوبت' }).getByRole('radio');
+  await expect(dayChips.first()).toBeVisible({ timeout: 10000 });
+
+  let availabilityResponse = initialResponse;
+  const daysCount = await dayChips.count();
+
+  for (let index = 0; index < daysCount; index++) {
+    if (index > 0) {
+      const nextAvailability = page.waitForResponse(isAvailabilityResponse);
+      await dayChips.nth(index).click();
+      availabilityResponse = await nextAvailability;
+    }
+
+    expect(availabilityResponse.status()).toBe(200);
+    const availability = await availabilityResponse.json();
+    const hasAvailableSlot =
+      availability.success === true &&
+      availability.isOpen === true &&
+      Array.isArray(availability.slots) &&
+      availability.slots.some((slot: { available?: boolean }) => slot.available === true);
+
+    if (!hasAvailableSlot) continue;
+
+    const availableSlots = page
+      .getByRole('radiogroup', { name: 'ساعت نوبت' })
+      .getByRole('radio', { disabled: false });
+    await expect(availableSlots.first()).toBeVisible({ timeout: 10000 });
+    await availableSlots.first().click();
+    return;
+  }
+
+  throw new Error('No available slot was returned by the real availability API for any of the next seven days.');
+}
+
 test('booking wizard reaches real availability and real server OTP issuance', async ({ page }) => {
   await page.goto('/');
   const catalog = page.getByRole('region', { name: 'خدمات و قیمت‌ها' });
@@ -36,22 +82,11 @@ test('booking wizard reaches real availability and real server OTP issuance', as
   await catalog.getByRole('button', { name: /^رزرو/ }).first().click();
   await expect(page.getByRole('list', { name: 'مراحل رزرو' })).toBeVisible({ timeout: 10000 });
 
-  // Step 1 → 2 (service/specialist selection)
+  // Step 1 → 2 (service/specialist selection). Capture the initial real
+  // availability response, then search the upcoming days for an open slot.
+  const initialAvailability = page.waitForResponse(isAvailabilityResponse);
   await page.getByRole('button', { name: 'ادامه' }).click();
-
-  // Step 2: the real availability API honestly reports closed days (e.g. Fridays)
-  // — pick the next open day chip, then the first available slot.
-  const dayChips = page.getByRole('radiogroup', { name: 'روز نوبت' }).getByRole('radio');
-  await expect(dayChips.first()).toBeVisible({ timeout: 10000 });
-  if (await dayChips.count() > 1) {
-    await dayChips.nth(1).click();
-  }
-
-  const availableSlot = page
-    .locator('button:not([disabled])')
-    .filter({ hasText: /([۰-۹]{2}:[۰-۹]{2})|(\d{2}:\d{2})/ })
-    .first();
-  await availableSlot.click();
+  await chooseFirstRealAvailableSlot(page, await initialAvailability);
   await expect(page.getByRole('button', { name: 'ادامه' })).toBeEnabled();
   await page.getByRole('button', { name: 'ادامه' }).click();
 
@@ -74,19 +109,9 @@ test('customer completes a REAL guest booking through the wizard (OTP grant, no 
   await catalog.getByRole('button', { name: /^رزرو/ }).first().click();
   await expect(page.getByRole('list', { name: 'مراحل رزرو' })).toBeVisible({ timeout: 10000 });
 
+  const initialAvailability = page.waitForResponse(isAvailabilityResponse);
   await page.getByRole('button', { name: 'ادامه' }).click();
-
-  const dayChips = page.getByRole('radiogroup', { name: 'روز نوبت' }).getByRole('radio');
-  await expect(dayChips.first()).toBeVisible({ timeout: 10000 });
-  if ((await dayChips.count()) > 1) {
-    await dayChips.nth(1).click();
-  }
-
-  const availableSlot = page
-    .locator('button:not([disabled])')
-    .filter({ hasText: /([۰-۹]{2}:[۰-۹]{2})|(\d{2}:\d{2})/ })
-    .first();
-  await availableSlot.click();
+  await chooseFirstRealAvailableSlot(page, await initialAvailability);
   await expect(page.getByRole('button', { name: 'ادامه' })).toBeEnabled();
   await page.getByRole('button', { name: 'ادامه' }).click();
 
