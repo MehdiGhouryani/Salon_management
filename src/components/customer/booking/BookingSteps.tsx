@@ -275,7 +275,7 @@ export const StepConfirm: React.FC<{
               ['خدمت', flow.service?.name],
               ['متخصص', flow.staffLabel],
               ['زمان', `${shortDate(flow.day.label)} ${flow.day.sub}، ساعت ${toPersianDigits(flow.time)}`],
-              ['پرداخت', `حضوری در سالن، ${money(flow.service?.price ?? 0)} تومان`],
+              ['پرداخت', `حضوری در سالن، ${formatNumber(flow.service?.price ?? 0)} تومان`],
             ].map(([k, v]) => (
               <div key={k} className="flex items-baseline justify-between gap-4 py-2.5 border-b border-[var(--border-subtle)] last:border-b-0">
                 <dt className="text-sm text-[var(--text-secondary)]">{k}</dt>

@@ -101,7 +101,7 @@ const Row: React.FC<{
       </button>
       <div className="shrink-0 w-[6.5rem] sm:w-28 flex flex-col sm:flex-row items-end sm:items-center justify-center sm:justify-end gap-1.5 pe-3 sm:pe-4">
         <span className="sm:hidden text-[13px] tabular-nums text-[var(--text-primary)]">
-          {money(b.price)}
+          {formatNumber(b.price)}
           <span className="text-[11px] text-[var(--text-muted)] ms-1">تومان</span>
         </span>
         {b.status === 'confirmed' && (
@@ -220,13 +220,13 @@ export const TodayTab: React.FC<TodayTabProps> = ({
         <Figure
           lead
           label="در انتظار تسویه"
-          value={stats ? money(stats.collectedRevenue) : money(sum(pending))}
+          value={stats ? formatNumber(stats.collectedRevenue) : formatNumber(sum(pending))}
           unit="تومان"
           className="col-span-2 sm:col-span-1"
         />
         <Figure
           label={stats ? `تکمیل‌شده (${fa(stats.completed)})` : 'تسویه‌شده'}
-          value={stats ? money(sum(done)) : money(sum(done))}
+          value={stats ? formatNumber(sum(done)) : formatNumber(sum(done))}
           unit="تومان"
           className="border-t sm:border-t-0 sm:border-s border-[var(--border-subtle)]"
         />

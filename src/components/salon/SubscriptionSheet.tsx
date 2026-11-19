@@ -77,7 +77,7 @@ export const SubscriptionSheet: React.FC<SubscriptionSheetProps> = ({
               <span className="block text-[13px] text-[var(--text-secondary)] mt-0.5">{p.features}</span>
             </span>
             <span className="shrink-0 text-sm tabular-nums text-[var(--text-primary)]">
-              {money(p.price)}
+              {formatNumber(p.price)}
               <span className="text-[11px] text-[var(--text-muted)] ms-1">تومان</span>
             </span>
           </button>
