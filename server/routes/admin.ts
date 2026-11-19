@@ -12,8 +12,15 @@ import { appointmentRepository } from '../repositories/appointmentRepository.ts'
 import { staffRepository } from '../repositories/staffRepository.ts';
 import { supportTicketRepository, type SupportTicketStatus, type SupportTicketPriority } from '../repositories/supportTicketRepository.ts';
 import { subscriptionRepository } from '../repositories/subscriptionRepository.ts';
-import { config } from '../config.ts';
 import { isDatabaseConfigured } from '../db/pool.ts';
+import {
+  getIntegrationRuntime,
+  getIntegrationStatuses,
+  IntegrationSettingsError,
+  saveIntegrationSettings,
+  type IntegrationKey,
+  type ZarinpalIntegrationSettings,
+} from '../services/integrations/integrationSettingsService.ts';
 
 export const adminRouter = express.Router();
 
@@ -605,15 +612,18 @@ adminRouter.get('/subscriptions/overview', async (req: Request, res: Response): 
   const limit = Number.parseInt(String(req.query.limit || '20'), 10);
   const offset = Number.parseInt(String(req.query.offset || '0'), 10);
   try {
-    const overview = await subscriptionRepository.getAdminOverview(
-      Number.isSafeInteger(limit) ? Math.min(100, Math.max(1, limit)) : 20,
-      Number.isSafeInteger(offset) ? Math.max(0, Math.min(1_000_000, offset)) : 0
-    );
+    const [overview, zarinpal] = await Promise.all([
+      subscriptionRepository.getAdminOverview(
+        Number.isSafeInteger(limit) ? Math.min(100, Math.max(1, limit)) : 20,
+        Number.isSafeInteger(offset) ? Math.max(0, Math.min(1_000_000, offset)) : 0
+      ),
+      getIntegrationRuntime<ZarinpalIntegrationSettings>('zarinpal'),
+    ]);
     res.status(200).json({
       success: true,
       ...overview,
-      paymentEnabled: config.payments.isZarinpalConfigured,
-      paymentSandbox: config.payments.zarinpalSandbox,
+      paymentEnabled: zarinpal.enabled,
+      paymentSandbox: Boolean(zarinpal.settings.sandbox),
       availableGateway: 'zarinpal',
     });
   } catch (err: any) {
@@ -623,3 +633,87 @@ adminRouter.get('/subscriptions/overview', async (req: Request, res: Response): 
     });
   }
 });
+
+
+/** Integration credentials are only ever handled server-side; responses contain status flags only. */
+adminRouter.get('/integrations', async (_req: Request, res: Response): Promise<void> => {
+  if (!isDatabaseConfigured()) {
+    res.status(503).json({
+      error: 'INTEGRATION_DATABASE_UNAVAILABLE',
+      message: 'برای ذخیره و مدیریت امن کلیدهای اتصال، پایگاه‌داده عملیاتی لازم است.',
+    });
+    return;
+  }
+
+  try {
+    const integrations = await getIntegrationStatuses();
+    res.status(200).json({ success: true, integrations });
+  } catch (err: any) {
+    res.status(500).json({
+      error: 'INTEGRATION_SETTINGS_FETCH_ERROR',
+      message: safeInternalErrorMessage(err),
+    });
+  }
+});
+
+adminRouter.put(
+  '/integrations/:key',
+  rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: 10,
+    keyFor: (req) => String(req.user?.id || req.ip || 'unknown'),
+    code: 'INTEGRATION_SETTINGS_RATE_LIMIT',
+  }),
+  async (req: Request, res: Response): Promise<void> => {
+    const key = String(req.params.key || '') as IntegrationKey;
+    if (!['kavenegar', 'zarinpal'].includes(key)) {
+      res.status(404).json({ error: 'INTEGRATION_NOT_SUPPORTED', message: 'این سرویس هنوز در سامانه پیاده‌سازی نشده است.' });
+      return;
+    }
+
+    if (!isDatabaseConfigured()) {
+      res.status(503).json({
+        error: 'INTEGRATION_DATABASE_UNAVAILABLE',
+        message: 'برای ذخیره امن کلیدهای اتصال، پایگاه‌داده عملیاتی لازم است.',
+      });
+      return;
+    }
+
+    try {
+      const integration = await withTransaction(async (client) => {
+        const updated = await saveIntegrationSettings(key, req.body, req.user!.id, client);
+        await auditLogRepository.create({
+          actor: req.user!.full_name,
+          actorRole: req.user!.platform_role,
+          action: 'PLATFORM_INTEGRATION_UPDATED',
+          target: 'integration:' + key,
+          ipAddress: req.ip || '127.0.0.1',
+          userAgent: String(req.headers['user-agent'] || 'Unknown'),
+          severity: 'warning',
+          category: 'system',
+          details: {
+            integration: key,
+            enabled: updated.enabled,
+            configured: updated.configured,
+          },
+        }, client);
+        return updated;
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'تنظیمات اتصال با موفقیت ذخیره شد.',
+        integration,
+      });
+    } catch (err: any) {
+      if (err instanceof IntegrationSettingsError) {
+        res.status(err.statusCode).json({ error: err.code, message: err.message });
+        return;
+      }
+      res.status(500).json({
+        error: 'INTEGRATION_SETTINGS_SAVE_ERROR',
+        message: safeInternalErrorMessage(err),
+      });
+    }
+  }
+);

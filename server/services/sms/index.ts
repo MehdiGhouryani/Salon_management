@@ -3,49 +3,36 @@ import type { SmsProvider } from './types.ts';
 import { KavenegarSmsProvider } from './kavenegarProvider.ts';
 import { DevMockSmsProvider } from './devMockProvider.ts';
 import { NullSmsProvider } from './nullProvider.ts';
+import { getIntegrationRuntime, type KavenegarIntegrationSettings } from '../integrations/integrationSettingsService.ts';
 
 export * from './types.ts';
 export * from './kavenegarProvider.ts';
 export * from './devMockProvider.ts';
 export * from './nullProvider.ts';
 
-let activeProvider: SmsProvider | null = null;
 let devMockProviderInstance: DevMockSmsProvider | null = null;
 
-export function getSmsProvider(): SmsProvider {
-  if (activeProvider) {
-    return activeProvider;
-  }
-
-  // 0. Explicit provider selection (Phase 14): SMS_PROVIDER=null forces the
-  // fail-closed NullProvider even in development — no silent mock sends.
+export async function getSmsProvider(): Promise<SmsProvider> {
+  // Explicit environment override always wins (emergency fail-closed switch).
   if (config.sms.provider === 'null') {
-    activeProvider = new NullSmsProvider(
-      'ارسال پیامک با تنظیم SMS_PROVIDER=null غیرفعال شده است.'
-    );
-    return activeProvider;
+    return new NullSmsProvider('ارسال پیامک با تنظیم SMS_PROVIDER=null غیرفعال شده است.');
   }
 
-  // 1. If Kavenegar API key is provided, use real Kavenegar integration
-  if (config.auth.kavenegarApiKey) {
-    activeProvider = new KavenegarSmsProvider(config.auth.kavenegarApiKey);
-    return activeProvider;
+  const integration = await getIntegrationRuntime<KavenegarIntegrationSettings>('kavenegar');
+  if (integration.enabled && integration.configured && integration.settings.apiKey) {
+    return new KavenegarSmsProvider(integration.settings.apiKey, {
+      template: integration.settings.template || config.sms.template,
+    });
   }
 
-  // 2. In non-production, instantiate DevMockSmsProvider
   if (config.isDevelopment || config.nodeEnv === 'test') {
-    if (!devMockProviderInstance) {
-      devMockProviderInstance = new DevMockSmsProvider();
-    }
-    activeProvider = devMockProviderInstance;
-    return activeProvider;
+    if (!devMockProviderInstance) devMockProviderInstance = new DevMockSmsProvider();
+    return devMockProviderInstance;
   }
 
-  // 3. In production with no SMS provider configured, fail closed!
-  activeProvider = new NullSmsProvider(
-    'درگاه ارسال پیامک عملیاتی پیکربندی نشده است. لطفا KAVENEGAR_API_KEY را در متغیرهای سرور تنظیم نمایید.'
+  return new NullSmsProvider(
+    'درگاه ارسال پیامک عملیاتی پیکربندی نشده است. کلید کاوه‌نگار را از بخش تنظیمات پنل مدیریت وارد کنید.'
   );
-  return activeProvider;
 }
 
 export function getDevMockSmsProvider(): DevMockSmsProvider | null {

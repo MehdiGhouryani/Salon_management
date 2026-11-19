@@ -3,6 +3,7 @@ import { withTransaction, query } from '../../db/pool.ts';
 import { auditLogRepository } from '../../repositories/auditLogRepository.ts';
 import { salonRepository } from '../../repositories/salonRepository.ts';
 import { subscriptionRepository, type DbSubscriptionPaymentAttempt, type SubscriptionPlanCode } from '../../repositories/subscriptionRepository.ts';
+import { getIntegrationRuntime, type ZarinpalIntegrationSettings } from '../integrations/integrationSettingsService.ts';
 
 export class SubscriptionPaymentError extends Error {
   readonly code: string;
@@ -65,15 +66,19 @@ export function parseZarinpalVerifyResponse(payload: unknown): { verified: boole
   };
 }
 
-async function postZarinpal(pathname: 'request.json' | 'verify.json', body: object): Promise<unknown> {
-  if (!config.payments.zarinpalMerchantId) {
+async function postZarinpal(
+  pathname: 'request.json' | 'verify.json',
+  body: object,
+  gateway: ZarinpalIntegrationSettings
+): Promise<unknown> {
+  if (!gateway.merchantId) {
     throw new SubscriptionPaymentError('PAYMENT_GATEWAY_NOT_CONFIGURED', 'درگاه پرداخت زرین‌پال در سرور پیکربندی نشده است.', 503);
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), config.payments.timeoutMs);
   try {
-    const response = await fetch(zarinpalApiBaseUrl() + '/' + pathname, {
+    const response = await fetch(zarinpalApiBaseUrl(Boolean(gateway.sandbox)) + '/' + pathname, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(body),
@@ -106,27 +111,27 @@ async function requestGatewayPayment(input: {
   callbackUrl: string;
   description: string;
   mobile?: string;
-}): Promise<{ authority: string; paymentUrl: string; message: string | null }> {
+}, gateway: ZarinpalIntegrationSettings): Promise<{ authority: string; paymentUrl: string; message: string | null }> {
   const payload: ZarinpalRequestPayload = {
-    merchant_id: config.payments.zarinpalMerchantId!,
+    merchant_id: gateway.merchantId!,
     amount: input.amountRial,
     callback_url: input.callbackUrl,
     description: input.description.slice(0, 255),
     ...(input.mobile ? { metadata: { mobile: input.mobile } } : {}),
   };
-  const response = parseZarinpalRequestResponse(await postZarinpal('request.json', payload));
+  const response = parseZarinpalRequestResponse(await postZarinpal('request.json', payload, gateway));
   return {
     ...response,
-    paymentUrl: zarinpalPaymentUrl(response.authority),
+    paymentUrl: zarinpalPaymentUrl(response.authority, Boolean(gateway.sandbox)),
   };
 }
 
-async function verifyGatewayPayment(amountRial: number, authority: string) {
+async function verifyGatewayPayment(amountRial: number, authority: string, gateway: ZarinpalIntegrationSettings) {
   const response = await postZarinpal('verify.json', {
-    merchant_id: config.payments.zarinpalMerchantId!,
+    merchant_id: gateway.merchantId!,
     amount: amountRial,
     authority,
-  });
+  }, gateway);
   return parseZarinpalVerifyResponse(response);
 }
 
@@ -144,10 +149,12 @@ export async function startSubscriptionCheckout(input: {
   planCode: SubscriptionPlanCode;
   idempotencyKey: string;
 }): Promise<StartSubscriptionCheckoutResult> {
-  if (!config.payments.isZarinpalConfigured) {
+  const gatewayRuntime = await getIntegrationRuntime<ZarinpalIntegrationSettings>('zarinpal');
+  const gatewaySettings = gatewayRuntime.settings;
+  if (!gatewayRuntime.enabled || !gatewayRuntime.configured || !gatewaySettings.merchantId || !gatewaySettings.publicBaseUrl) {
     throw new SubscriptionPaymentError(
       'PAYMENT_GATEWAY_NOT_CONFIGURED',
-      'درگاه پرداخت زرین‌پال هنوز در تنظیمات سرور فعال نشده است.',
+      'درگاه پرداخت زرین‌پال از بخش تنظیمات پنل مدیریت فعال و کامل نشده است.',
       503
     );
   }
@@ -215,7 +222,7 @@ export async function startSubscriptionCheckout(input: {
       return {
         attemptId: attempt.id,
         status: 'pending',
-        paymentUrl: zarinpalPaymentUrl(attempt.authority),
+        paymentUrl: zarinpalPaymentUrl(attempt.authority, Boolean(gatewaySettings.sandbox)),
         reused: true,
       };
     }
@@ -226,14 +233,14 @@ export async function startSubscriptionCheckout(input: {
     );
   }
 
-  const callbackUrl = new URL('/api/payments/zarinpal/callback', config.payments.publicBaseUrl!).toString();
+  const callbackUrl = new URL('/api/payments/zarinpal/callback', gatewaySettings.publicBaseUrl).toString();
   try {
     const gateway = await requestGatewayPayment({
       amountRial,
       callbackUrl,
       description: 'اشتراک ' + plan.offer + ' - ' + salon.name,
       mobile: input.mobile,
-    });
+    }, gatewaySettings);
 
     const updated = await withTransaction((client) =>
       subscriptionRepository.setPending(attempt.id, gateway.authority, gateway.message, client)
@@ -292,7 +299,13 @@ export async function processZarinpalCallback(
 
   let verification: ReturnType<typeof parseZarinpalVerifyResponse>;
   try {
-    verification = await verifyGatewayPayment(Number(attempt.amount_rial), authority);
+    const gatewayRuntime = await getIntegrationRuntime<ZarinpalIntegrationSettings>('zarinpal');
+    // A disabled gateway blocks new checkouts, but still verifies callbacks
+    // for payments that were started before it was disabled.
+    if (!gatewayRuntime.configured) {
+      return { success: false, attemptId: attempt.id, reason: 'pending' };
+    }
+    verification = await verifyGatewayPayment(Number(attempt.amount_rial), authority, gatewayRuntime.settings);
   } catch {
     // Transient gateway/network failure leaves the attempt pending for safe retry.
     return { success: false, attemptId: attempt.id, reason: 'pending' };

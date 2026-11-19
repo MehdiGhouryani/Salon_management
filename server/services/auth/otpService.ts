@@ -131,7 +131,7 @@ export const otpService = {
     });
 
     // Send OTP via SMS provider
-    const smsProvider = getSmsProvider();
+    const smsProvider = await getSmsProvider();
     // Phase 14: OTP rate limits already applied above (cooldown + per-IP/phone
     // counters) BEFORE the provider is called — the provider can never be
     // leveraged for SMS flooding.

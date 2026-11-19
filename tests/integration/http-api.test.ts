@@ -1257,3 +1257,38 @@ describe('Admin subscription finance overview fail-closed behavior', () => {
     expect(response.status).toBe(403);
   });
 });
+
+
+describe('Platform integration settings API security', () => {
+  it('requires super-admin authentication to inspect configured providers', async () => {
+    const anonymous = await fetch(`${baseUrl}/api/admin/integrations`);
+    expect(anonymous.status).toBe(401);
+
+    const regularUser = await fetch(`${baseUrl}/api/admin/integrations`, {
+      headers: { Authorization: `Bearer ${regUserToken}` },
+    });
+    expect(regularUser.status).toBe(403);
+  });
+
+  it('fails closed when PostgreSQL is unavailable and never returns fake integration settings', async () => {
+    const response = await fetch(`${baseUrl}/api/admin/integrations`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    expect(response.status).toBe(503);
+    expect((await response.json()).error).toBe('INTEGRATION_DATABASE_UNAVAILABLE');
+  });
+
+  it('rejects unsupported provider keys rather than accepting credentials for unimplemented gateways', async () => {
+    const response = await fetch(`${baseUrl}/api/admin/integrations/mellat`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+        'X-NobatAra-Client': 'integration-test',
+      },
+      body: JSON.stringify({ terminalKey: 'not-a-real-secret' }),
+    });
+    expect(response.status).toBe(404);
+    expect((await response.json()).error).toBe('INTEGRATION_NOT_SUPPORTED');
+  });
+});

@@ -1,15 +1,22 @@
 import express from 'express';
 import { config } from '../config.ts';
 import { processZarinpalCallback } from '../services/payments/subscriptionService.ts';
+import { getIntegrationRuntime, type ZarinpalIntegrationSettings } from '../services/integrations/integrationSettingsService.ts';
 
 export const paymentsRouter = express.Router();
 
-function redirectToConfiguredReturn(
+async function redirectToConfiguredReturn(
   res: express.Response,
   status: 'success' | 'cancelled' | 'failed' | 'pending',
   attemptId?: string
-): void {
-  const returnUrl = config.payments.returnUrl || config.payments.publicBaseUrl;
+): Promise<void> {
+  let returnUrl = config.payments.returnUrl || config.payments.publicBaseUrl;
+  try {
+    const integration = await getIntegrationRuntime<ZarinpalIntegrationSettings>('zarinpal');
+    returnUrl = integration.settings.returnUrl || integration.settings.publicBaseUrl || returnUrl;
+  } catch {
+    // Keep the environment URL as a safe fallback if stored settings are unavailable.
+  }
   if (!returnUrl) {
     res.status(503).json({ error: 'PAYMENT_RETURN_URL_NOT_CONFIGURED' });
     return;
@@ -31,7 +38,7 @@ paymentsRouter.get('/zarinpal/callback', async (req, res): Promise<void> => {
   const status = String(req.query.Status || '');
 
   if (!authority || authority.length > 64) {
-    redirectToConfiguredReturn(res, 'failed');
+    await redirectToConfiguredReturn(res, 'failed');
     return;
   }
 
@@ -44,17 +51,10 @@ paymentsRouter.get('/zarinpal/callback', async (req, res): Promise<void> => {
         : result.reason === 'pending'
           ? 'pending'
           : 'failed';
-    redirectToConfiguredReturn(res, returnStatus, result.attemptId);
+    await redirectToConfiguredReturn(res, returnStatus, result.attemptId);
   } catch {
     // Do not expose provider/database internals to the browser. A transient
     // failure leaves the payment attempt pending and can be reconciled safely.
-    const target = config.payments.returnUrl || config.payments.publicBaseUrl;
-    if (target) {
-      const url = new URL(target);
-      url.searchParams.set('subscription_payment', 'pending');
-      res.redirect(303, url.toString());
-      return;
-    }
-    res.status(503).json({ error: 'PAYMENT_RETURN_URL_NOT_CONFIGURED' });
+    await redirectToConfiguredReturn(res, 'pending');
   }
 });
