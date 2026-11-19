@@ -8,18 +8,6 @@
  * 4. Client-side flags are UI presentation hints ONLY and NEVER serve as authorization boundaries.
  */
 
-export type AppMode = 'development' | 'production' | 'test';
-
-export const getAppMode = (): AppMode => {
-  if (import.meta.env.PROD || import.meta.env.VITE_APP_MODE === 'production') {
-    return 'production';
-  }
-  if (import.meta.env.MODE === 'test' || import.meta.env.VITE_APP_MODE === 'test') {
-    return 'test';
-  }
-  return 'development';
-};
-
 export const getIsDemoMode = (): boolean => {
   // Production posture: If built for production or VITE_APP_MODE is production, demo is strictly disabled
   if (
